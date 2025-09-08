@@ -1,0 +1,54 @@
+package jp.co.art.trident.model.entity;
+
+import java.io.Serializable;
+
+/**操作データマスタを保持するクラス**/
+
+public class MOperation implements Serializable {
+
+	private static final long serialVersionUID = -3539055782577649251L;
+
+	/**
+     * デフォルトコンストラクタ
+     */
+	public MOperation() {};	
+	
+	/**
+     * デフォルトコンストラクタ
+     */
+	public MOperation(String date, String username, String opecode) {
+		this.date = date;
+		this.username = username;
+		this.opecode = opecode;
+	}
+	
+	/** 操作日 */
+	private String date;
+	
+	/** ユーザー名 */
+	private String username;
+	
+	/** 操作コード */
+	private String opecode;
+	
+	//　以下、ゲッター、セッター　-----------------------
+	public String getDate() {
+		return date;
+	}
+	public void setDate(String date) {
+		this.date = date;
+	}
+	public String getUsername() {
+		return username;
+	}
+	public void setUsername(String username) {
+		this.username = username;
+	}
+	public String getOpecode() {
+		return opecode;
+	}
+	public void setOpecode(String opecode) {
+		this.opecode = opecode;
+	}
+
+}

@@ -1,0 +1,53 @@
+package jp.co.art.trident.model.entity;
+
+import java.io.Serializable;
+
+/**装置タイプマスタを保持するクラス**/
+
+public class MDevicetype implements Serializable {
+
+	private static final long serialVersionUID = -5154808286454252393L;
+
+	/**
+     * デフォルトコンストラクタ
+     */
+	public MDevicetype() {};	
+	
+	/**
+     * デフォルトコンストラクタ
+     */
+	public MDevicetype(int devicetype_no, String devicetype_name, int devicetype_setcnt) {
+		this.devicetype_no = devicetype_no;
+		this.devicetype_name = devicetype_name;
+		this.devicetype_setcnt = devicetype_setcnt;
+	}
+	
+	/** 装置タイプ番号 */
+	private int devicetype_no;
+
+	/** 装置タイプ名称 */
+	private String devicetype_name;
+	
+	/** 最大接続回数 */
+	private int devicetype_setcnt;
+
+	//　以下、ゲッター、セッター　-----------------------
+	public int getDevicetype_no() {
+		return devicetype_no;
+	}
+	public void setDevicetype_no(int devicetype_no) {
+		this.devicetype_no = devicetype_no;
+	}
+	public String getDevicetype_name() {
+		return devicetype_name;
+	}
+	public void setDevicetype_name(String devicetype_name) {
+		this.devicetype_name = devicetype_name;
+	}	
+	public int getDevicetype_setcnt() {
+		return devicetype_setcnt;
+	}
+	public void setDevicetype_setcnt(int devicetype_setcnt) {
+		this.devicetype_setcnt = devicetype_setcnt;
+	}	
+}

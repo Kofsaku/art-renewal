@@ -1,0 +1,236 @@
+package jp.co.art.trident.controller;
+
+import java.io.IOException;
+import java.io.OutputStream;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.web.multipart.MultipartFile;
+
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+import jp.co.art.trident.exception.TridentException;
+import jp.co.art.trident.model.ServiceResult;
+import jp.co.art.trident.model.entity.common.MCommon.ParameterName;
+import jp.co.art.trident.model.form.TenantForm;
+import jp.co.art.trident.service.TenantService;
+import jp.co.art.trident.service.common.CommonService;
+
+/**テナント登録・編集画面のコントローラクラス**/
+@Controller
+public class TenantController {
+
+	/** テナント登録画面サービスクラス */
+	private final TenantService  tenantService;
+	
+	/** 汎用項目サービスクラス */
+	private final CommonService commonService;	
+	
+	public TenantController(TenantService tenantService,CommonService commonService) {
+		this.tenantService= tenantService;
+		this.commonService = commonService;
+	}
+	
+
+	// ------------------------------------------------------------------------------------------------------
+	// 定数
+	// ------------------------------------------------------------------------------------------------------
+	private final String FILE_TMP_PATH = "C:\\TRIDENT\\Data\\Tenant\\Temp\\";
+	
+	
+	/**
+	 * テナント登録・編集画面の初期表示処理を行う関数
+	 * @param model Thymeleafなどのテンプレートエンジンにデータを渡すためのModelオブジェクト
+	 * @return index.html
+	 * @throws TridentException 
+	 */	
+	@RequestMapping(value = { "/tenant", "/tenant/index" })
+	public String init(Model model) throws TridentException 
+	{
+		// テナント登録・編集画面に表示する初期フォーム情報を取得
+		TenantForm tForm = tenantService.initScreen();
+
+		// モデルにフォーム情報を設定し、画面に渡す
+		model.addAttribute("tenantForm", tForm);
+		// model.addAttribute("screen", "gate");
+
+		// 表示するHTMLテンプレート（tenant/index.html）を返却
+		return "tenant/index";
+	}
+
+	/**
+	 * テナント情報を取得する関数
+	 * @param tenantForm クライアントから送信されたテナント情報（テナントNoなどを含む）
+	 * @return result 該当テナントの詳細情報を格納した TenantForm を含むオブジェクト
+	 * @throws TridentException 
+	 */
+	@RequestMapping(value = { "/tenant/getTenantData" }, method = RequestMethod.POST)
+	@ResponseBody
+	public ServiceResult<TenantForm> getTenantData(@RequestBody TenantForm tenantForm) throws TridentException 
+	{	
+		// サービスクラスを通じて、指定されたテナントの詳細データを取得し、結果を返却
+		return tenantService.getTenantData(tenantForm);
+	}
+	
+	/**
+	 * テナント情報がすでに存在するかをチェックする関数
+	 * @param tenantForm クライアントから送信されたテナント情報（JSON形式で渡される）
+	 * @return result
+	 * @throws TridentException 
+	 */
+	@RequestMapping(value = { "/tenant/exist" }, method = RequestMethod.POST)
+	@ResponseBody
+	public ServiceResult<Boolean> exist(@RequestBody TenantForm tenantForm) throws TridentException 
+	{	
+		// サービス層でテナント情報の存在確認を行い、結果（true or false）を返却
+		return tenantService.checkExistenceTenantData(tenantForm);
+	}
+
+	/**
+	 * テナント登録・編集画面およびゲート設定画面の登録処理を行う関数
+	 *@param model
+	 * @param request HTTPリクエスト情報（フォームパラメータを含む）
+	 * @return index.html
+	 * @throws TridentException 
+	 */
+	@RequestMapping(value = { "/tenant/regist" })
+	public String regist(Model model, HttpServletRequest request) throws TridentException 
+	{
+		// 登録後、画面データ再表示
+		TenantForm form = new TenantForm();
+		// 登録処理
+		form = tenantService.tenantRegist(request);
+		
+		model.addAttribute("tenantForm", form);
+		
+		return "tenant/index";
+	}
+	
+	/**
+	 * テナント登録・編集画面におけるテナント情報の削除処理を行う関数
+	 * @param model 
+	 * @param request 
+	 * @return index.html
+	 * @throws TridentException 
+	 */
+	@RequestMapping(value = { "/tenant/delete" })
+	public String delete(Model model, HttpServletRequest request) throws TridentException 
+	{
+		// 削除後、画面データ再表示
+		TenantForm tenantform = new TenantForm();
+		// 削除処理
+		tenantform = tenantService.tenantDelete(request);
+		
+		model.addAttribute("tenantForm", tenantform);
+		model.addAttribute("screen", "gate");
+		return "tenant/index";
+
+	}	
+	
+	/**
+	 * ゲート設定画面登録処理
+	 * 
+	 * @param model モデル
+	 * @param 　request
+	 * @return HTML画面名
+	 * @throws TrindentException 
+	 */	
+	@RequestMapping(value = { "/tenant/gateset/regist"})
+	public String registGateset(Model model,HttpServletRequest request
+			) throws TridentException 
+	{
+		// 登録後、画面データ再表示
+		TenantForm form = new TenantForm();
+		// 登録処理
+		form = tenantService.gatesetRegist(request);
+		
+		model.addAttribute("tenantForm", form);
+		
+		return "tenant/index";
+	}
+
+	/**
+	 * テナント情報のCSVファイルをAjax経由でアップロードする処理する関数
+	 * @param uploadFile アップロードされたCSVファイル
+	 * @return result
+	 * @throws IOException アップロード処理中にI/Oエラーが発生した場合にスローされます
+	 * (ファイル、ネットワークなどの入出力処理エラー)
+	 * @throws TridentException 
+	 */
+	@RequestMapping(value = { "/tenant/upload" }, method = RequestMethod.POST)
+	@ResponseBody
+	public ServiceResult<TenantForm> upload(@RequestParam MultipartFile uploadFile) throws IOException, TridentException{
+		ServiceResult<TenantForm> result = new ServiceResult<TenantForm>();	
+		
+		result = tenantService.checkAndUpload(uploadFile);
+		
+		return result;
+	}
+	
+	/**
+	 * テナント情報のファイル出力処理を行う関数
+	 * @param request  リクエスト情報（ダウンロード種別など）
+	 * @param response レスポンス情報（ファイル出力対象）
+	 * @return  
+	 * @throws TridentException 
+	 */
+	@RequestMapping(value = { "/tenant/outputData" }, method = RequestMethod.POST)
+	public String fileDownload(HttpServletRequest request, HttpServletResponse response) throws TridentException {
+
+	    // ファイルの一時出力先ディレクトリ（定数で管理されている前提）
+	    String path = FILE_TMP_PATH;
+
+	    // リクエストパラメータ downloadType を取得（"O"＝出力モード、その他＝ダウンロードモード）
+	    String downloadType = request.getParameter("downloadType");
+
+	    // 出力ファイル名を定義
+	    String fileName = "";
+	    if (downloadType.equals("O")) {
+	        // データ出力
+	        fileName = commonService.getParameterValue1(ParameterName.TENANT_OUTPUT_FILENAME);
+	    } else {
+	        // ダウンロード
+	        fileName = commonService.getParameterValue1(ParameterName.TENANT_DOWNLOAD_FILENAME);
+	    }
+
+	    try (OutputStream os = response.getOutputStream()) {
+
+	        // 実際にファイルデータを生成（CSV等）し、一時ファイルに出力
+	        tenantService.createDownloadData(path, fileName, downloadType);
+
+	        // 出力したファイルのパスを作成
+	        String downloadPath = path + fileName;
+	        Path filePath = Paths.get(downloadPath);
+
+	        // ファイルの内容をすべて読み込む
+	        byte[] fb1 = Files.readAllBytes(filePath);
+
+	        // レスポンスにヘッダー情報をセット（ファイルダウンロードの基本設定）
+	        response.setContentType("application/octet-stream");
+	        response.setHeader("Content-Disposition", "attachment; filename=\"" + URLEncoder.encode(fileName, StandardCharsets.UTF_8) + "\"");
+	        response.setContentLength(fb1.length);
+
+	        // ファイルの中身をレスポンスの出力ストリームへ書き込み
+	        os.write(fb1);
+	        os.flush(); // 念のための明示フラッシュ
+
+	    }
+	    catch (IOException e) 
+	    {
+			// エラーログ
+			
+		}
+	    return null;
+	}
+
+}

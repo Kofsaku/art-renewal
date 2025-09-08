@@ -1,0 +1,1449 @@
+// 処理後メッセージを表示
+$(document).ready(function(){
+	var message = $("#message").val();
+	if(message !=null  && message != ""){	
+		// メッセージを表示
+		alert(message);
+		
+		if($("#isInitError").val() == "true"){
+			// 初期表示時にエラーがあった場合
+			// 遷移前の画面に戻る
+			history.back();
+		}
+	} // エラーがない場合、何もしない
+});
+
+$(function(){
+	
+	// ゲート編集タブを選択した場合
+	$("#gateInfoTab").on("click",　function(e){
+		$("#pageTitle").text("ゲート編集");
+	});	
+	
+	// 連続解錠時間帯登録タブを選択した場合
+	$("#ctimerRegistTab").on("click",　function(e){
+		$("#pageTitle").text("連続解錠時間帯設定");
+	});	
+	
+// --------------------------------------------------------------------
+// ゲート編集画面
+// --------------------------------------------------------------------
+ 	// ゲート一覧のゲート番号を選択
+ 	$("#gateDataListTbl .selectItem").on("click", gateData.setdata);
+
+	// ゲート編集画面の連解番号が入力された場合
+	$("#ctimerno").on("focusout",　function(){
+		
+		var ctimerno = $("#ctimerno").val();
+		// 前0付加する
+		if(ctimerno.length < 3 && ctimerno !=""){
+			$("#ctimerno").val(String(ctimerno).padStart(3, '0'));
+		}
+		
+		// ロストフォーカス処理(ゲート編集画面フラグ=0)
+		ctimerRegist.searchCtimerData(0);
+		
+	});	
+			
+	// 登録ボタン押下
+	$("#regist").on("click",　gateData.regist);
+	
+	// 連続解錠時間帯送信ボタン押下
+	$("#ctimerSend").on("click",　gateData.sendRegist);
+	
+	// 参照ボタン押下
+	$("#ctimerref").on("click", gateData.ctimerRef);
+
+	// データ出力ボタン押下
+	$("#outputData").on("click",　gateData.outputData);
+			
+	// 印刷ボタン押下
+	$("#print").on("click",　gateData.print);	
+	
+	// ゲート編集画面の連解番号入力時、半角数字以外をリアルタイムで除外
+	$("#ctimerno").on("input",　common.allowOnlyHalfWidthDigits);
+	
+// --------------------------------------------------------------------
+// 連続解錠時間帯設定画面
+// --------------------------------------------------------------------
+	// 連続解錠時間帯設定一覧の連解データを選択
+	$("#ctimerDataListTbl .selectItem").on("click", ctimerRegist.setdata);
+	
+	// 連続解錠時間帯設定画面の連解番号が入力された場合
+	$("#selectCtimerno").on("focusout",　function(){
+		
+		var ctimerno = $("#selectCtimerno").val();
+		// 前0付加する
+		if(ctimerno.length < 3 && ctimerno !=""){
+			$("#selectCtimerno").val(String(ctimerno).padStart(3, '0'));
+		}
+		
+		// ロストフォーカス処理(連続解錠時間帯設定画面フラグ=1)
+		ctimerRegist.searchCtimerData(1);
+		
+	});	
+
+	// 連解登録ボタン押下
+	$("#ctimerDataRegist").on("click",　ctimerRegist.regist);
+	
+	// 連解削除ボタン押下
+	$("#ctimerDataDelete").on("click",　ctimerRegist.delete);
+	
+	// 連解設定(ゲート編集画面　参照ボタンから表示する)ボタン押下
+	$("#ctimerDataSet").on('click', function (e) {
+		e.preventDefault();
+		ctimerRegist.dataSet();
+	});
+	
+	// 連続解錠時間帯登録画面の連解番号入力時、半角数字以外をリアルタイムで除外
+	$("#selectCtimerno").on("input",　common.allowOnlyHalfWidthDigits);
+	
+	// 連続解錠時間帯設定(曜日)ボタン押下
+	$('button[data-day]').on('click', function (e) {
+		e.preventDefault();
+		var day = $(this).data('day');
+
+		// 押下したボタンの時間帯設定のdata-hidden-value値を取得
+		var value = $(`#ctimer${day}Line`).attr('data-hidden-value');
+		// 押下したボタンの時間帯設定のid名を取得
+		var id = "#" + $(`#ctimer${day}Line`).attr('id');
+		
+		ctimerRegist.ctimerEditOpen(value,id);
+	});
+	
+	// 連続解錠時間帯編集(モーダル画面) 連解設定ボタン押下
+	$("#ctimerEditDataSet").on("click",　ctimerRegist.EditDataSet);
+	
+	// 連続解錠時間帯編集(モーダル画面)　設定変更時、入力前の値を保存
+	$('input[data-ctimer]').on('focusin', function () {
+		$(this).data('prev-value', $(this).val());
+	});
+	
+	// 連続解錠時間帯編集(モーダル画面)　設定変更時イベント
+	$('input[data-ctimer]').on('change', function (e) {
+		
+		const $input = $(this);
+		const value = $input.val();
+		const prev = $input.data('prev-value');
+
+		// 入力値チェック
+		const formatted = ctimerRegist.validateAndFormatTime(value, prev);
+		
+		$input.val(formatted);
+		$input.data('prev-value', formatted);
+		
+	});
+	
+	// 連続解錠時間帯編集(モーダル画面)　削除ボタン押下イベント
+	$('button[data-del]').on('click', function (e) {
+		e.preventDefault();
+		var data = $(this).data('del');
+
+		// 対象id取得
+		var HFrom = "select" + data + "CtimerFrom";
+		var HTo = "select" + data + "CtimerTo";
+
+		ctimerRegist.ctimerEditDelete(HFrom,HTo);
+	});
+	
+	// 連続解錠時間帯編集(モーダル画面)　終日連続解錠ボタン押下イベント
+	$("#ctimerEditAllDayOpen").on("click",　ctimerRegist.AllDayOpen);
+	
+	// 連続解錠時間帯編集(モーダル画面)　終日連続施錠ボタン押下イベント
+	$("#ctimerEditAllDayClose").on("click",　ctimerRegist.AllDayClose);
+	
+	// 連続解錠時間帯編集(モーダル画面)　計算ボタン押下イベント
+	$("#ctimerEditCalc").on("click",　ctimerRegist.CtimerCalc);
+	
+	// モーダル画面を閉じる(印刷・連続解錠時間帯編集)
+	$(".btn-close").on("click",　function(){
+		// クリックされたボタン(this)の親のモーダル要素を探す
+		const $modal = $(this).closest(".modal");
+		if ($modal.length) {
+		    $modal.hide();
+		}
+	});
+	
+});
+
+!function() {
+	
+	// --------------------------------------------------------------------
+	// ゲート編集画面
+	// --------------------------------------------------------------------
+	var gateData = {
+		
+		// 選択したデータを入力値に設定する
+		setdata : function(e){
+			
+				// 選択した行を取得
+				var selectedRow = $(this).closest('tr');
+
+				// 選択した行の各項目の値を取得
+				var gateno = selectedRow.children("td").eq(0).text();
+				var hostno = selectedRow.children("td").eq(1).text();
+				var addressno = selectedRow.children("td").eq(2).text();
+				var gatename = selectedRow.children("td").eq(3).text();
+				var ctimerno = selectedRow.children("td").eq(4).text();
+				var ctimername = selectedRow.children("td").eq(5).text();
+
+				var gatetype_4 = selectedRow.children("input").eq(0).val();
+				var hosttype = selectedRow.children("input").eq(1).val();
+
+				// 参照ボタンのdata-ctimer-refに装置タイプをセットする(参照ボタン押下時に使用)
+				$("#ctimerref").attr("data-ctimer-ref", hosttype);
+				
+				// 選択した行の色を変える
+				$("#gateDataListTbl").find('tr').find('td').removeClass('selectline');
+				selectedRow.children("td").addClass('selectline');
+				
+				
+				// 入力欄に値を設定
+				$("#gateno").val(gateno);
+				$("#hostno").val(hostno);
+				$("#addressno").val(addressno);
+				$("#gatename").val(gatename);
+				$("#ctimerno").val(ctimerno);
+				$("#ctimername").val(ctimername);
+				
+				//連解番号の値によって、連続解錠時間帯送信ボタンの活性非活性を変更
+				if (ctimerno === 'XXX') {
+					// 連解番号"XXX"の場合、非活性に設定
+				    $("#ctimerSend").prop("disabled", true);
+				} else {
+					// 連解番号"XXX"ではない場合、活性に設定
+					$("#ctimerSend").prop("disabled", false);
+				}
+				
+				//ゲートタイプ4の値によって、参照ボタンの活性非活性を変更
+				if (gatetype_4 === '0') {
+				    $("#ctimerno").prop("disabled", true);
+				    $("#ctimerref").prop("disabled", true);
+				} else {
+					$("#ctimerno").prop("disabled", false);
+					$("#ctimerref").prop("disabled", false);
+				}
+		},
+
+		regist : function(e){
+			e.preventDefault();// フォーム送信を防ぐ
+		
+			//////////////
+			// 入力チェック //
+			//////////////
+			
+			// 権限チェック
+			if($("#userGateEditRegistLevel").val() == "0"){
+				//alert('ユーザーの操作権限レベルが合いません');
+				alert($("#userErrLevel").val());
+				return;
+			}
+			
+			// ゲート番号
+			if($("#gateno").val() == ""){
+				//alert('ゲートを選択してください。');
+				alert($("#gateDataErrEmptyGateNo").val());
+				return;
+			}
+			
+			// 連解番号
+			if($("#ctimerno").val() == ""){
+				//alert('連解番号を入力してください。');
+				alert($("#gateDataErrEmptyCtimerno").val());
+				return;
+			}
+			if ($("#ctimerno").val() !== "XXX" && !$("#ctimerno").val().match(/^[0-9]+$/)) {
+				//alert('連解番号は半角数字3桁以内で入力してください。');
+				//"XXX"は例外的に許可
+				alert($("#gateDataErrInputCtimerno").val());
+				return;
+			}
+			
+			// ゲート名称
+			if($("#gatename").val() == ""){
+				//alert('ゲート名称を入力してください');
+				alert($("#gateDataErrEmptyGateName").val());
+				return;
+			}
+			const pattern = /[\/:*?<>|]/;
+			if ($("#gatename").val().match(pattern)){
+				// 禁止文字チェック
+				//alert('ゲート名称に\\\/:*?<>|は入力できません。');
+				alert($("#gateDataErrInputGateName").val());
+				return;			
+			}			
+			
+			// データ存在チェック
+			// 選択したゲート番号の値を取得
+			var gateno = $("#gateno").val();
+			var data = {"gateno" : gateno}
+			var deferred = common.ajax("/gateEdit/exist", data, { "type" : "POST" });
+			
+			deferred.done(function(result) {
+		    		if (result.success) {
+						// データが存在する
+						if (result.content == true){
+							//var res = confirm("ゲートデータを登録しますか？" + "\n" +  "（名称を変更した場合は、本システムを再起動して下さい。）");
+							var res = confirm($("#gateDataRegistConfirm").val());
+							if( res == true ) {
+								
+								$("#gateno").prop("disabled", false);
+								$("#hostno").prop("disabled", false);
+								$("#addressno").prop("disabled", false);
+								$("#ctimername").prop("disabled", false);
+								
+								// 登録処理
+								$("#GateEditForm").attr("action", "/TRIDENT/gateEdit/regist");
+								$("#GateEditForm").submit();
+								
+								$("#gateno").prop("disabled", true);
+								$("#hostno").prop("disabled", true);
+								$("#addressno").prop("disabled", true);
+								$("#ctimername").prop("disabled", true);
+								
+							} else {
+								return false;
+							}
+						} else {
+							// データが存在しない場合、何もしない
+							// ※基本的にはあり得ない
+						}
+		    		}else{
+						alert("error");
+		    		}
+			}).fail(function(jqXHR, textStatus, errorThrown) {
+					alert($("#serverErrorMessage").val());
+					return false;
+			});								
+		},
+		
+		sendRegist : function(e){
+			e.preventDefault();// フォーム送信を防ぐ
+
+			//////////////
+			// 入力チェック //
+			//////////////
+			
+			// 権限チェック
+			if($("#userGateEditRegistLevel").val() == "0"){
+				//alert('ユーザーの操作権限レベルが合いません');
+				alert($("#userErrLevel").val());
+				return;
+			}
+			
+			// ゲート番号
+			if($("#gateno").val() == ""){
+				//alert('ゲートを選択してください。');
+				alert($("#gateDataErrEmptyGateNo").val());
+				return;
+			}
+			
+			// 連解番号
+			if($("#ctimerno").val() == ""){
+				//alert('連解番号を入力してください。');
+				alert($("#gateDataErrEmptyCtimerno").val());
+				return;
+			}
+			if (!$("#ctimerno").val().match(/^[0-9]+$/)){
+				//alert('連解番号は半角数字3桁以内で入力してください。');
+				alert($("#gateDataErrInputCtimerno").val());
+				return;			
+			}	
+			
+			// ゲート名称
+			if($("#gatename").val() == ""){
+				//alert('ゲート名称を入力してください');
+				alert($("#gateDataErrEmptyGateName").val());
+				return;
+			}
+			const pattern = /[\/:*?<>|]/;
+			if ($("#gatename").val().match(pattern)){
+				// 禁止文字チェック
+				//alert('ゲート名称に\\\/:*?<>|は入力できません。');
+				alert($("#gateDataErrInputGateName").val());
+				return;			
+			}			
+
+			// データ存在チェック
+			// 選択したゲート番号の値を取得
+			var gateno = $("#gateno").val();
+			var data = {"gateno" : gateno}
+			var deferred = common.ajax("/gateEdit/exist", data, { "type" : "POST" });
+			
+			deferred.done(function(result) {
+		    		if (result.success) {
+						// ゲートデータが存在する
+						if (result.content == true){
+							// 選択したゲート番号の値を取得
+							var ctimer = $("#ctimerno").val();
+							var data = {"ctimer" : ctimer}
+							var deferred = common.ajax("/ctimerRegist/ctimerExist", data, { "type" : "POST" });
+							
+							deferred.done(function(result) {
+									if (result.success) {
+										// 連続解錠時間帯データが存在する
+										if (result.content == true){
+											//var res = confirm("ゲートデータを登録しますか？" + "\n" +  "（名称を変更した場合は、本システムを再起動して下さい。）");
+											var res = confirm($("#gateDataRegistConfirm").val());
+											if( res == true ) {
+												
+												$("#gateno").prop("disabled", false);
+												$("#hostno").prop("disabled", false);
+												$("#addressno").prop("disabled", false);
+												$("#ctimername").prop("disabled", false);
+												
+												// 登録処理
+												$("#GateEditForm").attr("action", "/TRIDENT/gateEdit/sendRegist");
+												$("#GateEditForm").submit();
+												
+												$("#gateno").prop("disabled", true);
+												$("#hostno").prop("disabled", true);
+												$("#addressno").prop("disabled", true);
+												$("#ctimername").prop("disabled", true);
+																				
+											} else {
+												return false;
+											}
+										} else {
+											// データが存在しない場合
+											//alert('入力された連続解錠時間帯は存在しません。');
+											alert($("#gateDataErrNothingCtimerData").val());
+											return;		
+										}
+									}else{
+										alert("error");
+									}
+							}).fail(function(jqXHR, textStatus, errorThrown) {
+									alert($("#serverErrorMessage").val());
+									return false;
+							});
+						} else {
+							// データが存在しない場合、何もしない
+							// ※基本的にはあり得ない
+						}
+		    		}else{
+						alert("error");
+		    		}
+			}).fail(function(jqXHR, textStatus, errorThrown) {
+					alert($("#serverErrorMessage").val());
+					return false;
+			});
+		},
+		
+		// 連続解錠時間帯の登録している内容を表示する
+		ctimerRef : function(e){
+			e.preventDefault();
+			
+			//////////////
+			// 入力チェック //
+			//////////////
+
+			// ゲート番号
+			if($("#gateno").val() == ""){
+				//alert('ゲートを選択してください。');
+				alert($("#gateDataErrEmptyGateNo").val());
+				return;
+			}
+			
+			// 画面リフレッシュのためのロストフォーカス処理(連続解錠時間帯設定画面フラグ=1)
+			$("#selectCtimerno").val("")
+			$("#selectCtimername").val("")
+			$("#ctimerDataListTbl").find('tr').find('td').removeClass('selectline'); // 選択した行の色を元に戻す
+			ctimerRegist.searchCtimerData(1);
+			
+			// データ存在チェック
+			// 選択した連解番号の値を取得
+			var ctimer = null;
+			var data = {"ctimer" : ctimer}
+			var deferred = common.ajax("/ctimerRegist/ctimerExist", data, { "type" : "POST" });
+
+			deferred.done(function(result) {
+				if (result.success) {
+					if (result.content == true){
+						// データが存在する
+						
+						// 参照ボタンのdata-ctimer-refclickに参照ボタン押下フラグ(1)をセットする
+						$("#ctimerref").attr("data-ctimer-refclick", 1);
+						
+						/////////////////////////////////////
+						////連続解錠時間帯編集モーダル画面の設定////
+						/////////////////////////////////////
+						
+						// 連解設定ボタンを非表示に設定
+						$("#ctimerEditDataSet").hide();
+						
+						// 終日連続解錠ボタンを非表示に設定
+						$("#ctimerEditAllDayOpen").hide();
+						
+						// 終日連続施錠ボタンを非表示に設定
+						$("#ctimerEditAllDayClose").hide();
+						
+						// 計算ボタンを非表示に設定
+						$("#ctimerEditCalc").hide();
+						
+						// 削除ボタンを非表示
+						$('[data-del]').hide();
+						
+						// 全ての入力を無効化
+						$('input[data-ctimer="Ctimer"]').prop('disabled', true);
+						
+						var refValue = parseInt($('#ctimerref').attr('data-ctimer-ref'), 10);
+						
+						if (refValue !== 0 && refValue !== 1) {
+							// 装置タイプが0もしくは1でない場合
+							// data-label が 1～5 のものは表示、それ以外は非表示
+							$("[data-label]").each(function() {
+							    const num = parseInt($(this).attr("data-label"), 10);
+							    if (num >= 1 && num <= 5) {
+							        $(this).show(); // 表示
+							        $(this).nextAll("input[data-ctimer]").eq(0).show(); // From入力
+							        $(this).nextAll("div[data-label]").eq(0).show();    // ～記号
+							        $(this).nextAll("input[data-ctimer]").eq(1).show(); // To入力
+							    } else {
+							        $(this).hide(); // ラベル非表示
+							        $(this).nextAll("input[data-ctimer]").eq(0).hide(); 
+							        $(this).nextAll("div[data-label]").eq(0).hide();    
+							        $(this).nextAll("input[data-ctimer]").eq(1).hide(); 
+							    }
+							});
+						}
+						
+						////////////////////////////////
+						////連続解錠時間帯設定画面の設定////
+						////////////////////////////////
+						
+						// 連続解錠時間帯登録タブ画面表示
+						$('#ctimerRegistTab').trigger('click');
+
+						// ゲート編集タブを非活性に設定
+						$("#gateInfoTab").prop("disabled", true);
+
+						// 連続解錠時間帯設定画面の連解番号と連解名称を非活性に設定
+						$("#selectCtimerno").prop("disabled", true);
+						$("#selectCtimername").prop("disabled", true);
+
+						// 連解登録、連解削除ボタンを非表示に設定
+						$("#ctimerDataRegist").hide();
+						$("#ctimerDataDelete").hide();
+
+						// 連解設定ボタンを表示に設定
+						$("#ctimerDataSet").removeAttr("hidden");
+					} else {
+						// データが存在しない場合
+						//alert('連続解錠時間帯を登録してください。');
+						alert($("#gateDataErrNoCtimerData").val());
+						return;			
+					}
+				}else{
+					alert("error");
+				}
+			}).fail(function(jqXHR, textStatus, errorThrown) {
+					alert($("#serverErrorMessage").val());
+					return false;
+			});
+			
+		},
+						
+		outputData :function(e){
+			e.preventDefault();// フォーム送信を防ぐ
+			
+			// 権限チェック
+			if($("#userGateEditDataoutLevel").val() == "0"){
+				//alert('ユーザーの操作権限レベルが合いません');
+				alert($("#userErrLevel").val());
+				return;
+			}
+			
+			// 取得したファイル名、拡張子を設定
+			// ※ゲート0件の場合は画面表示しないため、ありえない		
+			$("#OutputFileDialog").hide();
+			
+			//処理
+			$("#GateEditForm").attr("action", "/TRIDENT/gateEdit/outputData");
+			$("#GateEditForm").submit();					
+		},
+		 	
+		print :function(e){
+			e.preventDefault();// フォーム送信を防ぐ
+			
+			// 権限チェック
+			if($("#userGateEditPrintLevel").val() == "0"){
+				//alert('ユーザーの操作権限レベルが合いません');
+				alert($("#userErrLevel").val());
+				return;
+			}
+			
+			var dataCnt = $("#gateDataListTbl").children("tbody").children("tr").length
+			// ※ゲート0件の場合は画面表示しないため、ありえない
+			
+			//var res = confirm("ゲート一覧を印刷しますか？");
+			var res = confirm($("#gateDataPrintConfirm").val());
+			if( res == true ) {
+				
+				// 操作ログを登録
+				var data = {"type1":"0203002"};
+				var deferred = common.ajax("/operation", data, { "type" : "POST" });
+
+				deferred.done(function(result) {
+						if (result.success) {
+							// 操作ログ登録OK
+						}else{
+							alert("error");
+						}
+				}).fail(function(jqXHR, textStatus, errorThrown) {
+						alert($("#serverErrorMessage").val());
+						return false;
+				});					
+						
+				// 印刷用のモーダル画面を表示
+				// 印刷内容作成	
+				// データ件数
+				$(".listCnt").text(dataCnt);
+				//　印刷日
+				// 現在の日時を取得
+				var now = new Date();
+				// 年、月、日、時、分、秒を取得
+			    var year 	= now.getFullYear();
+				var month   = common.zeroPad(now.getMonth() + 1); // 月は0から始まるため+1
+				var day     = common.zeroPad(now.getDate());
+				var hours   = common.zeroPad(now.getHours());
+				var minutes = common.zeroPad(now.getMinutes());
+				var seconds = common.zeroPad(now.getSeconds());
+
+				// フォーマットされた日時を作成
+				var formattedDate = year + '/' + month + '/' + day + ' ' + hours + ':' + minutes + ':' + seconds;
+											
+				$(".printDate").text(formattedDate);
+						
+				let html ='';
+				for (var i=0; i < dataCnt; i++){
+					
+					var selectedRow = $("#gateDataListTbl").children("tbody").children("tr").eq(i);
+					
+					var gateno = selectedRow.children("td").eq(0).text();
+					var hostno = selectedRow.children("td").eq(1).text();
+					var addressno = selectedRow.children("td").eq(2).text();
+					var gatename = selectedRow.children("td").eq(3).text();
+					var ctimerno = selectedRow.children("td").eq(4).text();
+					var ctimername = selectedRow.children("td").eq(5).text();
+					
+					html = html + '<tr>'
+								+ '<td class="col-1">' + gateno  + '</td>' + '<td class="col-1">' + hostno + '</td>' 
+								+ '<td class="col-1">' + addressno + '</td>' + '<td class="col-3">' + gatename + '</td>' 
+								+ '<td class="col-1">' + ctimerno + '</td>' + '<td class="col-3">' + ctimername + '</td>'
+								+ '</tr>'
+								;					
+				}					
+				$('#printDataTbl').html(html);					
+				$("#printModal").show();
+												
+			} else {
+				return false;
+			}
+		}
+	};
+	
+	// --------------------------------------------------------------------
+	// 連続解錠時間帯設定画面
+	// --------------------------------------------------------------------
+	var ctimerRegist = {
+		
+		// 連続解錠時間帯の設定された時間帯に青の帯を設定する
+		renderCtimerBands : function(redBand, hiddenValue) {
+			
+				const totalMinutes = 24 * 60;
+				const bandWidth = 25 * 20; // CSSで指定している幅
+				const pxPerMinute = bandWidth / totalMinutes;
+				
+				// 1. 初期化処理（全体を赤に戻す）
+				redBand.innerHTML = ""; // 以前の青帯を削除
+				
+				// 2. From/To のペアを順番に処理
+				for (let i = 0; i < hiddenValue.length; i += 8) {
+					const from = hiddenValue.substring(i, i + 4);
+					const to = hiddenValue.substring(i + 4, i + 8);
+					
+					if (!from || !to) continue;
+					
+					// "9999" の場合はスキップ（青帯なし）
+					if (from === "9999" && to === "9999") continue;
+					
+					const fromHour = parseInt(from.substring(0, 2), 10);
+					const fromMin  = parseInt(from.substring(2, 4), 10);
+					const toHour   = parseInt(to.substring(0, 2), 10);
+					const toMin    = parseInt(to.substring(2, 4), 10);
+					
+					const fromMinutes = fromHour * 60 + fromMin;
+					const toMinutes   = toHour * 60 + toMin;
+					
+					// 00:00～00:00 → 全部青
+					if (fromMinutes === 0 && toMinutes === 0) {
+						const blueBand = document.createElement("div");
+						blueBand.style.position = "absolute";
+						blueBand.style.left = "0px";
+						blueBand.style.width = bandWidth + "px";
+						blueBand.style.height = "20px";
+						blueBand.style.backgroundColor = "blue";
+						redBand.appendChild(blueBand);
+						break;
+					}
+					
+					// 通常の青帯
+					const blueBand = document.createElement("div");
+					blueBand.style.position = "absolute";
+					blueBand.style.left = (fromMinutes * pxPerMinute) + "px";
+					blueBand.style.width = ((toMinutes - fromMinutes) * pxPerMinute) + "px";
+					blueBand.style.height = "20px";
+					blueBand.style.backgroundColor = "blue";
+					redBand.appendChild(blueBand);
+				}
+		},
+		
+		// 連続解錠時間帯編集モーダル画面の入力値チェック
+		validateAndFormatTime : function(value, prev) {
+			
+				// 数値or:か判定
+				if (!/^[\d:]+$/.test(value)) {
+					return prev;
+				}
+	
+				// 入力値の先頭2桁が99の場合は固定
+				if (value.substr(0, 2) === '99') {
+					return '99:99';
+				}
+	
+				let hh = '00';
+				let mm = '00';
+	
+				// HHとMMに分解
+				if (value.includes(':')) {
+					const parts = value.split(':');
+					// :が複数ある場合、入力前の値を設定する
+					if (parts.length !== 2 || parts[0] === '' || parts[1] === '') {
+					    return prev;
+					}
+					hh = parts[0].padStart(2, '0');
+					mm = (parts[1] || '00').padStart(2, '0');
+				} else {
+					if (value.length <= 2) {
+				  		hh = value.padStart(2, '0');
+				  		mm = '00';
+					} else if (value.length === 3) {
+				  		hh = value.substr(0, 1).padStart(2, '0');
+				  		mm = value.substr(1, 2);
+					} else if (value.length === 4) {
+				  		hh = value.substr(0, 2);
+				  		mm = value.substr(2, 2);
+					} else {
+				  		return prev; // 不正な長さ
+					}
+				}
+	
+				// 範囲チェック（99:99は除外済み）
+				const hhNum = parseInt(hh, 10);
+				const mmNum = parseInt(mm, 10);
+	
+				if ((hhNum < 0 || hhNum > 23) || (mmNum < 0 || mmNum > 59)) {
+					return prev;
+				}
+	
+				return hh + ':' + mm;
+		},
+		
+		// 連続解錠時間帯編集モーダル画面の入力値のFromとToをチェック
+		validateFromTo : function($fromInput, $toInput) {
+			
+				const fromVal = $fromInput.val();
+				const toVal = $toInput.val();
+				
+				const isFromSpecial = fromVal === '99:99';
+				const isToSpecial   = toVal === '99:99';
+
+				// どちらか片方が99:99の場合は両方99:99に統一
+				if (isFromSpecial || isToSpecial) {
+				    $fromInput.val('99:99');
+				    $toInput.val('99:99');
+				    return;
+				}
+				
+				if (fromVal && toVal) {
+				    // HH:MM を分単位に変換して比較
+				    const fromMinutes = ctimerRegist.timeToMinutes(fromVal);
+				    const toMinutes = ctimerRegist.timeToMinutes(toVal);
+				
+					// from>toになっていないかチェック
+				    if (fromMinutes > toMinutes) {
+						// from>toの場合
+				        // fromとtoを入れ替え
+				        $fromInput.val(toVal);
+				        $toInput.val(fromVal);
+				    }
+				}
+		},
+		
+		// HH:MMを分単位に変換
+		timeToMinutes : function(timeStr) {
+				const [hh, mm] = timeStr.split(":").map(Number);
+				return hh * 60 + mm;
+		},
+		
+		// 選択したデータを入力値に設定する
+		setdata : function(e){
+			
+				// 選択した行を取得
+				var selectedRow = $(this).closest('tr');
+
+				// 選択した行の各項目の値を取得
+				var ctimerno = selectedRow.children("td").eq(0).text();
+				var ctimername = selectedRow.children("td").eq(1).text();
+
+				// 選択した行の色を変える
+				$("#ctimerDataListTbl").find('tr').find('td').removeClass('selectline');
+				selectedRow.children("td").addClass('selectline');
+				
+				
+				// 入力欄に値を設定
+				$("#selectCtimerno").val(ctimerno);
+				$("#selectCtimername").val(ctimername);
+				
+				var refValue = parseInt($('#ctimerref').attr('data-ctimer-ref'), 10);
+				var refClickValue = parseInt($('#ctimerref').attr('data-ctimer-refclick'), 10);
+				
+				if (refClickValue === 1 && (refValue !== 0 && refValue !== 1)) {
+					// 参照ボタン押下かつ、装置タイプが0もしくは1でない場合
+					// data-hidden-valueの各データ1～5(先頭から40桁)までを取得し、残りは"9"で埋める
+					const lineIds = [
+					    "ctimerSundayLine", "ctimerMondayLine", "ctimerTuesdayLine", "ctimerWednesdayLine",
+					    "ctimerThursdayLine", "ctimerFridayLine", "ctimerSaturdayLine","ctimerHolidayLine",
+					    "ctimerSpecialday1Line", "ctimerSpecialday2Line", "ctimerSpecialday3Line",
+					    "ctimerSpecialday4Line", "ctimerSpecialday5Line", "ctimerSpecialday6Line",
+					    "ctimerSpecialday7Line", "ctimerSpecialday8Line"
+					];
+
+					lineIds.forEach((id, index) => {
+					    let val = selectedRow.children("input").eq(index).val(); // 元の120桁
+					    if (val.length > 40) {
+					        // 先頭40桁はそのまま、残りは"9"で埋める
+					        val = val.substring(0, 40) + "9".repeat(val.length - 40);
+					    } else {
+					        // 40桁に満たない場合は、全体を9で埋めて40桁にする
+					        val = val.padEnd(40, "9");
+					    }
+					    $("#" + id).attr("data-hidden-value", val);
+					});
+				} else {
+					// 参照ボタン押下されていないor装置タイプが2でも3でもない場合
+					// 表示している連続解錠時間帯のdata-hidden-value項目の各データに、取得したデータ1～16をセット
+					$("#ctimerSundayLine").attr("data-hidden-value", selectedRow.children("input").eq(0).val());
+					$("#ctimerMondayLine").attr("data-hidden-value", selectedRow.children("input").eq(1).val());
+					$("#ctimerTuesdayLine").attr("data-hidden-value", selectedRow.children("input").eq(2).val());
+					$("#ctimerWednesdayLine").attr("data-hidden-value", selectedRow.children("input").eq(3).val());
+					$("#ctimerThursdayLine").attr("data-hidden-value", selectedRow.children("input").eq(4).val());
+					$("#ctimerFridayLine").attr("data-hidden-value", selectedRow.children("input").eq(5).val());
+					$("#ctimerSaturdayLine").attr("data-hidden-value", selectedRow.children("input").eq(6).val());
+					$("#ctimerHolidayLine").attr("data-hidden-value", selectedRow.children("input").eq(7).val());
+					$("#ctimerSpecialday1Line").attr("data-hidden-value", selectedRow.children("input").eq(8).val());
+					$("#ctimerSpecialday2Line").attr("data-hidden-value", selectedRow.children("input").eq(9).val());
+					$("#ctimerSpecialday3Line").attr("data-hidden-value", selectedRow.children("input").eq(10).val());
+					$("#ctimerSpecialday4Line").attr("data-hidden-value", selectedRow.children("input").eq(11).val());
+					$("#ctimerSpecialday5Line").attr("data-hidden-value", selectedRow.children("input").eq(12).val());
+					$("#ctimerSpecialday6Line").attr("data-hidden-value", selectedRow.children("input").eq(13).val());
+					$("#ctimerSpecialday7Line").attr("data-hidden-value", selectedRow.children("input").eq(14).val());
+					$("#ctimerSpecialday8Line").attr("data-hidden-value", selectedRow.children("input").eq(15).val());
+				}
+				
+				// 選択したデータの連続解錠時間帯を描画
+				$('.red-band').each(function() {
+				    const redBand = this; // DOM要素
+				    const hiddenValue = redBand.dataset.hiddenValue; // data-hidden-valueを取得
+
+				    // 青帯描画関数に渡す
+				    ctimerRegist.renderCtimerBands(redBand, hiddenValue);
+				});
+		},
+		
+		// 連解番号をロストフォーカスした時
+		searchCtimerData : function(ctimerFlag){
+
+			// デフォルトの連続解錠時間帯データを設定
+			var ctimerdefault = "999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999";
+			
+			// 画面フラグチェック
+			if(ctimerFlag == 0){
+				// ゲート編集画面の場合
+				//　入力した連解番号を取得
+				var ctimer = $("#ctimerno").val();
+				
+				// 空の場合は処理終了
+				if(ctimer == ""){
+					return;
+				}
+				
+			}else{
+				// 連続解錠時間帯設定画面の場合
+				//　入力した連解番号を取得
+				var ctimer = $("#selectCtimerno").val();
+				
+				// 空かどうかチェック
+				if(ctimer == ""){
+					
+					// デフォルトの連続解錠時間帯データを設定
+					var ctimerdefault = "999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999";
+
+					// 連解番号が空白の場合、連解名称には空白を設定
+					$("#selectCtimername").val("");
+
+					// 表示している連続解錠時間帯のdata-hidden-value項目の各データに、デフォルトデータをセット
+					$("#ctimerSundayLine").attr("data-hidden-value", ctimerdefault);
+					$("#ctimerMondayLine").attr("data-hidden-value", ctimerdefault);
+					$("#ctimerTuesdayLine").attr("data-hidden-value", ctimerdefault);
+					$("#ctimerWednesdayLine").attr("data-hidden-value", ctimerdefault);
+					$("#ctimerThursdayLine").attr("data-hidden-value", ctimerdefault);
+					$("#ctimerFridayLine").attr("data-hidden-value", ctimerdefault);
+					$("#ctimerSaturdayLine").attr("data-hidden-value", ctimerdefault);
+					$("#ctimerHolidayLine").attr("data-hidden-value", ctimerdefault);
+					$("#ctimerSpecialday1Line").attr("data-hidden-value", ctimerdefault);
+					$("#ctimerSpecialday2Line").attr("data-hidden-value", ctimerdefault);
+					$("#ctimerSpecialday3Line").attr("data-hidden-value", ctimerdefault);
+					$("#ctimerSpecialday4Line").attr("data-hidden-value", ctimerdefault);
+					$("#ctimerSpecialday5Line").attr("data-hidden-value", ctimerdefault);
+					$("#ctimerSpecialday6Line").attr("data-hidden-value", ctimerdefault);
+					$("#ctimerSpecialday7Line").attr("data-hidden-value", ctimerdefault);
+					$("#ctimerSpecialday8Line").attr("data-hidden-value", ctimerdefault);
+
+					// 選択したデータの連続解錠時間帯を描画
+					$('.red-band').each(function() {
+					    const redBand = this; // DOM要素
+					    const hiddenValue = redBand.dataset.hiddenValue; // data-hidden-valueを取得
+
+					    // 青帯描画関数に渡す
+					    ctimerRegist.renderCtimerBands(redBand, hiddenValue);
+					});
+					
+					return;
+				}
+			}
+			
+			var data = {"ctimer" : ctimer}
+			var deferred = common.ajax("/gateEdit/getCtimerData", data, { "type" : "POST" });
+						
+			deferred.done(function(result) {
+		    		if (result.success) {
+
+						// 画面に取得した値を設定
+						if(result.content !=null){
+							
+							// 画面フラグチェック
+							if(ctimerFlag == 0){
+								// ゲート編集画面の場合
+								$("#ctimername").val(result.content.mstCTList[0].ctimername);
+							}else{
+								// 連続解錠時間帯設定画面の場合
+								$("#selectCtimername").val(result.content.mstCTList[0].ctimername);
+								
+								// 表示している連続解錠時間帯のdata-hidden-value項目の各データに、取得したデータ1～16をセット
+								$("#ctimerSundayLine").attr("data-hidden-value", result.content.mstCTList[0].data1);
+								$("#ctimerMondayLine").attr("data-hidden-value", result.content.mstCTList[0].data2);
+								$("#ctimerTuesdayLine").attr("data-hidden-value", result.content.mstCTList[0].data3);
+								$("#ctimerWednesdayLine").attr("data-hidden-value", result.content.mstCTList[0].data4);
+								$("#ctimerThursdayLine").attr("data-hidden-value", result.content.mstCTList[0].data5);
+								$("#ctimerFridayLine").attr("data-hidden-value", result.content.mstCTList[0].data6);
+								$("#ctimerSaturdayLine").attr("data-hidden-value", result.content.mstCTList[0].data7);
+								$("#ctimerHolidayLine").attr("data-hidden-value", result.content.mstCTList[0].data8);
+								$("#ctimerSpecialday1Line").attr("data-hidden-value", result.content.mstCTList[0].data9);
+								$("#ctimerSpecialday2Line").attr("data-hidden-value", result.content.mstCTList[0].data10);
+								$("#ctimerSpecialday3Line").attr("data-hidden-value", result.content.mstCTList[0].data11);
+								$("#ctimerSpecialday4Line").attr("data-hidden-value", result.content.mstCTList[0].data12);
+								$("#ctimerSpecialday5Line").attr("data-hidden-value", result.content.mstCTList[0].data13);
+								$("#ctimerSpecialday6Line").attr("data-hidden-value", result.content.mstCTList[0].data14);
+								$("#ctimerSpecialday7Line").attr("data-hidden-value", result.content.mstCTList[0].data15);
+								$("#ctimerSpecialday8Line").attr("data-hidden-value", result.content.mstCTList[0].data16);
+								
+								// 選択したデータの連続解錠時間帯を描画
+								$('.red-band').each(function() {
+								    const redBand = this; // DOM要素
+								    const hiddenValue = redBand.dataset.hiddenValue; // data-hidden-valueを取得
+
+								    // 青帯描画関数に渡す
+								    ctimerRegist.renderCtimerBands(redBand, hiddenValue);
+								});
+							}
+							
+						} else {
+							// データがない場合、連解番号を前03桁の形式にする
+							if(ctimer.length <= 3){
+								// 画面フラグチェック
+								if(ctimerFlag == 0){
+									// ゲート編集画面の場合
+									$("#ctimerno").val(String(ctimer).padStart(3, '0'));
+									$("#ctimername").val("該当なし");
+								}else{
+									// 連続解錠時間帯設定画面の場合
+									$("#selectCtimerno").val(String(ctimer).padStart(3, '0'));
+									$("#selectCtimername").val("");
+									
+									// 表示している連続解錠時間帯のdata-hidden-value項目の各データに、デフォルトデータをセット
+									$("#ctimerSundayLine").attr("data-hidden-value", ctimerdefault);
+									$("#ctimerMondayLine").attr("data-hidden-value", ctimerdefault);
+									$("#ctimerTuesdayLine").attr("data-hidden-value", ctimerdefault);
+									$("#ctimerWednesdayLine").attr("data-hidden-value", ctimerdefault);
+									$("#ctimerThursdayLine").attr("data-hidden-value", ctimerdefault);
+									$("#ctimerFridayLine").attr("data-hidden-value", ctimerdefault);
+									$("#ctimerSaturdayLine").attr("data-hidden-value", ctimerdefault);
+									$("#ctimerHolidayLine").attr("data-hidden-value", ctimerdefault);
+									$("#ctimerSpecialday1Line").attr("data-hidden-value", ctimerdefault);
+									$("#ctimerSpecialday2Line").attr("data-hidden-value", ctimerdefault);
+									$("#ctimerSpecialday3Line").attr("data-hidden-value", ctimerdefault);
+									$("#ctimerSpecialday4Line").attr("data-hidden-value", ctimerdefault);
+									$("#ctimerSpecialday5Line").attr("data-hidden-value", ctimerdefault);
+									$("#ctimerSpecialday6Line").attr("data-hidden-value", ctimerdefault);
+									$("#ctimerSpecialday7Line").attr("data-hidden-value", ctimerdefault);
+									$("#ctimerSpecialday8Line").attr("data-hidden-value", ctimerdefault);
+									
+									// 連続解錠時間帯を描画(赤帯に設定)
+									$('.red-band').each(function() {
+									    const redBand = this; // DOM要素
+									    const hiddenValue = redBand.dataset.hiddenValue; // data-hidden-valueを取得
+
+									    // 青帯描画関数に渡す
+									    ctimerRegist.renderCtimerBands(redBand, hiddenValue);
+									});
+								}
+							}
+						}
+		    		}else{
+						//alert("連続解錠時間帯情報を取得できませんでした。");
+						alert($("#ctDataErrMessage").val());
+		    		}			
+			}).fail(function(jqXHR, textStatus, errorThrown) {
+					//alert("サーバーとの通信に失敗しました。");
+					alert($("#serverErrorMessage").val());
+					return false;
+			});					
+		},
+		
+		regist : function(e){
+			e.preventDefault();// フォーム送信を防ぐ
+
+			//////////////
+			// 入力チェック //
+			//////////////
+			
+			// 権限チェック
+			if($("#userCtimerRegistLevel").val() == "0"){
+				//alert('ユーザーの操作権限レベルが合いません');
+				alert($("#userErrLevel").val());
+				return;
+			}
+			
+			// 連解番号
+			if($("#selectCtimerno").val() == ""){
+				//alert('連解番号を入力してください。');
+				alert($("#gateDataErrEmptyCtimerno").val());
+				return;
+			}
+			
+			// 連解名称
+			if($("#selectCtimername").val() == ""){
+				//alert('連解名称を入力してください。');
+				alert($("#ctimerErrEmptyCtimername").val());
+				return;
+			}
+			const pattern = /[\/:*?<>|]/;
+			if ($("#selectCtimername").val().match(pattern)){
+				// 禁止文字チェック
+				//alert('連解名称に\\\/:*?<>|は入力できません。');
+				alert($("#ctimerErrInputCtimername").val());
+				return;			
+			}			
+			
+			// データ存在チェック
+			// 選択した連解番号の値を取得
+			var ctimer = $("#selectCtimerno").val();
+			var data = {"ctimer" : ctimer}
+			var deferred = common.ajax("/ctimerRegist/ctimerExist", data, { "type" : "POST" });
+			
+			deferred.done(function(result) {
+		    		if (result.success) {
+						
+						// 送信前に hidden に値をコピーしておく(Inputに値をセットするため)
+						$("#hiddenSunday").val($("#ctimerSundayLine").data("hidden-value"));
+						$("#hiddenMonday").val($("#ctimerMondayLine").data("hidden-value"));
+						$("#hiddenTuesday").val($("#ctimerTuesdayLine").data("hidden-value"));
+						$("#hiddenWednesday").val($("#ctimerWednesdayLine").data("hidden-value"));
+						$("#hiddenThursday").val($("#ctimerThursdayLine").data("hidden-value"));
+						$("#hiddenFriday").val($("#ctimerFridayLine").data("hidden-value"));
+						$("#hiddenSaturday").val($("#ctimerSaturdayLine").data("hidden-value"));
+						$("#hiddenHoliday").val($("#ctimerHolidayLine").data("hidden-value"));
+						$("#hiddenSpecialday1").val($("#ctimerSpecialday1Line").data("hidden-value"));
+						$("#hiddenSpecialday2").val($("#ctimerSpecialday2Line").data("hidden-value"));
+						$("#hiddenSpecialday3").val($("#ctimerSpecialday3Line").data("hidden-value"));
+						$("#hiddenSpecialday4").val($("#ctimerSpecialday4Line").data("hidden-value"));
+						$("#hiddenSpecialday5").val($("#ctimerSpecialday5Line").data("hidden-value"));
+						$("#hiddenSpecialday6").val($("#ctimerSpecialday6Line").data("hidden-value"));
+						$("#hiddenSpecialday7").val($("#ctimerSpecialday7Line").data("hidden-value"));
+						$("#hiddenSpecialday8").val($("#ctimerSpecialday8Line").data("hidden-value"));
+						
+						//var res = confirm("データを登録しますか？）");
+						var res = confirm($("#ctimerRegistConfirm").val());
+						if( res == true ) {
+							
+							if (result.content == true){
+								// データが存在する
+								// 更新処理
+									
+								// 登録フラグを"0"に設定(0=更新)
+								$("#ctimerRegistType").val(0);
+								
+								// 更新処理を実行(サービスクラス内で登録フラグをチェック)
+								$("#ctimerRegistFrom").attr("action", "/TRIDENT/ctimerRegist/ctimerRegist");
+								$("#ctimerRegistFrom").submit();
+									
+							} else {
+								// データが存在しない
+								// 新規登録処理
+								
+								// 登録フラグを"1"に設定(1=新規登録)
+								$("#ctimerRegistType").val(1);
+								
+								// 新規登録処理を実行(サービスクラス内で登録フラグをチェック)
+								$("#ctimerRegistFrom").attr("action", "/TRIDENT/ctimerRegist/ctimerRegist");
+								$("#ctimerRegistFrom").submit();
+								
+							}
+							
+							// 画面リフレッシュのためのロストフォーカス処理(連続解錠時間帯設定画面フラグ=1)
+							$("#selectCtimerno").val("")
+							$("#selectCtimername").val("")
+							$("#ctimerDataListTbl").find('tr').find('td').removeClass('selectline'); // 選択した行の色を元に戻す
+							ctimerRegist.searchCtimerData(1);
+							
+						} else {
+							return false;
+						}
+		    		}else{
+						alert("error");
+		    		}
+			}).fail(function(jqXHR, textStatus, errorThrown) {
+					alert($("#serverErrorMessage").val());
+					return false;
+			});								
+		},
+			
+		delete : function(e){
+			e.preventDefault();// フォーム送信を防ぐ
+			
+			// 権限チェック
+			if($("#userCtimerRegistLevel").val() == "0"){
+				//alert('ユーザーの操作権限レベルが合いません');
+				alert($("#userErrLevel").val());
+				return;
+			}
+			
+			// 入力チェック
+			var selectCtimerno = $("#selectCtimerno").val();
+			
+			if(selectCtimerno == ""){
+				//alert('連続解錠時間帯番号が選択されていません。')
+				alert($("#ctimerDeleteCaution").val());
+				return;
+			}
+			//var res = confirm("データを削除しますか？");
+			var res = confirm($("#ctimerDeleteConfirm").val());
+			if( res == true ) {
+				// 削除処理
+				$("#ctimerRegistFrom").attr("action", "/TRIDENT/ctimerRegist/ctimerDelete");
+				$("#ctimerRegistFrom").submit();
+				
+				// 画面リフレッシュのためのロストフォーカス処理(連続解錠時間帯設定画面フラグ=1)
+				$("#selectCtimerno").val("")
+				$("#selectCtimername").val("")
+				$("#ctimerDataListTbl").find('tr').find('td').removeClass('selectline'); // 選択した行の色を元に戻す
+				ctimerRegist.searchCtimerData(1);
+				
+			} else {
+				return false;
+			}				
+		},
+		
+		dataSet : function(e){
+
+			// 選択状態チェック
+			if($("#selectCtimerno").val() == ""){
+				//alert('設定する連続解錠時間帯を選択してください。');
+				alert($("#ctimerErrNoSelectCtimer").val());
+				return;
+			}
+			
+			/////////////////////////////////////
+			////連続解錠時間帯編集モーダル画面の設定////
+			/////////////////////////////////////
+
+			// 連解設定ボタンを表示に設定
+			$("#ctimerEditDataSet").show();
+
+			// 終日連続解錠ボタンを表示に設定
+			$("#ctimerEditAllDayOpen").show();
+
+			// 終日連続施錠ボタンを表示に設定
+			$("#ctimerEditAllDayClose").show();
+
+			// 計算ボタンを表示に設定
+			$("#ctimerEditCalc").show();
+
+			// 削除ボタンを表示
+			$('[data-del]').show();
+
+			// 全ての入力を有効化
+			$('input[data-ctimer="Ctimer"]').prop('disabled', false);
+
+			// 参照ボタンのdata-ctimer-refclickに参照ボタン押下していないフラグ(0)をセットする
+			$("#ctimerref").attr("data-ctimer-refclick", 0);
+			
+			var refValue = parseInt($('#ctimerref').attr('data-ctimer-ref'), 10);
+
+			if (refValue !== 0 && refValue !== 1) {
+				// 装置タイプが0もしくは1でない場合
+				// 1～15の全項目表示
+				$("[data-label]").each(function() {
+			        $(this).show(); // 表示
+			        $(this).nextAll("input[data-ctimer]").eq(0).show(); // From入力
+			        $(this).nextAll("div[data-label]").eq(0).show();    // ～記号
+			        $(this).nextAll("input[data-ctimer]").eq(1).show(); // To入力
+				});
+			}
+
+			////////////////////////////////
+			////連続解錠時間帯設定画面の設定////
+			////////////////////////////////
+			
+			// ゲート編集タブを活性に設定
+			$("#gateInfoTab").prop("disabled", false);
+
+			// 連続解錠時間帯設定画面の連解番号と連解名称を活性に設定
+			$("#selectCtimerno").prop("disabled", false);
+			$("#selectCtimername").prop("disabled", false);
+
+			// 連解登録、連解削除ボタンを表示に設定
+			$("#ctimerDataRegist").show();
+			$("#ctimerDataDelete").show();
+
+			// 連解設定ボタンを非表示に設定
+			$("#ctimerDataSet").attr("hidden", true);
+			
+			// ゲート編集タブ画面表示
+			$('#gateInfoTab').trigger('click');
+			
+			// ゲート編集タブ画面の連解番号、連解名称を設定
+			$("#ctimerno").val($("#selectCtimerno").val());
+			$("#ctimername").val($("#selectCtimername").val());
+			
+			// 画面リフレッシュのためのロストフォーカス処理(連続解錠時間帯設定画面フラグ=1)
+			$("#selectCtimerno").val("")
+			$("#selectCtimername").val("")
+			$("#ctimerDataListTbl").find('tr').find('td').removeClass('selectline'); // 選択した行の色を元に戻す
+			ctimerRegist.searchCtimerData(1);
+			
+		},
+		
+		// 連続解錠時間帯編集画面 モーダル表示
+		ctimerEditOpen :function(value,id){
+			
+			// モーダル画面を表示
+			let modal = new bootstrap.Modal(document.getElementById('ctimerDataEditModal'));
+			modal.show();
+			
+			// イメージ表示の時間帯設定に、押下されたボタンの時間帯の値を設定
+			$('#ctimerdayLine').attr('data-hidden-value', value);
+			// 押下されたボタンの時間帯設定のidを隠し項目に設定
+			$('#hiddenType').val(id);
+			
+			// 4桁ずつ分割して配列に
+			const chunks = value.match(/.{1,4}/g); // 30要素
+
+			for (let i = 0; i < 15; i++) {
+			  const from = chunks[i * 2];
+			  const to   = chunks[i * 2 + 1];
+
+			  // 間に:をつける
+			  const fromStr = from.substr(0, 2) + ':' + from.substr(2, 2);
+			  const toStr   = to.substr(0, 2) + ':' + to.substr(2, 2);
+
+			  // 対象idに設定
+			  $(`#select${i + 1}CtimerFrom`).val(fromStr);
+			  $(`#select${i + 1}CtimerTo`).val(toStr);
+			  
+			}
+			
+			// モーダル内の赤帯に青帯描画
+			const redBand = document.getElementById('ctimerdayLine');
+			const hiddenValue = redBand.dataset.hiddenValue;
+			ctimerRegist.renderCtimerBands(redBand, hiddenValue);
+		},
+		
+		// 連続解錠時間帯編集画面 連解設定ボタン押下処理
+		EditDataSet :function(){
+			
+			var totalValue = '';
+
+			// 各時間帯設定ごとにループ
+			for (var i = 1; i <= 15; i++) {
+
+				const $fromInput = $(`#select${i}CtimerFrom`);
+				const $toInput   = $(`#select${i}CtimerTo`);
+
+				// fromとtoのチェック
+				ctimerRegist.validateFromTo($fromInput, $toInput);
+				
+				// 「:」を除去してfrom部分を取得
+				var from = $(`#select${i}CtimerFrom`).val().replace(':', ''); 
+				
+				// 「:」を除去してto部分を取得
+				var to   = $(`#select${i}CtimerTo`).val().replace(':', '');
+				
+				// 時間帯設定値を結合
+				totalValue += from + to;
+			}
+			
+			// 連続解錠時間帯登録画面の対象とする時間帯idを取得
+			var targetId = $('#hiddenType').val();
+			
+			// 取得した時間帯idで、結合した時間帯をdata-hidden-valueに設定
+			$(targetId).attr("data-hidden-value", totalValue);
+			
+			// 選択したデータの連続解錠時間帯を描画
+			const redBand = $(targetId)[0];
+			ctimerRegist.renderCtimerBands(redBand, totalValue);
+			
+			// モーダル表示を閉じる
+			let modalElement = document.getElementById('ctimerDataEditModal');
+			let modalInstance = bootstrap.Modal.getInstance(modalElement);
+			if (!modalInstance) {
+			    modalInstance = new bootstrap.Modal(modalElement);
+			}
+			modalInstance.hide();
+			
+		},
+		
+		// 連続解錠時間帯編集画面 削除ボタン押下処理
+		ctimerEditDelete :function(HFrom,HTo){
+			
+			// 押下されたボタンの時間帯設定を"99:99"に設定
+			$('#' + HFrom).val('99:99');
+			$('#' + HTo).val('99:99');
+			
+		},
+		
+		// 連続解錠時間帯編集画面 終日連続解錠ボタン押下処理
+		AllDayOpen :function(){
+			
+			// 「１」～「１５」までの時間帯設定値を結合した値を入れる変数
+			var totalValue = '';
+			
+			// 「１」の時間帯設定に"00:00"～"00:00"を設定
+			// それ以外の時間帯設定には"99:99"～"99:99"を設定
+			for (var i = 1; i <= 15; i++) {
+				
+				// 画面表示値を設定
+				var fromDisp = (i === 1) ? "00:00" : "99:99";
+				var toDisp   = (i === 1) ? "00:00" : "99:99";
+				
+				// 「:」を除去した保存用の値
+				var fromHidden = fromDisp.replace(":", "");
+				var toHidden   = toDisp.replace(":", "");
+				
+				// 各入力欄に「:」付きで表示
+				$(`#select${i}CtimerFrom`).val(fromDisp);
+				$(`#select${i}CtimerTo`).val(toDisp);
+				
+				// data-hidden-value 用に「:」なしの時間帯設定値を結合
+				totalValue += fromHidden + toHidden;
+			}
+			
+			// 結果をdata-hidden-valueに設定
+			$('#ctimerdayLine').attr('data-hidden-value', totalValue);
+			
+			// モーダル内の赤帯に青帯描画
+			const redBand = document.getElementById('ctimerdayLine');
+			const hiddenValue = redBand.dataset.hiddenValue;
+			ctimerRegist.renderCtimerBands(redBand, hiddenValue);
+			
+		},
+		
+		// 連続解錠時間帯編集画面 終日連続施錠ボタン押下処理
+		AllDayClose :function(){
+			
+			var totalValue = '';
+			
+			// 全時間帯設定に"99:99"～"99:99"を設定
+			for (var i = 1; i <= 15; i++) {
+
+				// 画面表示値を設定
+				var fromDisp = "99:99";
+				var toDisp   = "99:99";
+				
+				// 「:」を除去した保存用の値
+				var fromHidden = fromDisp.replace(":", "");
+				var toHidden   = toDisp.replace(":", "");
+				
+				// 各入力欄に「:」付きで表示
+				$(`#select${i}CtimerFrom`).val(fromDisp);
+				$(`#select${i}CtimerTo`).val(toDisp);
+				
+				// data-hidden-value用に「:」付きの時間帯設定値を結合
+				totalValue += fromHidden + toHidden;
+			}
+
+			// 結果をdata-hidden-valueに設定
+			$('#ctimerdayLine').attr('data-hidden-value', totalValue);
+			
+			// モーダル内の赤帯に赤帯のみ描画
+			const redBand = document.getElementById('ctimerdayLine');
+			const hiddenValue = redBand.dataset.hiddenValue;
+			ctimerRegist.renderCtimerBands(redBand, hiddenValue);
+			
+		},
+		
+		// 連続解錠時間帯編集画面 計算ボタン押下処理
+		CtimerCalc :function(){
+			
+			var totalValue = '';
+
+			// 各時間帯設定ごとにループ
+			for (var i = 1; i <= 15; i++) {
+
+				const $fromInput = $(`#select${i}CtimerFrom`);
+				const $toInput   = $(`#select${i}CtimerTo`);
+
+				// fromとtoのチェック
+				ctimerRegist.validateFromTo($fromInput, $toInput);
+				
+				// from と to の2つを対象にする
+				var timeIds = [`#select${i}CtimerFrom`, `#select${i}CtimerTo`];
+				
+				timeIds.forEach(id => {
+					// 入力値を取得
+				    var value = $(id).val();
+					// 「:」を除去
+				    var noColonValue = value.replace(":", "");
+					// 時間帯設定値を結合
+				    totalValue += noColonValue;
+				});
+			}
+
+			// 結果をdata-hidden-valueに設定
+			$('#ctimerdayLine').attr('data-hidden-value', totalValue);
+			
+			// モーダル内の赤帯に青帯描画
+			const redBand = document.getElementById('ctimerdayLine');
+			const hiddenValue = redBand.dataset.hiddenValue;
+			ctimerRegist.renderCtimerBands(redBand, hiddenValue);
+			
+		}
+		
+	};
+	
+	this.gateData = gateData;
+	this.ctimerRegist = ctimerRegist;
+	
+}();	

@@ -1,0 +1,54 @@
+package jp.co.art.trident.component;
+
+import java.io.BufferedReader;
+import java.io.FileInputStream;
+import java.io.InputStreamReader;
+import java.util.List;
+
+import org.springframework.stereotype.Component;
+
+/**
+ * CSVファイル操作ユーティリティクラス
+ */
+@Component
+public class CsvUtility {
+	
+	
+	
+	/**
+	 * CSVファイルを読込
+	 * 
+	 * @param csvFilePath フルパス
+	 * @param readList ファイルの内容
+	 * @return
+	 * @throws IOException
+	 */
+
+	public Boolean readCsv(String csvFilePath,List<String> readList) {
+		
+		BufferedReader buffReader = null;
+		
+		try {
+			// ファイルを読み込む
+			FileInputStream fileInput = new FileInputStream(csvFilePath);	
+			InputStreamReader inputStream = new InputStreamReader(fileInput);
+			buffReader = new BufferedReader(inputStream);
+			
+			String currentContent;
+			while((currentContent = buffReader.readLine()) != null) {
+				readList.add(currentContent);		
+			}
+	     } catch(Exception ex) {
+//	          ex.printStackTrace();
+	    	 return false;
+	     } finally {
+			try{
+			    buffReader.close();
+			} catch(Exception ex) {
+				//ex.printStackTrace();
+				return false;
+			}
+		}
+		return true;
+	}
+}

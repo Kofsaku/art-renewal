@@ -1,0 +1,167 @@
+package jp.co.art.trident.model.form;
+
+import java.io.Serializable;
+import java.util.List;
+
+import jp.co.art.trident.model.entity.GateEdit;
+import jp.co.art.trident.model.entity.MCT;
+
+/**
+ * <b>ゲート編集画面クラス.</b> <br/>
+ * 画面情報を保持します<br/>
+ * <br/>
+ * 
+ * <pre>
+ * </pre>
+ */	
+public class GateEditForm implements Serializable{
+
+	private static final long serialVersionUID = 1434976356359994371L;
+
+	/** ゲート編集リスト */
+	private List<GateEdit> mstGateList;
+	
+	/** 連続解錠時間帯リスト */
+	private List<MCT> mstCTList;
+	
+	/** ゲート番号 */
+	private String gateno;
+	
+	/** 装置タイプ */
+	private String hosttype;
+	
+	/** ホスト番号 */
+	private String hostno;
+	
+	/** アドレス番号 */
+	private String addressno;
+	
+	/** ゲート名称 */
+	private String gatename;
+	
+	/** ゲートタイプ */	
+	private int gatetype_4;	
+	
+	/** 連続解錠時間番号 */
+	private String ctimer;
+	
+	/** 連続解錠時間名称 */
+	private String ctimername;
+	
+	/** ゲート存在フラグ */
+	private boolean gateflag;
+	
+	/** メッセージ */
+	private String message;
+	
+	/** アップロード件数 */
+	private int uploadCount;
+
+	/** 処理件数 */
+	private int updateCount;
+	
+	/** エラー件数 */
+	private int errorCount;
+
+	/** エラーリスト */
+	private List<String> errorList;
+	
+	//　以下、ゲッター、セッター　-----------------------
+	public List<GateEdit> getMstGateList() {
+		return mstGateList;
+	}
+	public void setMstGateList(List<GateEdit> mstGateList) {
+		this.mstGateList = mstGateList;
+	}
+	public List<MCT> getMstCTList() {
+		return mstCTList;
+	}
+	public void setMstCTList(List<MCT> mstCTList) {
+		this.mstCTList = mstCTList;
+	}
+	public String getGateno() {
+		return gateno;
+	}
+	public void setGateno(String gateno) {
+		this.gateno = gateno;
+	}
+	public String getHosttype() {
+		return hosttype;
+	}
+	public void setHosttype(String hosttype) {
+		this.hosttype = hosttype;
+	}
+	public String getHostno() {
+		return hostno;
+	}
+	public void setHostno(String hostno) {
+		this.hostno = hostno;
+	}
+	public String getAddressno() {
+		return addressno;
+	}
+	public void setAddressno(String addressno) {
+		this.addressno = addressno;
+	}	
+	public String getGatename() {
+		return gatename;
+	}
+	public void setGatename(String gatename) {
+		this.gatename = gatename;
+	}
+	public int getGatetype_4() {
+		return gatetype_4;
+	}
+	public void setGatetype_4(int gatetype_4) {
+		this.gatetype_4 = gatetype_4;
+	}
+	public String getCtimer() {
+		return ctimer;
+	}
+	public void setCtimer(String ctimer) {
+		this.ctimer = ctimer;
+	}
+	public boolean isGateflag() {
+		return gateflag;
+	}
+	public void setGateflag(boolean gateflag) {
+		this.gateflag = gateflag;
+	}
+	public String getMessage() {
+		return message;
+	}
+	public void setMessage(String message) {
+		this.message = message;
+	}
+	public int getUploadCount() {
+		return uploadCount;
+	}
+	public void setUploadCount(int uploadCount) {
+		this.uploadCount = uploadCount;
+	}
+	public int getUpdateCount() {
+		return updateCount;
+	}
+	public void setUpdateCount(int updateCount) {
+		this.updateCount = updateCount;
+	}
+	public int getErrorCount() {
+		return errorCount;
+	}
+	public void setErrorCount(int errorCount) {
+		this.errorCount = errorCount;
+	}
+	public List<String> getErrorList() {
+		return errorList;
+	}
+	public void setErrorList(List<String> errorList) {
+		this.errorList = errorList;
+	}
+	public String getCtimername() {
+		return ctimername;
+	}
+	public void setCtimername(String ctimername) {
+		this.ctimername = ctimername;
+	}
+	
+}

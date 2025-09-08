@@ -1,0 +1,60 @@
+package jp.co.art.trident.repository;
+
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.util.List;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.jdbc.core.RowMapper;
+import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
+import org.springframework.stereotype.Repository;
+
+import jp.co.art.trident.model.entity.MGatetype;
+
+/**ゲートタイプマスタのリポジトリクラス**/
+
+@Repository
+public class MGatetypeRepository {
+
+	@Autowired
+	private final NamedParameterJdbcTemplate namedParameterJdbcTemplate;
+	
+    public MGatetypeRepository(NamedParameterJdbcTemplate namedParameterJdbcTemplate) {
+        this.namedParameterJdbcTemplate = namedParameterJdbcTemplate;
+    }
+    
+    private RowMapper<MGatetype> resultSetMapper() {
+    	
+    	
+    	return new RowMapper<MGatetype>() {
+
+			@Override
+			public MGatetype mapRow(ResultSet rs, int rowNum) throws SQLException {
+			
+				MGatetype mgatetype = new MGatetype();
+				mgatetype.setGatetype_no(rs.getInt("gatetype_no"));
+				mgatetype.setGatetype_name(rs.getString("gatetype_name"));
+				mgatetype.setCan_edit(rs.getInt("can_edit"));
+				return mgatetype;
+			}
+		};
+    }
+    
+    /**
+     * ゲートタイプ一覧を取得する関数
+     */
+    public List<MGatetype> getGateTypeList(){
+    	
+    	StringBuilder sb = new StringBuilder();
+    	sb.append("SELECT ");
+    	sb.append(" gatetype_no ");
+    	sb.append(" ,gatetype_name ");
+    	sb.append(" ,can_edit ");
+    	sb.append("FROM ");
+    	sb.append(" \"TRIDENT\".m_gatetype ");
+    	sb.append("ORDER BY ");
+    	sb.append(" gatetype_no  ");
+		
+    	return namedParameterJdbcTemplate.query(sb.toString(), resultSetMapper());
+    }
+    
+}

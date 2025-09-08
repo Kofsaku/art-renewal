@@ -1,0 +1,31 @@
+package jp.co.art.trident.component;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.authentication.dao.AbstractUserDetailsAuthenticationProvider;
+import org.springframework.security.core.AuthenticationException;
+import org.springframework.security.core.userdetails.UserDetails;
+
+import jp.co.art.trident.service.UserInitService;
+
+/**
+ * ユーザーID、パスワードを以て認可情報を生成するクラス
+ *
+ */
+public class UserDetailsAuthenticationProvider  extends AbstractUserDetailsAuthenticationProvider  {
+
+	@Autowired
+	private UserInitService userInitService;
+	
+	@Override
+	protected void additionalAuthenticationChecks(UserDetails userDetails,
+			UsernamePasswordAuthenticationToken authentication) throws AuthenticationException {
+		// 何もしない
+	}
+
+	@Override
+	protected UserDetails retrieveUser(String username, UsernamePasswordAuthenticationToken authentication)
+			throws AuthenticationException {
+		return userInitService.userDetailsAuthentication(username, (String) authentication.getCredentials());
+	}
+}

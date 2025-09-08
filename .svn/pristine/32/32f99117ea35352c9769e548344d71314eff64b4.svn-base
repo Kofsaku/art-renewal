@@ -1,0 +1,64 @@
+package jp.co.art.trident.repository.common;
+
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.jdbc.core.RowMapper;
+import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
+import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
+import org.springframework.jdbc.core.namedparam.SqlParameterSource;
+import org.springframework.stereotype.Repository;
+import jp.co.art.trident.model.entity.common.MCommon;
+
+/**汎用項目テーブルのリポジトリクラス**/
+
+@Repository
+public class CommonRepository {
+
+	@Autowired
+	private final NamedParameterJdbcTemplate namedParameterJdbcTemplate;
+	
+    public CommonRepository(NamedParameterJdbcTemplate namedParameterJdbcTemplate) {
+        this.namedParameterJdbcTemplate = namedParameterJdbcTemplate;
+    }
+
+	private RowMapper<MCommon> resultSetMapper() {
+
+		return new RowMapper<MCommon>() {
+
+			@Override
+			public MCommon mapRow(ResultSet rs, int rowNum) throws SQLException {
+				return new MCommon(rs.getString("codeid")
+								,rs.getInt("code")
+								,rs.getString("parametername")
+								,rs.getString("purpose")
+								,rs.getString("parameter1")
+								,rs.getString("parameter2")
+								,rs.getInt("intparameter3")
+								,rs.getInt("intparameter4"));
+			}
+		};
+	}   
+    
+    public MCommon findByParameterName(String parameterName) {
+    	StringBuilder sb = new StringBuilder();
+ 
+    	sb.append("SELECT ");
+    	sb.append(" codeid ");
+    	sb.append(" ,code ");
+    	sb.append(" ,parametername ");
+    	sb.append(" ,purpose ");
+    	sb.append(" ,parameter1 ");
+    	sb.append(" ,parameter2 ");
+    	sb.append(" ,intparameter3 ");
+    	sb.append(" ,intparameter4 ");
+    	sb.append("FROM ");
+    	sb.append(" \"TRIDENT\".m_common ");   	
+    	sb.append("WHERE ");
+    	sb.append(" parametername = :parameterName ");
+    	
+        // SQLパラメータ
+        SqlParameterSource param = new MapSqlParameterSource().addValue("parameterName", parameterName);
+    	return namedParameterJdbcTemplate.queryForObject(sb.toString(), param, resultSetMapper());
+    }
+}

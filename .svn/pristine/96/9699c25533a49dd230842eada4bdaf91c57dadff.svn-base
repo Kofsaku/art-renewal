@@ -1,0 +1,50 @@
+package jp.co.art.trident.service.common;
+
+import org.springframework.dao.DataAccessException;
+import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
+
+import jp.co.art.trident.exception.TridentException;
+import jp.co.art.trident.model.entity.common.MCommon;
+import jp.co.art.trident.model.entity.common.MCommon.ParameterName;
+import jp.co.art.trident.repository.common.CommonRepository;
+
+/**共通処理のサービスクラス**/
+@Service
+public class CommonService {
+
+	/**汎用項目テーブルのリポジトリ */
+	private final CommonRepository commonRepository;
+	
+	/**
+	 * コンストラクタ
+	 * 
+	 * @param commonRepository
+	 */	
+	public CommonService(CommonRepository commonRepository) {
+		this.commonRepository = commonRepository;
+	}
+	
+	/**
+	 * 汎用項目テーブルからパラメータ値1を取得する
+	 * @param parameterName パラメータ名
+	 * @return
+	 * @throws TridentException
+	 */
+	public String getParameterValue1(ParameterName parameterName) throws TridentException {
+		String parameterValue = "";
+		
+		try {
+			MCommon mCommon= commonRepository.findByParameterName(parameterName.name());
+			if (StringUtils.hasLength(mCommon.getParameter1()) == false) {
+				throw new TridentException("ParameterTableGeneralField Null or Empty : parameterName=" + parameterName.name());
+			} else {
+				parameterValue = mCommon.getParameter1();
+			}
+		} catch(DataAccessException e) {
+			throw new TridentException("ParameterTableGeneralField Not Found : parameterName=" + parameterName.name());
+		}
+
+		return parameterValue;
+	}
+}

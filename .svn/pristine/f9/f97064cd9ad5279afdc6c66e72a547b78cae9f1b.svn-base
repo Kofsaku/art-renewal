@@ -1,0 +1,72 @@
+package jp.co.art.trident.model.entity;
+
+import java.io.Serializable;
+
+/** 装置マスタクラス（装置情報を取得） **/
+public class MDevice implements Serializable {
+
+	private static final long serialVersionUID = 704181332641717535L;
+
+	/**
+     * デフォルトコンストラクタ
+     */
+	public MDevice() {}
+
+	/**
+     * コンストラクタ（全項目）
+     */
+	public MDevice(Integer hostno, Integer addressno, String ipaddress, Integer portno, String devicename) {
+		this.hostno = hostno;
+		this.addressno = addressno;
+		this.ipaddress = ipaddress;
+		this.portno = portno;
+		this.devicename = devicename;
+	}
+	
+	/** ホスト番号 */
+	private Integer hostno;
+	
+	/** アドレス番号 */
+	private Integer addressno;
+	
+	/** ＩＰアドレス */
+	private String ipaddress;
+	
+	/** ポート番号 */
+	private Integer portno;
+	
+	/** 装置名称 */
+	private String devicename;
+	
+	// 以下、ゲッター、セッター -----------------------
+	public Integer getHostno() {
+		return hostno;
+	}
+	public void setHostno(Integer hostno) {
+		this.hostno = hostno;
+	}
+	public Integer getAddressno() {
+		return addressno;
+	}
+	public void setAddressno(Integer addressno) {
+		this.addressno = addressno;
+	}
+	public String getIpaddress() {
+		return ipaddress;
+	}
+	public void setIpaddress(String ipaddress) {
+		this.ipaddress = ipaddress;
+	}
+	public Integer getPortno() {
+		return portno;
+	}
+	public void setPortno(Integer portno) {
+		this.portno = portno;
+	}
+	public String getDevicename() {
+		return devicename;
+	}
+	public void setDevicename(String devicename) {
+		this.devicename = devicename;
+	}
+}

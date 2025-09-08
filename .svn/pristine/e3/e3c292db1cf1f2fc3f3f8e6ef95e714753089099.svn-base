@@ -1,0 +1,32 @@
+package jp.co.art.trident.repository;
+
+import java.util.HashMap;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
+import org.springframework.stereotype.Repository;
+
+/**一斉制御ゲートマスタのリポジトリクラス**/
+
+@Repository
+public class MKgateRepository {
+
+	@Autowired
+	private final NamedParameterJdbcTemplate namedParameterJdbcTemplate;
+	
+    public MKgateRepository(NamedParameterJdbcTemplate namedParameterJdbcTemplate) {
+        this.namedParameterJdbcTemplate = namedParameterJdbcTemplate;
+    }
+    
+    /**
+     * 全てのレコードを削除する関数
+     */
+    public void deleteAll(){
+    	
+    	StringBuilder sb = new StringBuilder();
+    	sb.append("DELETE ");
+    	sb.append("FROM ");
+    	sb.append(" \"TRIDENT\".m_kgate ");   	
+
+		namedParameterJdbcTemplate.update(sb.toString(), new HashMap<>());
+    }    
+}

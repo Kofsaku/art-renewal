@@ -1,0 +1,78 @@
+package jp.co.art.trident.repository;
+
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.util.List;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.jdbc.core.RowMapper;
+import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
+import org.springframework.stereotype.Repository;
+import jp.co.art.trident.model.entity.Gate;
+
+/**ゲート登録・編集画面のリポジトリクラス**/
+
+@Repository
+public class GateRepository {
+
+	@Autowired
+	private final NamedParameterJdbcTemplate namedParameterJdbcTemplate;
+	
+    public GateRepository(NamedParameterJdbcTemplate namedParameterJdbcTemplate) {
+        this.namedParameterJdbcTemplate = namedParameterJdbcTemplate;
+    }
+    
+    private RowMapper<Gate> resultSetMapper() {
+
+    	return new RowMapper<Gate>() {
+
+			@Override
+			public Gate mapRow(ResultSet rs, int rowNum) throws SQLException {
+				Gate mgate = new Gate();
+				mgate.setHostno(rs.getString("hostno"));
+				mgate.setAddressno(rs.getString("addressno"));
+				return mgate;
+			}
+		};
+    }
+
+    /**
+     * ゲートマスタにあって、装置マスタにないホスト番号をアドレスを取得する関数
+     */
+    public List<Gate> getGateListNotExistMDevice(){
+    	
+    	StringBuilder sb = new StringBuilder();
+    	sb.append("SELECT distinct ");
+    	sb.append(" hostno ");
+    	sb.append(" ,addressno ");
+    	sb.append("FROM ");
+    	sb.append(" \"TRIDENT\".m_gate ");	
+    	sb.append("WHERE NOT EXISTS ");
+    	sb.append(" ( SELECT * FROM \"TRIDENT\".m_device");
+    	sb.append("  WHERE m_gate.hostno = m_device.hostno");
+    	sb.append("  AND m_gate.addressno = m_device.addressno");
+    	sb.append(" )");
+
+    	return namedParameterJdbcTemplate.query(sb.toString(),resultSetMapper());
+    }
+
+    /**
+     * ゲートマスタになくて装置マスタにあるホスト番号をアドレスを取得する関数
+     */
+    public List<Gate> getDeviceListNotExistMGate(){
+    	
+    	StringBuilder sb = new StringBuilder();
+    	sb.append("SELECT distinct ");
+    	sb.append(" hostno ");
+    	sb.append(" ,addressno ");
+    	sb.append("FROM ");
+    	sb.append(" \"TRIDENT\".m_device ");
+    	sb.append("WHERE NOT EXISTS ");
+    	sb.append(" ( SELECT * FROM \"TRIDENT\".m_gate");
+    	sb.append("  WHERE m_gate.hostno = m_device.hostno");
+    	sb.append("  AND m_gate.addressno = m_device.addressno");
+    	sb.append(" )");
+
+    	return namedParameterJdbcTemplate.query(sb.toString(),resultSetMapper());
+    }
+
+}

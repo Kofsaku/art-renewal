@@ -1,0 +1,256 @@
+package jp.co.art.trident.repository;
+
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.util.HashMap;
+import java.util.List;
+import org.springframework.jdbc.core.RowMapper;
+import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
+import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
+import org.springframework.stereotype.Repository;
+import jp.co.art.trident.model.entity.MDevice;
+/**装置登録画面のリポジトリクラス**/
+@Repository
+public class MDeviceRepository {
+
+	private final NamedParameterJdbcTemplate namedParameterJdbcTemplate;
+	
+    public MDeviceRepository(NamedParameterJdbcTemplate namedParameterJdbcTemplate) {
+        this.namedParameterJdbcTemplate = namedParameterJdbcTemplate;
+    }
+    private RowMapper<MDevice> resultSetMapper() {
+   
+    	return new RowMapper<MDevice>() {
+
+			@Override
+			public MDevice mapRow(ResultSet rs, int rowNum) throws SQLException {
+			
+				MDevice mDevice = new MDevice();
+				mDevice.setHostno(rs.getInt("hostno"));
+				mDevice.setAddressno(rs.getInt("addressno"));
+				mDevice.setIpaddress(rs.getString("ipaddress"));
+				mDevice.setPortno(rs.getInt("portno"));
+				mDevice.setDevicename(rs.getString("devicename"));
+				return mDevice;
+			}
+    	};
+    }
+    
+    /**
+     * ホスト番号とアドレス番号に該当するMDeviceのリストを取得する関数
+     * @param hostno ホスト番号
+     * @param addressno アドレス番号
+     * @return　MDevice（装置情報）のList
+     */
+    public List<MDevice> getDeviceListByHostnoAndAddressno(Integer hostno, Integer addressno){
+    	
+    	StringBuilder sb = new StringBuilder();
+    	sb.append("SELECT ");
+    	sb.append(" hostno ");
+    	sb.append(" ,addressno ");
+    	sb.append(" ,ipaddress ");
+    	sb.append(" ,portno ");
+    	sb.append(" ,devicename ");
+    	sb.append("FROM ");
+    	sb.append(" \"TRIDENT\".m_device ");
+    	sb.append("WHERE ");
+    	sb.append(" hostno = :hostno ");
+    	sb.append("AND ");
+    	sb.append(" addressno = :addressno ");
+    	
+		MapSqlParameterSource  param = new MapSqlParameterSource();
+    		
+		param.addValue("hostno", hostno);
+		param.addValue("addressno", addressno);
+		
+    	return namedParameterJdbcTemplate.query(sb.toString(), param, resultSetMapper());
+    }
+    
+    /**
+     * MDeviceのリストをホスト番号・アドレス番号順に取得する関数     
+     * @return MDeviceのList
+     */
+    public List<MDevice> getDeviceList(){
+    	
+    	StringBuilder sb = new StringBuilder();
+    	sb.append("SELECT ");
+    	sb.append(" hostno ");
+    	sb.append(" ,addressno ");
+    	sb.append(" ,ipaddress ");
+    	sb.append(" ,portno ");
+    	sb.append(" ,devicename ");
+    	sb.append("FROM ");
+    	sb.append(" \"TRIDENT\".m_device ");
+    	sb.append("ORDER BY ");
+    	sb.append(" hostno  ");
+    	sb.append(" ,addressno  ");
+    
+    	return namedParameterJdbcTemplate.query(sb.toString(), resultSetMapper());
+    }
+   
+    /**
+     * ホスト番号に該当するMDeviceのリストを取得する関数
+     * @param hostno 
+     * @return MDeviceのList
+     */
+    public List<MDevice> getDeviceListByHostno(Integer hostno) {
+
+        StringBuilder sb = new StringBuilder();
+        sb.append("SELECT ");
+        sb.append(" hostno ");
+        sb.append(" ,addressno ");
+        sb.append(" ,ipaddress ");
+        sb.append(" ,portno ");
+        sb.append(" ,devicename ");
+        sb.append("FROM ");
+        sb.append(" \"TRIDENT\".m_device ");
+        sb.append("WHERE ");
+        sb.append(" hostno = :hostno ");
+        sb.append("ORDER BY ");
+        sb.append(" hostno ASC ");
+        
+        // パラメータを設定
+        MapSqlParameterSource param = new MapSqlParameterSource();
+        param.addValue("hostno", hostno);
+
+        return namedParameterJdbcTemplate.query(sb.toString(), param, resultSetMapper());
+    }
+
+   /**
+    **MDeviceのリストを全取得する関数
+    * @return MDeviceのList
+    */
+    public List<MDevice> findAll() {
+        StringBuilder sb = new StringBuilder();
+        sb.append("SELECT ");
+        sb.append(" hostno ");
+        sb.append(" ,addressno ");
+        sb.append(" ,ipaddress ");
+        sb.append(" ,portno ");
+        sb.append(" ,devicename ");
+        sb.append("FROM ");
+        sb.append(" \"TRIDENT\".m_device ");
+        sb.append("ORDER BY ");
+        sb.append(" hostno ASC ");
+
+        return namedParameterJdbcTemplate.query(sb.toString(), resultSetMapper());
+    }
+   
+   /**
+    * 新しい装置情報（MDevice）をデータベースに登録する関数
+    *(device は、登録したい機器情報をすべて持った MDevice オブジェクト)
+    * @param device 
+    */
+    public void regist(MDevice device){
+    	
+    	StringBuilder sb = new StringBuilder();
+    	sb.append("INSERT INTO ");
+    	sb.append(" \"TRIDENT\".m_device ");
+    	sb.append(" ( ");
+    	sb.append(" hostno ");
+    	sb.append(" ,addressno ");
+    	sb.append(" ,ipaddress ");
+    	sb.append(" ,portno ");
+    	sb.append(" ,devicename ");
+    	sb.append(" ) values ( ");
+    	sb.append(" :hostno ");
+    	sb.append(" ,:addressno ");
+    	sb.append(" ,:ipaddress ");
+    	sb.append(" ,:portno ");
+    	sb.append(" ,:devicename ");
+    	sb.append(" ) ");
+    	
+		//パラメータを設定
+		MapSqlParameterSource  param = new MapSqlParameterSource();
+    	//SQL内の :hostno に、device.getHostno() の値（たとえば 1 など）をバインド(以下同）
+		param.addValue("hostno", device.getHostno());
+		param.addValue("addressno", device.getAddressno());
+		param.addValue("ipaddress", device.getIpaddress());
+		param.addValue("portno", device.getPortno());
+		param.addValue("devicename", device.getDevicename());
+		//組み立てたSQL文と、バインドしたパラメータをもとにデータベースに登録を実行
+		namedParameterJdbcTemplate.update(sb.toString(), param);
+    }
+
+    /**
+     * 装置情報のIPアドレス、ポート番号、機器名を更新または削除する関数
+     * @param device 更新対象の装置情報オブジェクト
+     * @param updateflag 0の場合は情報を更新し、1の場合は該当項目をNULLに設定して削除
+     * 
+     */
+    public void update(MDevice device, int updateflag) {
+        StringBuilder sb = new StringBuilder();
+        sb.append("UPDATE ");
+        sb.append(" \"TRIDENT\".m_device ");
+        sb.append("SET ");
+        
+        // updateflagが0の場合は、IPアドレス・ポート番号・機器名をdeviceオブジェクトの値で更新
+        if (updateflag == 0) {
+            sb.append(" ipaddress = :ipaddress ");
+            sb.append(", portno = :portno ");
+            sb.append(", devicename = :devicename ");
+        } else {
+        // updateflagが0以外の場合は、対象カラムをNULLにして論理削除
+            sb.append(" ipaddress = null ");
+            sb.append(", portno = null ");
+            sb.append(", devicename = null ");
+        }
+        //hostno と addressno による条件指定
+        sb.append("WHERE ");
+        sb.append(" hostno = :hostno ");
+        sb.append(" AND ");
+        sb.append(" addressno = :addressno ");
+        
+        // パラメータを設定
+        MapSqlParameterSource param = new MapSqlParameterSource();
+        //対象レコード特定のため、hostno と addressno を必ず設定
+        param.addValue("hostno", device.getHostno());
+        param.addValue("addressno", device.getAddressno());
+        
+        // updateflagが0の場合のみ(通常更新の場合のみ)、更新対象カラムの値をパラメータにセット
+        if (updateflag == 0) {
+            param.addValue("ipaddress", device.getIpaddress());
+            param.addValue("portno", device.getPortno());
+            param.addValue("devicename", device.getDevicename());
+        }
+        namedParameterJdbcTemplate.update(sb.toString(), param);
+    }
+    
+    /**
+     * ホスト番号とアドレス番号に該当する装置情報を削除する関数
+     * @param hostno 
+     * @param addressno
+     */
+    public void delete(int hostno, int addressno){
+    	
+    	StringBuilder sb = new StringBuilder();
+    	sb.append("DELETE ");
+    	sb.append("FROM ");
+    	sb.append(" \"TRIDENT\".m_device ");
+    	sb.append("WHERE ");
+    	sb.append(" hostno = :hostno ");
+    	sb.append("AND ");
+    	sb.append(" addressno = :addressno ");
+    	
+		//パラメータを設定
+		MapSqlParameterSource  param = new MapSqlParameterSource();
+    		
+		param.addValue("hostno", hostno);
+		param.addValue("addressno", addressno);
+    	
+		namedParameterJdbcTemplate.update(sb.toString(), param);
+    }
+    
+    /**
+     * m_device テーブルの全ての機器情報を削除する関数
+     */
+    public void deleteAll(){
+    	
+    	StringBuilder sb = new StringBuilder();
+    	sb.append("DELETE ");
+    	sb.append("FROM ");
+    	sb.append(" \"TRIDENT\".m_device ");   	
+    	//渡されるパラメータが無いため、空のHashMapを渡す
+		namedParameterJdbcTemplate.update(sb.toString(), new HashMap<>());
+    } 
+}

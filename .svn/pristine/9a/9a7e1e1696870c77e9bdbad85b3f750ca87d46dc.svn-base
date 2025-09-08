@@ -1,0 +1,148 @@
+package jp.co.art.trident.model.form;
+
+import java.io.Serializable;
+import java.util.List;
+
+import jp.co.art.trident.model.entity.Gate;
+import jp.co.art.trident.model.entity.MTenant;
+
+/**テナント登録・編集画面のフォームクラス（画面から取得した値を保持）**/
+public class TenantForm implements Serializable {
+
+    private static final long serialVersionUID = 6065499544902506017L;
+
+    /** テナント番号 */
+    private String tenantno;
+    
+    /** テナント名称 */
+    private String name;
+    
+    /** テナント名称カナ */
+    private String kana;
+    
+    /** ゲート(1920バイト) */
+    private String gate;
+    
+    /** メッセージ */
+	//databaseにマッピングしない
+	private String message;
+	
+	// 登録済みテナント一覧（表示用リスト）
+    private List<MTenant> mstTenantList;
+    
+	/** ゲート登録リスト */
+	private List<Gate> mstGateList;
+	
+	/** ゲート登録リスト(選択ゲート) */
+	private List<Gate> mstSelectGateList;
+	
+	/** アップロード件数 */
+	private int uploadCount;
+
+	/** 処理件数 */
+	private int updateCount;
+	
+	/** エラー件数 */
+	private int errorCount;
+
+	/** エラーリスト */
+	private List<String> errorList;
+
+    // Getter/Setter
+    public String getTenantno() {
+        return tenantno;
+    }
+
+    public void setTenantno(String tenantno) {
+        this.tenantno = tenantno;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    public String getKana() {
+        return kana;
+    }
+
+    public void setKana(String kana) {
+        this.kana = kana;
+    }
+
+    public String getGate() {
+        return gate;
+    }
+
+    public void setGate(String gate) {
+        this.gate = gate;
+    }
+	
+	public String getMessage() {
+		return message;
+	}
+	public void setMessage(String message) {
+		this.message = message;
+	}
+
+    // 登録済みテナント一覧（表示用リスト）のGetter/Setter
+    public List<MTenant> getMstTenantList() {
+        return mstTenantList;
+    }
+
+    public void setMstTenantList(List<MTenant> mstTenantList) {
+        this.mstTenantList = mstTenantList;
+    }
+    
+    //ゲート一覧（表示用リスト）のGetter/Setter
+    public List<Gate> getMstGateList() {
+		return mstGateList;
+	}
+    
+	public void setMstGateList(List<Gate> mstGateList) {
+		this.mstGateList = mstGateList;
+	}	
+	
+	public List<Gate> getMstSelectGateList() {
+		return mstSelectGateList;
+	}
+
+	public void setMstSelectGateList(List<Gate> mstSelectGateList) {
+		this.mstSelectGateList = mstSelectGateList;
+	}
+
+	public int getUploadCount() {
+		return uploadCount;
+	}
+
+	public void setUploadCount(int uploadCount) {
+		this.uploadCount = uploadCount;
+	}
+
+	public int getUpdateCount() {
+		return updateCount;
+	}
+
+	public void setUpdateCount(int updateCount) {
+		this.updateCount = updateCount;
+	}
+
+	public int getErrorCount() {
+		return errorCount;
+	}
+
+	public void setErrorCount(int errorCount) {
+		this.errorCount = errorCount;
+	}
+
+	public List<String> getErrorList() {
+		return errorList;
+	}
+
+	public void setErrorList(List<String> errorList) {
+		this.errorList = errorList;
+	}
+}

@@ -1,0 +1,15 @@
+spring.application.name=TRIDENT
+
+# tridentdb db settings
+spring.datasource.driver-class-name=org.postgresql.Driver
+spring.jpa.database=POSTGRESQL 
+#spring.datasource.url=jdbc:postgresql://ART-WEB-2025-1-hv:5432/TRIDENT
+spring.datasource.url=jdbc:postgresql://192.168.4.230:5432/TRIDENT?currentSchema=TRIDENT
+spring.datasource.username=TRIDENT
+spring.datasource.password=TRIDENTPASS
+
+# message setting
+spring.messages.basename=i18n/messages
+
+# servlet.context
+server.servlet.context-path=/TRIDENT/

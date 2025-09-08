@@ -1,0 +1,93 @@
+package jp.co.art.trident.service.common;
+
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.stereotype.Service;
+
+import jp.co.art.trident.exception.TridentException;
+import jp.co.art.trident.model.entity.MOperation;
+import jp.co.art.trident.repository.MOperationRepository;
+
+/**
+ * <b>操作ログ登録のサービスクラス.</b> <br/>
+ * 
+ * <pre>
+ * </pre>
+ */
+@Service
+public class MOperationlogService {
+
+	/**操作ログのリポジトリ */
+	private final MOperationRepository mOperationRepository;
+	
+	/**
+	 * コンストラクタ
+	 * 
+	 * @param commonRepository
+	 */	
+	public MOperationlogService(MOperationRepository mOperationRepository) {
+		this.mOperationRepository = mOperationRepository;
+	}
+	
+	/**
+	 * パラメータ名列挙型
+	 */
+	public enum OperationCode{
+		INITIAL_INITIAL_INITIALIZATION("0102001"),
+		INITIAL_INITIAL_REGISTRATION("0102003"),
+		INITIAL_ADVANCEDSETTING_REGISTRATION("0102004"),
+		GATE_GATEINFO_REGISTRATION("0103001"),
+		GATE_GATEINFO_DELETE("0103002"),
+		GATE_GATEINFO_DOWNLOAD("0103003"),
+		GATE_GATEINFO_UPLOAD("0103004"),
+		GATE_GATEINFO_DATAOUTPUT("0103005"),
+		GATE_GATEINFO_PRINT("0103006"),
+		GATE_ANTIPASS_REGISTRATION("0103007"),
+		DEVICE_REGISTRATION("0104001"),
+		DEVICE_DELETE("0104002"),
+		TENANT_TENANTINFO_REGISTRATION("0105001"),
+		TENANT_TENANTINFO_DELETE("0105002"),
+		TENANT_TENANTINFO_DOWNLOAD("0105003"),
+		TENANT_TENANTINFO_UPLOAD("0105004"),
+		TENANT_TENANTINFO_DATAOUTPUT("0105005"),
+		TENANT_TENANTINFO_PRINT("0105006"),
+		TENANT_GATESET_REGISTRATION("0105007"),
+		GATEEDIT_GATEEDIT_REGISTRATION("0203001"),
+		GATEEDIT_GATEEDIT_PRINT("0203002"),
+		GATEEDIT_GATEEDIT_DATAOUTPUT("0203003"),
+		GATEEDIT_CTIMERREGIST_REGISTRATION("0203004"),
+		GATEEDIT_CTIMERREGIST_DELETE("0203005");
+		
+	    private final String code;
+
+	    OperationCode(String code) {
+	        this.code = code;
+	    }
+	    
+	    public String getCode() {
+	        return code;
+	    }
+	}
+	
+	/**
+	 * 操作ログを登録する
+	 * @param opecode パラメータ名
+	 * @return
+	 * @throws TridentException
+	 */	
+	
+	public Boolean RegistOperation(String opecode) {
+		Boolean bRet = true;
+		
+		Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+		String username = auth.getName();
+		
+		// 操作ログを登録
+		MOperation operation = new MOperation();
+		operation.setUsername(username);
+		operation.setOpecode(opecode);		
+		mOperationRepository.regist(operation);   		
+		
+		return bRet;
+	}
+}

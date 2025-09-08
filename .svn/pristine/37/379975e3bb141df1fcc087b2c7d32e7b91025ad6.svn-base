@@ -1,0 +1,80 @@
+package jp.co.art.trident.config;
+
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.PropertySource;
+import org.springframework.stereotype.Component;
+
+/**
+ * <b>アプリケーション固有設定ファイルクラス.</b>
+ * <br/>
+* webtrident.propertiesファイルの設定値を取得する場合に使用します<br/>
+* <br/>
+* <pre>
+* </pre>
+*/
+@Component
+@PropertySource("classpath:trident.properties")
+public class TridentProperties {
+
+	@Value("${trident.postgres.pgDumpPath}")
+	private String pgDumpPath; 
+	@Value("${trident.postgres.host}")
+	private String host;
+	@Value("${trident.postgres.port}")
+	private String port;
+	@Value("${trident.postgres.database}")
+	private String database;
+	@Value("${trident.postgres.database.user}")
+	private String user;
+	@Value("${trident.postgres.database.password}")
+	private String password;
+    
+	// 以下、ゲッター、セッター　-----------------------
+	public String getPgDumpPath() {
+		return pgDumpPath;
+	}
+
+	public void setPgDumpPath(String pgDumpPath) {
+		this.pgDumpPath = pgDumpPath;
+	}
+	
+	public String getHost() {
+		return host;
+	}
+
+	public void setHost(String host) {
+		this.host = host;
+	}
+	
+	public String getPort() {
+		return port;
+	}
+
+	public void setPort(String port) {
+		this.port = port;
+	}
+	
+	public String getDatabase() {
+		return database;
+	}
+
+	public void setDatabase(String database) {
+		this.database = database;
+	}
+	
+	public String getUser() {
+		return user;
+	}
+
+	public void setUser(String user) {
+		this.user = user;
+	}
+	
+	public String getPassword() {
+		return password;
+	}
+
+	public void setPassword(String password) {
+		this.password = password;
+	}
+}

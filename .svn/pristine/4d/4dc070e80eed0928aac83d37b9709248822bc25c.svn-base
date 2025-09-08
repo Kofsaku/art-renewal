@@ -1,0 +1,62 @@
+package jp.co.art.trident.controller;
+
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
+import org.springframework.web.bind.annotation.RequestMapping;
+import jp.co.art.trident.exception.TridentException;
+import jp.co.art.trident.model.UserDetailsImpl;
+import jp.co.art.trident.model.UserRole;
+import jp.co.art.trident.service.InitialService;
+
+/**ホーム画面のコントローラークラス**/
+@Controller
+public class HomeController {
+
+	/** 初期設定画面サービスクラス */
+	private final InitialService initialService;
+
+	public HomeController(InitialService initialService){
+		this.initialService = initialService;
+	}
+
+	/**
+	 * ホーム画面初期表示処理
+	 * 
+	 * @param model モデル
+	 * @return HTML画面名
+	 * @throws TrindentException 
+	 */	
+	@RequestMapping(value = {"/home", "/home/index" })
+	public String init(Model model) throws TridentException 
+	{
+		model.addAttribute("screen", "home");
+
+		Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+		UserDetailsImpl user = (UserDetailsImpl) auth.getPrincipal();
+		// 初期設定マスタのフィルター機能フラグを取得し、User情報に保持しておく
+		if (initialService.getJudgmentTenant() == true ){
+			// テナント登録表示
+			user.getUser().setFilterflag(1);
+		} else {
+			// テナント登録非表示
+			user.getUser().setFilterflag(0);
+		}
+
+		// レベルによって表示を変更する	
+		if(auth.getAuthorities().toString().contains(UserRole.ROLE_USER_LV1.name()) || auth.getAuthorities().toString().contains(UserRole.ROLE_USER_LV9.name()) ) {
+			// レベル9で初期設定の権限がある場合は初期設定画面を表示する		
+			if(user.getUser().getInitialDispFlg().equals("1")) {
+				// 初期設定の権限ありのため、初期設定画面へ
+				return "redirect:/initial";	
+			}
+			// ホーム画面へ
+			return "home/index";	
+		} else {
+			// 初期設定画面へ
+			return "redirect:/initial";
+		}	
+
+	}
+}

@@ -1,0 +1,60 @@
+package jp.co.art.trident.repository;
+
+import java.util.HashMap;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
+import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
+import org.springframework.stereotype.Repository;
+
+import jp.co.art.trident.model.entity.MOperation;
+
+/**操作データマスタのリポジトリクラス**/
+
+@Repository
+public class MOperationRepository {
+
+	@Autowired
+	private final NamedParameterJdbcTemplate namedParameterJdbcTemplate;
+	
+    public MOperationRepository(NamedParameterJdbcTemplate namedParameterJdbcTemplate) {
+        this.namedParameterJdbcTemplate = namedParameterJdbcTemplate;
+    }
+    
+    public void regist(MOperation operation){
+    	
+    	StringBuilder sb = new StringBuilder();
+    	sb.append("INSERT INTO ");
+    	sb.append(" \"TRIDENT\".m_operation ");
+    	sb.append(" ( ");
+    	sb.append(" date ");
+    	sb.append(" ,username ");
+    	sb.append(" ,opecode ");
+    	sb.append(" ) values ( ");
+    	sb.append(" CURRENT_TIMESTAMP ");
+    	sb.append(" ,:username ");
+    	sb.append(" ,:opecode ");
+    	sb.append(" ) ");
+    	
+		//パラメータを設定
+		MapSqlParameterSource  param = new MapSqlParameterSource();
+
+		param.addValue("username", operation.getUsername());
+		param.addValue("opecode", operation.getOpecode());
+    	
+		namedParameterJdbcTemplate.update(sb.toString(), param);
+    }
+
+    /**
+     * 全てのレコードを削除する関数
+     */
+    public void deleteAll(){
+    	
+    	StringBuilder sb = new StringBuilder();
+    	sb.append("DELETE ");
+    	sb.append("FROM ");
+    	sb.append(" \"TRIDENT\".m_operation ");   	
+
+		namedParameterJdbcTemplate.update(sb.toString(), new HashMap<>());
+    } 
+}

@@ -1,0 +1,181 @@
+package jp.co.art.trident.component;
+
+import java.util.regex.Pattern;
+import java.util.List;
+
+import org.springframework.stereotype.Component;
+
+/**
+ * 文字列関連のチェックユーティリティクラス
+ */
+@Component
+public class StringCheckUtility {
+
+	/**
+     * 数値がNULLまたは空白はチェック
+     * @param String str  文字列
+     * @return boolean true:OK, false:NG
+     */
+	public boolean isNullOrEmpty(String str) {
+		if (str == null  || "".equals(str) == true) {
+			return true;
+		}
+		return false;
+	}
+	
+	/**
+     * 数値の桁数チェック
+     * @param String str  検索文字列
+     * @param int maxDigit    整数部の最大桁数
+     * @param int digitAfterDecimalPoint    小数部の最大桁数
+     * @param boolean minus     マイナス値を許可するか
+     * @return boolean true:OK, false:NG
+     */
+	public boolean isDecimalCheck(String str, int maxDigit, int digitAfterDecimalPoint, boolean minus) {
+
+	     if (str==null  || "".equals(str.trim())) {
+	    	 return false;
+	     }
+	     
+	     //マイナスチェック
+	     if(str.charAt(0)=='-') {
+	       if (!minus) {
+	    	   	// マイナス負荷の場合NG
+	              return false;
+	          }
+	       // マイナスより後ろをチェックする
+	       str=str.substring(1);
+	     }
+	     
+	     // データの形式
+	     String dataPattern = "^[0-9]{0," + maxDigit + "}([\\\\.][0-9]{0," + digitAfterDecimalPoint + "}){0,1}$";
+	     
+	     if (str.matches(dataPattern)) {
+	    	 return true;
+	     } else {
+	    	 return false;
+	     }
+
+    }	
+	
+	/**
+     * 禁止文字「\ / : * ? " <> |」が含まれていないかチェック
+     * @param String str  検索文字列
+     * @return boolean true:OK, false:NG
+     */
+	public boolean isForbiddenCharsCheck(String str) {
+
+		String pattern = "[\\\\\\/\\:\\*\\?\\\"\\<\\>\\|]";
+		Pattern p = Pattern.compile(pattern);
+		
+		if (null == str || "".equals(str) == true) {
+			// null or ""の場合、エラーにはせずスルーする
+            return true;
+        }
+        if (p.matcher(str).find()) {
+            return false;
+        }
+        return true;
+
+    }	
+	
+    /**
+     * 指定されたエラーをエラーリストに追加する
+     * @param List<String> errorList  エラーリスト
+     * @param String message  指定されたエラー
+     * @param int ilineNum  「,」区切りかチェック
+     */
+    public void addError(List<String> errorList, String message, int ilineNum) {
+        if (ilineNum == -1) {
+            errorList.add(message);
+        } else {
+            errorList.add(ilineNum + "," + message);
+        }
+    }
+    
+	/**
+     * 指定された文字数ごとにカンマを入れる
+     * @param String str  文字列
+     * @param int digits    区切るか桁数
+     * @return String　カンマ区切りした文字
+     */	
+    public String splitWithCommas(String str, int digits) {
+    	
+    	if(str == null || "".equals(str) ==true) {
+    		return "";
+    	}
+        StringBuilder result = new StringBuilder();
+        int length = str.length();
+
+        for (int i = 0; i < length; i += digits) {
+            if (i > 0) {
+                result.append(","); // カンマを追加
+            }
+            int end = Math.min(i + digits, length);
+            result.append(str.substring(i, end));
+        }
+
+        return result.toString();
+    }
+    
+    /**
+     * 指定バイト数になるまで指定文字(0, スペースなど)を追加する
+     * @param String str  文字列
+     * @param int totalLength 文字列の長さ
+     * @param String addChar 追加する文字列
+     * @param int position 前に追加か後に追加か(0:前,-1:後ろ)
+     * @return String　指定文字追加後の文字列
+     */  
+    public String addCharByByte(String str, int totalLength, String addChar, int position) {
+        if (str == null) str = "";
+
+        try {
+            byte[] bytes = str.getBytes("Shift_JIS"); // または "UTF-8"
+            if (bytes.length > totalLength) {
+                // 最大バイト数で切り捨てる
+                int count = 0;
+                StringBuilder sb = new StringBuilder();
+                for (int i = 0; i < str.length(); i++) {
+                    String ch = str.substring(i, i+1);
+                    int chLen = ch.getBytes("Shift_JIS").length;
+                    if (count + chLen > totalLength) break;
+                    sb.append(ch);
+                    count += chLen;
+                }
+                str = sb.toString();
+            }
+
+            // パディング
+            int strByteLen = str.getBytes("Shift_JIS").length;
+            int padLen = totalLength - strByteLen;
+            if (padLen > 0) {
+                StringBuilder pad = new StringBuilder();
+                for (int i = 0; i < padLen; i++) pad.append(addChar);
+                str = (position == -1) ? str + pad.toString() : pad.toString() + str;
+            }
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        return str;
+    }
+    
+	/**
+     * 指定された番号のバイト数を取得
+     * @param String str  文字列
+     * @param int num    指定番号
+     * @return String　取得した文字
+     */	
+    public String getNthByte(String str, int num) {
+    	
+    	if(str == null || "".equals(str) ==true) {
+    		return "";
+    	}
+    	
+    	if(num > str.length() || num == 0) {
+    		return "";
+    	}
+    	return String.valueOf(str.charAt(num-1));
+    }
+}

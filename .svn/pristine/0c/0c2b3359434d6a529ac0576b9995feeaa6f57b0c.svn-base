@@ -1,0 +1,111 @@
+package jp.co.art.trident.model.entity;
+
+import java.io.Serializable;
+
+/**ゲート編集画面の情報を保持するクラス**/
+
+public class GateEdit implements Serializable{
+
+	private static final long serialVersionUID = -8256423427027727311L;
+
+	/**
+     * デフォルトコンストラクタ
+     */
+	public GateEdit() {};
+	
+	/**
+     * デフォルトコンストラクタ
+     */
+	public GateEdit(String gateno
+			,String hosttype
+			,String hostno
+			,String addressno
+			,String gatename
+			,int gatetype_4
+			,String ctimer
+			,String ctimername
+			) {
+		this.gateno = gateno;
+		this.hosttype = hosttype;
+		this.hostno = hostno;
+		this.addressno = addressno;
+		this.gatename = gatename;
+		this.gatetype_4 = gatetype_4;
+		this.ctimer = ctimer;
+		this.ctimername = ctimername;
+	};
+	
+	/** ゲート番号 */
+	private String gateno;
+
+	/** 装置タイプ */
+	private String hosttype;
+	
+	/** ホスト番号 */
+	private String hostno;
+	
+	/** アドレス番号 */
+	private String addressno;
+	
+	/** ゲート名称 */
+	private String gatename;
+	
+	/** ゲートタイプ4 */
+	private int gatetype_4;
+	
+	/** 連続解錠時間番号 */
+	private String ctimer;
+	
+	/** 連続解錠時間名称 */
+	private String ctimername;
+	
+	//　以下、ゲッター、セッター　-----------------------
+	public String getGateno() {
+		return gateno;
+	}
+	public void setGateno(String gateno) {
+		this.gateno = gateno;
+	}
+	public String getHosttype() {
+		return hosttype;
+	}
+	public void setHosttype(String hosttype) {
+		this.hosttype = hosttype;
+	}
+	public String getHostno() {
+		return hostno;
+	}
+	public void setHostno(String hostno) {
+		this.hostno = hostno;
+	}	
+	public String getAddressno() {
+		return addressno;
+	}
+	public void setAddressno(String addressno) {
+		this.addressno = addressno;
+	}
+	public String getGatename() {
+		return gatename;
+	}
+	public void setGatename(String gatename) {
+		this.gatename = gatename;
+	}
+	public int getGatetype_4() {
+		return gatetype_4;
+	}
+	public void setGatetype_4(int gatetype_4) {
+		this.gatetype_4 = gatetype_4;
+	}
+	public String getCtimer() {
+		return ctimer;
+	}
+	public void setCtimer(String ctimer) {
+		this.ctimer = ctimer;
+	}
+	public String getCtimername() {
+		return ctimername;
+	}
+	public void setCtimername(String ctimername) {
+		this.ctimername = ctimername;
+	}
+}

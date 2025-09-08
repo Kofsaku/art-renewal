@@ -1,0 +1,312 @@
+package jp.co.art.trident.repository;
+
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.util.List;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.jdbc.core.RowMapper;
+import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
+import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
+import org.springframework.stereotype.Repository;
+
+import jp.co.art.trident.model.entity.MInitial;
+
+/**初期設定マスタのリポジトリクラス**/
+
+@Repository
+public class MInitialRepository {
+
+	@Autowired
+	private final NamedParameterJdbcTemplate namedParameterJdbcTemplate;
+	
+    public MInitialRepository(NamedParameterJdbcTemplate namedParameterJdbcTemplate) {
+        this.namedParameterJdbcTemplate = namedParameterJdbcTemplate;
+    }
+    
+    private RowMapper<MInitial> resultSetMapper() {
+ 
+    	return new RowMapper<MInitial>() {
+
+			@Override
+			public MInitial mapRow(ResultSet rs, int rowNum) throws SQLException {
+			
+				MInitial mInitial = new MInitial();
+				mInitial.setSettingno(rs.getInt("settingno"));
+				mInitial.setCodesize(rs.getInt("codesize"));
+				mInitial.setScodesize(rs.getInt("scodesize"));
+				mInitial.setPcodesize(rs.getInt("pcodesize"));
+				mInitial.setKcodesize(rs.getInt("kcodesize"));
+				mInitial.setHolidayflag(rs.getString("holidayflag"));
+				mInitial.setAntimode(rs.getInt("antimode"));
+				mInitial.setGlobalantiflag(rs.getInt("globalantiflag"));
+				mInitial.setBioflag(rs.getInt("bioflag"));
+				mInitial.setBiosize(rs.getInt("biosize"));
+				mInitial.setUpcntflag(rs.getInt("upcntflag"));
+				mInitial.setUpcntsize(rs.getInt("upcntsize"));
+				mInitial.setCardpostupdownmode(rs.getInt("cardpostupdownmode"));
+				mInitial.setFilterflag(rs.getInt("filterflag"));
+				mInitial.setLoginflag(rs.getInt("loginflag"));
+				mInitial.setPasorireadtype(rs.getInt("pasorireadtype"));
+				mInitial.setPasorireadstart1(rs.getInt("pasorireadstart1"));
+				mInitial.setPasorireadend1(rs.getInt("pasorireadend1"));
+				mInitial.setPasorireadstart2(rs.getInt("pasorireadstart2"));
+				mInitial.setPasorireadend2(rs.getInt("pasorireadend2"));
+				mInitial.setPasorireadstart3(rs.getInt("pasorireadstart3"));
+				mInitial.setPasorireadend3(rs.getInt("pasorireadend3"));
+				mInitial.setWaittime(rs.getInt("waittime"));
+				mInitial.setRetrycnt(rs.getInt("retrycnt"));
+				mInitial.setLanwaittime(rs.getInt("lanwaittime"));
+				mInitial.setLanretrycnt(rs.getInt("lanretrycnt"));
+				mInitial.setZaiautodelflag(rs.getInt("zaiautodelflag"));
+				mInitial.setZaikeepterm(rs.getInt("zaikeepterm"));
+				mInitial.setZaideltime(rs.getString("zaideltime"));
+				mInitial.setDatamoncnt(rs.getInt("datamoncnt"));
+				mInitial.setAutoupflag(rs.getInt("autoupflag"));
+				mInitial.setAutosendflag(rs.getInt("autosendflag"));
+				mInitial.setAutouptime(rs.getString("autouptime"));
+				mInitial.setAutouprealtime(rs.getInt("autouprealtime"));
+				mInitial.setAutouppath(rs.getString("autouppath"));
+				mInitial.setAutoupfname(rs.getString("autoupfname"));
+				mInitial.setAutoupoutpath(rs.getString("autoupoutpath"));
+				mInitial.setRecvoutpath(rs.getString("recvoutpath"));
+				mInitial.setDispmonflag(rs.getInt("dispmonflag"));
+				mInitial.setGatedclkcl(rs.getString("gatedclkcl"));
+				mInitial.setGatedclkop(rs.getString("gatedclkop"));
+				mInitial.setGateerror(rs.getString("gateerror"));
+				mInitial.setGatedopkcl(rs.getString("gatedopkcl"));
+				mInitial.setGatedopkop(rs.getString("gatedopkop"));
+				mInitial.setGateguardset(rs.getString("gateguardset"));
+				mInitial.setGateguarderror(rs.getString("gateguarderror"));
+				mInitial.setSensornouse(rs.getString("sensornouse"));
+				mInitial.setSensorguardset(rs.getString("sensorguardset"));
+				mInitial.setSensorguardfree(rs.getString("sensorguardfree"));
+				mInitial.setSensorerror(rs.getString("sensorerror"));
+				mInitial.setSensorlerrguardfree(rs.getString("sensorlerrguardfree"));
+				mInitial.setAutotimesendflag(rs.getInt("autotimesendflag"));
+				mInitial.setAutotimesendtime(rs.getString("autotimesendtime"));
+				mInitial.setAutotimesetlastdate(rs.getString("autotimesetlastdate"));
+				mInitial.setTctmp_lastupdate(rs.getString("tctmp_lastupdate"));
+
+				return mInitial;
+			}
+		};
+    }
+    
+    /**
+     * 初期設定情報を取得する関数
+     */
+    public List<MInitial> getInitialList() {
+    	
+    	StringBuilder sb = new StringBuilder();
+    	sb.append("SELECT ");
+    	sb.append(" settingno");
+    	sb.append(" ,codesize");
+    	sb.append(" ,scodesize");
+    	sb.append(" ,pcodesize");
+    	sb.append(" ,kcodesize");
+    	sb.append(" ,holidayflag");
+    	sb.append(" ,antimode");
+    	sb.append(" ,globalantiflag");
+    	sb.append(" ,bioflag");
+    	sb.append(" ,biosize");
+    	sb.append(" ,upcntflag");
+    	sb.append(" ,upcntsize");
+    	sb.append(" ,cardpostupdownmode");
+    	sb.append(" ,filterflag");
+    	sb.append(" ,loginflag");
+    	sb.append(" ,pasorireadtype");
+    	sb.append(" ,pasorireadstart1");
+    	sb.append(" ,pasorireadend1");
+    	sb.append(" ,pasorireadstart2");
+    	sb.append(" ,pasorireadend2");
+    	sb.append(" ,pasorireadstart3");
+    	sb.append(" ,pasorireadend3");
+    	sb.append(" ,waittime");
+    	sb.append(" ,retrycnt");
+    	sb.append(" ,lanwaittime");
+    	sb.append(" ,lanretrycnt");
+    	sb.append(" ,zaiautodelflag");
+    	sb.append(" ,zaikeepterm");
+    	sb.append(" ,zaideltime");
+    	sb.append(" ,datamoncnt");
+    	sb.append(" ,autoupflag");
+    	sb.append(" ,autosendflag");
+    	sb.append(" ,autouptime");
+    	sb.append(" ,autouprealtime");
+    	sb.append(" ,autouppath");
+    	sb.append(" ,autoupfname");
+    	sb.append(" ,autoupoutpath");
+    	sb.append(" ,recvoutpath");
+    	sb.append(" ,dispmonflag");
+    	sb.append(" ,gatedclkcl");
+    	sb.append(" ,gatedclkop");
+    	sb.append(" ,gateerror");
+    	sb.append(" ,gatedopkcl");
+    	sb.append(" ,gatedopkop");
+    	sb.append(" ,gateguardset");
+    	sb.append(" ,gateguarderror");
+    	sb.append(" ,sensornouse");
+    	sb.append(" ,sensorguardset");
+    	sb.append(" ,sensorguardfree");
+    	sb.append(" ,sensorerror");
+    	sb.append(" ,sensorlerrguardfree");
+    	sb.append(" ,autotimesendflag");
+    	sb.append(" ,autotimesendtime");
+    	sb.append(" ,autotimesetlastdate");
+    	sb.append(" ,tctmp_lastupdate ");
+    	sb.append("FROM ");
+    	sb.append(" \"TRIDENT\".m_initial ");
+    	sb.append("WHERE ");
+    	sb.append(" settingno = 1");	// 固定
+    	
+    	return namedParameterJdbcTemplate.query(sb.toString(), resultSetMapper());
+    }
+    
+    /**
+     * 初期設定の内容を更新する関数
+     * @param mInitial 初期設定情報
+     * @param holidayInitializationFlg	休日設定ボタン押下の判断　1:押す,0:押してない
+     * @param initializationFlg　初期設定設定ボタン押下の判断　1:押す,0:押してない
+     */
+    public void updateInitialInfo(MInitial mInitial,String holidayInitializationFlg, String initializationFlg){
+    	StringBuilder sb = new StringBuilder();
+    	sb.append("UPDATE ");
+    	sb.append(" \"TRIDENT\".m_initial ");
+    	sb.append("SET ");
+    	sb.append(" antimode = :antimode "); 
+    	if ("1".equals(holidayInitializationFlg) || "1".equals(initializationFlg)) {
+    		sb.append(" ,holidayflag = :holidayflag ");
+    	}
+    	if("1".equals(initializationFlg)) {
+	    	sb.append(" ,codesize = :codesize ");  
+	    	sb.append(" ,scodesize = :scodesize ");  
+	    	sb.append(" ,pcodesize = :pcodesize ");  
+	    	sb.append(" ,kcodesize = :kcodesize ");  
+	    	sb.append(" ,bioflag = :bioflag "); 
+	    	sb.append(" ,biosize = :biosize "); 
+	    	sb.append(" ,upcntflag = :upcntflag "); 
+	    	sb.append(" ,upcntsize = :upcntsize ");    	 
+    	}
+    	sb.append(" ,globalantiflag = :globalantiflag "); 
+    	sb.append(" ,cardpostupdownmode = :cardpostupdownmode "); 
+    	sb.append(" ,filterflag = :filterflag "); 
+    	sb.append(" ,loginflag = :loginflag "); 
+    	sb.append(" ,pasorireadtype = :pasorireadtype "); 
+    	sb.append(" ,pasorireadstart1 = :pasorireadstart1 "); 
+    	sb.append(" ,pasorireadend1 = :pasorireadend1 "); 
+    	sb.append(" ,pasorireadstart2 = :pasorireadstart2 "); 
+    	sb.append(" ,pasorireadend2 = :pasorireadend2 "); 
+    	sb.append(" ,pasorireadstart3 = :pasorireadstart3 ");
+    	sb.append(" ,pasorireadend3 = :pasorireadend3 ");
+    	sb.append("WHERE ");
+    	sb.append(" settingno = 1");	// 固定    	
+    	
+		//パラメータを設定
+		MapSqlParameterSource  param = new MapSqlParameterSource();  
+		param.addValue("antimode", mInitial.getAntimode());
+		if("1".equals(initializationFlg)) {
+			param.addValue("codesize", mInitial.getCodesize());
+			param.addValue("scodesize", mInitial.getScodesize());
+			param.addValue("pcodesize", mInitial.getPcodesize());
+			param.addValue("kcodesize", mInitial.getKcodesize());
+			param.addValue("bioflag", mInitial.getBioflag());
+			param.addValue("biosize", mInitial.getBiosize());
+			param.addValue("upcntflag", mInitial.getUpcntflag());
+			param.addValue("upcntsize", mInitial.getUpcntsize());
+		}
+		if ("1".equals(holidayInitializationFlg) || "1".equals(initializationFlg)) {
+			param.addValue("holidayflag", mInitial.getHolidayflag());
+		}
+		param.addValue("globalantiflag", mInitial.getGlobalantiflag());
+		param.addValue("cardpostupdownmode", mInitial.getCardpostupdownmode());
+		param.addValue("filterflag", mInitial.getFilterflag());
+		param.addValue("loginflag", mInitial.getLoginflag());
+		param.addValue("pasorireadtype", mInitial.getPasorireadtype());
+		param.addValue("pasorireadstart1", mInitial.getPasorireadstart1());
+		param.addValue("pasorireadend1", mInitial.getPasorireadend1());
+		param.addValue("pasorireadstart2", mInitial.getPasorireadstart2());
+		param.addValue("pasorireadend2", mInitial.getPasorireadend2());
+		param.addValue("pasorireadstart3", mInitial.getPasorireadstart3());
+		param.addValue("pasorireadend3", mInitial.getPasorireadend3());
+		
+		namedParameterJdbcTemplate.update(sb.toString(), param);
+    	
+    }
+    
+    /**
+     * 詳細設定の内容を更新する関数
+     * @param mInitial 初期設定情報
+     */
+    public void updateAdvancedsettings(MInitial mInitial){
+    	StringBuilder sb = new StringBuilder();
+    	sb.append("UPDATE ");
+    	sb.append(" \"TRIDENT\".m_initial ");
+    	sb.append("SET ");
+    	sb.append(" waittime = :waittime");
+    	sb.append(" ,retrycnt = :retrycnt");
+    	sb.append(" ,lanwaittime = :lanwaittime");
+    	sb.append(" ,lanretrycnt = :lanretrycnt");
+    	sb.append(" ,zaiautodelflag = zaiautodelflag");
+    	sb.append(" ,zaikeepterm = :zaikeepterm");
+    	sb.append(" ,zaideltime = :zaideltime");
+    	sb.append(" ,datamoncnt = :datamoncnt");
+    	sb.append(" ,autoupflag = :autoupflag");
+    	sb.append(" ,autosendflag = :autosendflag");
+    	sb.append(" ,autouptime = :autouptime");
+    	sb.append(" ,autouprealtime =:autouprealtime");
+    	sb.append(" ,autouppath = :autouppath");
+    	sb.append(" ,autoupfname = :autoupfname");
+    	sb.append(" ,autoupoutpath = :autoupoutpath");
+    	sb.append(" ,recvoutpath = :recvoutpath");
+    	sb.append(" ,dispmonflag = :dispmonflag");
+    	sb.append(" ,gatedclkcl = :gatedclkcl");
+    	sb.append(" ,gatedclkop = :gatedclkop");
+    	sb.append(" ,gateerror = :gateerror");
+    	sb.append(" ,gatedopkcl = :gatedopkcl");
+    	sb.append(" ,gatedopkop = :gatedopkop");
+    	sb.append(" ,gateguardset = :gateguardset");
+    	sb.append(" ,gateguarderror = :gateguarderror");
+    	sb.append(" ,sensornouse = :sensornouse");
+    	sb.append(" ,sensorguardset = :sensorguardset");
+    	sb.append(" ,sensorguardfree = :sensorguardfree");
+    	sb.append(" ,sensorerror = :sensorerror");
+    	sb.append(" ,sensorlerrguardfree = :sensorlerrguardfree ");
+    	sb.append("WHERE ");
+    	sb.append(" settingno = 1");	// 固定    	
+    	
+		//パラメータを設定
+		MapSqlParameterSource  param = new MapSqlParameterSource();  
+		param.addValue("waittime", mInitial.getWaittime());
+		param.addValue("retrycnt", mInitial.getRetrycnt());
+		param.addValue("lanwaittime", mInitial.getLanwaittime());
+		param.addValue("lanretrycnt", mInitial.getLanretrycnt());
+		param.addValue("zaiautodelflag", mInitial.getZaiautodelflag());
+		param.addValue("zaikeepterm", mInitial.getZaikeepterm());
+		param.addValue("zaideltime", mInitial.getZaideltime());
+		param.addValue("datamoncnt", mInitial.getDatamoncnt());
+		param.addValue("autoupflag", mInitial.getAutoupflag());
+		param.addValue("autosendflag", mInitial.getAutosendflag());
+		param.addValue("autouptime", mInitial.getAutouptime());
+		param.addValue("autouprealtime", mInitial.getAutouprealtime());
+		param.addValue("autouppath", mInitial.getAutouppath());
+		param.addValue("autoupfname", mInitial.getAutoupfname());
+		param.addValue("autoupoutpath", mInitial.getAutoupoutpath());
+		param.addValue("recvoutpath", mInitial.getRecvoutpath());
+		param.addValue("dispmonflag", mInitial.getDispmonflag());
+		param.addValue("gatedclkcl", mInitial.getGatedclkcl());
+		param.addValue("gatedclkop", mInitial.getGatedclkop());
+		param.addValue("gateerror", mInitial.getGateerror());
+		param.addValue("gatedopkcl", mInitial.getGatedopkcl());
+		param.addValue("gatedopkop", mInitial.getGatedopkop());
+		param.addValue("gateguardset", mInitial.getGateguardset());
+		param.addValue("gateguarderror", mInitial.getGateguarderror());
+		param.addValue("sensornouse", mInitial.getSensornouse());
+		param.addValue("sensorguardset", mInitial.getSensorguardset());
+		param.addValue("sensorguardfree", mInitial.getSensorguardfree());
+		param.addValue("sensorerror", mInitial.getSensorerror());
+		param.addValue("sensorlerrguardfree", mInitial.getSensorlerrguardfree());
+		
+		namedParameterJdbcTemplate.update(sb.toString(), param);
+    	
+    }   
+}

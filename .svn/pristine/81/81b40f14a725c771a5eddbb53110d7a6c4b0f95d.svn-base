@@ -1,0 +1,83 @@
+package jp.co.art.trident.model;
+
+import java.io.Serializable;
+import java.util.List;
+
+/**サービス（ビジネスロジック）の実行結果を返却するクラス
+ * 処理の成否保持
+ * 失敗時のエラーメッセージおよび成功時に使用するリソースを保持する
+ */
+public class ServiceResult <T extends Serializable> {
+
+	/**
+	 * 処理成功時に使用するリソースのクラスインスタンス<br/>
+	 * シリアライズ可能であることが必須です
+	 */
+	private T content;
+	private List<T> contentList;
+	/**
+	 * 処理結果<br/>
+	 * true: 成功 false: 失敗
+	 */
+	private boolean isSuccess = true;
+	
+	/**
+	 * 処理成功時に表示するメッセージ
+	 */
+	private String successMessage;
+	
+	/**
+	 * 処理失敗時に表示するエラーメッセージ
+	 */
+	private String errorMessage;
+	
+	public ServiceResult() {}
+	
+	public ServiceResult(boolean isSuccess) {
+		this.isSuccess = isSuccess;
+	}
+
+	// 以下、ゲッター、セッター　-----------------------
+	
+	public T getContent() {
+		return content;
+	}
+
+	public void setContent(T content) {
+		this.content = content;
+	}
+
+	public boolean isSuccess() {
+		return isSuccess;
+	}
+
+	public void setSuccess(boolean isSuccess) {
+		this.isSuccess = isSuccess;
+	}
+	
+	public String getSuccessMessage() {
+		return successMessage;
+	}
+
+	public void setSuccessMessage(String successMessage) {
+		this.successMessage = successMessage;
+	}
+
+	public String getErrorMessage() {
+		return errorMessage;
+	}
+
+	public void setErrorMessage(String errorMessage) {
+		this.errorMessage = errorMessage;
+	}
+
+	public List<T> getContentList() {
+		return contentList;
+	}
+
+	public void setContentList(List<T> contentList) {
+		this.contentList = contentList;
+	}
+	
+	// 以上、ゲッター、セッター　-----------------------
+}

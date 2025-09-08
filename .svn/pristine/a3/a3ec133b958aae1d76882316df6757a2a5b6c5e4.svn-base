@@ -1,0 +1,232 @@
+package jp.co.art.trident.controller;
+
+import java.io.IOException;
+import java.io.OutputStream;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.web.multipart.MultipartFile;
+
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+import jp.co.art.trident.exception.TridentException;
+import jp.co.art.trident.model.ServiceResult;
+import jp.co.art.trident.model.entity.common.MCommon.ParameterName;
+import jp.co.art.trident.model.form.GateRegistrationForm;
+import jp.co.art.trident.service.GateRegistrationService;
+import jp.co.art.trident.service.common.CommonService;
+
+/**ゲート登録画面のコントローラークラス**/
+@Controller
+public class GateRegistrationController {
+
+	/** ゲート登録画面サービスクラス */
+	private final GateRegistrationService gateRegistrationService;
+	
+	/** 汎用項目サービスクラス */
+	private final CommonService commonService;	
+
+	/** ロガークラス */
+	private final Logger logger;
+	
+	public GateRegistrationController(GateRegistrationService gateRegistrationService
+			,CommonService commonService) {
+		this.gateRegistrationService = gateRegistrationService;
+		this.commonService = commonService;
+		this.logger = LoggerFactory.getLogger(getClass());
+	}
+
+	// ------------------------------------------------------------------------------------------------------
+	// 定数
+	// ------------------------------------------------------------------------------------------------------
+	private final String FILE_TMP_PATH = "C:\\TRIDENT\\Data\\Gate\\Temp\\";
+	
+	/**
+	 * ゲート登録・編集画面初期表示処理
+	 * 
+	 * @param model モデル
+	 * @return HTML画面名
+	 * @throws TrindentException 
+	 */	
+	@RequestMapping(value = { "/gateRegistration", "/gateRegistration/index" })
+	public String init(Model model) throws TridentException 
+	{
+		GateRegistrationForm form = gateRegistrationService.initScreen();	
+		model.addAttribute("gateRegistrationForm", form);
+		model.addAttribute("screen", "gate");
+		return "gateRegistration/index";
+	}	
+	
+
+	/**
+	 * ゲート登録・編集画面ゲートデータ取得
+	 * 
+	 * @param gateRegistrationForm
+	 * @return HTML画面名
+	 * @throws TrindentException 
+	 */	
+	@RequestMapping(value = { "/gateRegistration/getGateData"}, method = RequestMethod.POST)
+	@ResponseBody
+	public ServiceResult<GateRegistrationForm> getGateData(@RequestBody GateRegistrationForm gateRegistrationForm
+			) throws TridentException 
+	{
+		return gateRegistrationService.getGateData(gateRegistrationForm);
+	}	
+	/**
+	 * ゲート登録・編集画面存在チェック
+	 * 
+	 * @param gateRegistrationForm
+	 * @return HTML画面名
+	 * @throws TrindentException 
+	 */	
+	@RequestMapping(value = { "/gateRegistration/exist"}, method = RequestMethod.POST)
+	@ResponseBody
+	public ServiceResult<Boolean> exist(@RequestBody GateRegistrationForm gateRegistrationForm
+			) throws TridentException 
+	{
+		return gateRegistrationService.checkExistenceGateData(gateRegistrationForm);
+	}
+	
+	/**
+	 * ゲート登録・編集画面登録処理
+	 * 
+	 * @param model モデル
+	 * @param 　request
+	 * @return HTML画面名
+	 * @throws TrindentException 
+	 */	
+	@RequestMapping(value = { "/gateRegistration/regist"})
+	public String regist(Model model,HttpServletRequest request
+			) throws TridentException 
+	{
+		// 登録後、画面データ再表示
+		GateRegistrationForm form = new GateRegistrationForm();
+		// 登録処理
+		form = gateRegistrationService.gateRegist(request);	
+		
+		model.addAttribute("gateRegistrationForm", form);
+		model.addAttribute("screen", "gate");
+		return "gateRegistration/index";
+	}	
+	
+	/**
+	 * ゲート登録・編集画面アンチパス送信登録処理
+	 * 
+	 * @param model モデル
+	 * @param 　request
+	 * @return HTML画面名
+	 * @throws TrindentException 
+	 */	
+	@RequestMapping(value = { "/gateRegistration/antipass/regist"})
+	public String registAntipass(Model model,HttpServletRequest request
+			) throws TridentException 
+	{
+		// 登録後、画面データ再表示
+		GateRegistrationForm form = new GateRegistrationForm();
+		// 登録処理
+		form = gateRegistrationService.antipassRegist(request);	
+		
+		model.addAttribute("gateRegistrationForm", form);
+		model.addAttribute("screen", "gate");
+		return "gateRegistration/index";
+	}
+	
+	/**
+	 * ゲート登録・編集画面削除処理
+	 * 
+	 * @param model モデル
+	 * @param 　request
+	 * @return HTML画面名
+	 * @throws TrindentException 
+	 */	
+	@RequestMapping(value = { "/gateRegistration/delete"})
+	public String delete(Model model,HttpServletRequest request
+			) throws TridentException 
+	{
+		// 削除後、画面データ再表示
+		GateRegistrationForm form = new GateRegistrationForm();
+		// 削除処理
+		form = gateRegistrationService.gateDelete(request);	
+		
+		model.addAttribute("gateRegistrationForm", form);
+		model.addAttribute("screen", "gate");
+		return "gateRegistration/index";
+	}		
+	
+	
+	/**
+	 * ajaxによるファイルアップロード処理
+	 * @param uploadFile
+	 * @param request
+	 * @return
+	 * @throws TrindentException 
+	 * @throws IOException 
+	 */
+	@RequestMapping(value = { "/gateRegistration/upload" }, method = RequestMethod.POST)
+	@ResponseBody
+	public ServiceResult<GateRegistrationForm> upload(@RequestParam MultipartFile uploadFile) throws IOException, TridentException{
+		ServiceResult<GateRegistrationForm> result = new ServiceResult<GateRegistrationForm>();	
+		
+		result = gateRegistrationService.checkAndUpload(uploadFile);
+		
+		return result;
+	}
+	
+	/**
+	 * ダウンロード、データ出力処理
+	 * @param request
+	 * @param response
+	 * @return
+	 * @throws GcnException 
+	 */
+	@RequestMapping(value = { "/gateRegistration/outputData" }, method = RequestMethod.POST)
+	public String fileDownload(HttpServletRequest request, HttpServletResponse response) throws TridentException{
+
+		String path = FILE_TMP_PATH;
+		String downloadType = request.getParameter("downloadType");
+		
+		String fileName = "";
+		if (downloadType.equals("O")) {
+			// データ出力
+			fileName = commonService.getParameterValue1(ParameterName.GATE_OUTPUT_FILENAME);
+		} else {
+			// ダウンロード
+			fileName = commonService.getParameterValue1(ParameterName.GATE_DOWNLOAD_FILENAME);
+		}		
+		
+		try (OutputStream os = response.getOutputStream();){
+				gateRegistrationService.createDownloadData(path,fileName,downloadType);
+
+				String downloadPath = path + fileName;
+				Path filePath = Paths.get(downloadPath);
+	
+				byte[] fb1 = Files.readAllBytes(filePath);
+				
+				response.setContentType("application/octet-stream");
+	            response.setHeader("Content-Disposition", "attachment; filename=\"" + URLEncoder.encode(fileName, StandardCharsets.UTF_8) + "\"");
+	            response.setContentLength(fb1.length);
+	            os.write(fb1);
+	            os.flush();
+
+		}
+		catch (IOException e) 
+		{
+			// エラーログ
+			logger.error(e.toString());
+		}
+	    return null;
+	}
+	
+}

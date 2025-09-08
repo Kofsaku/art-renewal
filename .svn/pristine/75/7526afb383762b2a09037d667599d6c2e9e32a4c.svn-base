@@ -1,0 +1,714 @@
+package jp.co.art.trident.model.form;
+
+import java.io.Serializable;
+import java.util.List;
+
+/**初期設定画面のフォームクラス(画面情報を保持)**/	
+public class InitialForm implements Serializable{
+
+	private static final long serialVersionUID = 1332464942227708798L;
+	
+	/** 個人コードリストボックス */
+	private List<Integer> codesizeList;
+
+	/** 管理番号リストボックス */
+	private List<Integer> scodesizeList;
+	
+	/** 所属コードリストボックス */
+	private List<Integer> pcodesizeList;
+	
+	/** 区分コードリストボックス */
+	private List<Integer> kcodesizeList;
+	
+	/** 読取リストボックス */
+	private List<Integer> pasorireadList;
+
+	/** 個人コード */
+	private int codesize;
+	
+	/** 管理番号 */
+	private int scodesize;
+	
+	/** 所属コード */
+	private int pcodesize;
+	
+	/** 区分コード */
+	private int kcodesize;
+	
+	/** 休日設定(日曜日) */
+	private String holidaySunflag;
+	
+	/** 休日設定(月曜日) */
+	private String holidayMonflag;
+	
+	/** 休日設定(火曜日) */
+	private String holidayTueflag;
+	
+	/** 休日設定(水曜日) */
+	private String holidayWedflag;
+
+	/** 休日設定(木曜日) */
+	private String holidayThuflag;
+	
+	/** 休日設定(金曜日) */
+	private String holidayFriflag;
+	
+	/** 休日設定(土曜日) */
+	private String holidaySatflag;
+	
+	/** アンチパス設定 */
+	private int antimode;
+	
+	/** グローバルアンチパス機能フラグ */
+	private int globalantiflag;
+	
+	/** バイオリーダー機能フラグ */
+	private int bioflag;
+	
+	/** バイオリーダー桁数 */
+	private int biosize;
+	
+	/** 発行回数機能フラグ */
+	private int upcntflag;
+	
+	/** 発行回数桁数 */
+	private int upcntsize;
+	
+	/** 通門コードフォーマット設定 */
+	private int cardpostupdownmode;
+	
+	/** フィルター機能フラグ */
+	private int filterflag;
+	
+	/** ログイン機能フラグ */
+	private int loginflag;
+	
+	/** パソリ読込タイプ */
+	private int pasorireadtype;
+	
+	/** パソリ読込開始桁数1 */
+	private int pasorireadstart1;
+	
+	/** パソリ読込終了桁数1 */
+	private int pasorireadend1;
+	
+	/** パソリ読込開始桁数2 */
+	private int pasorireadstart2;
+	
+	/** パソリ読込終了桁数2 */
+	private int pasorireadend2;
+	
+	/** パソリ読込開始桁数3 */
+	private int pasorireadstart3;
+	
+	/** パソリ読込終了桁数3 */
+	private int pasorireadend3;
+	
+	/** 通信異常ウェイト時間 */
+	private int waittime;
+	
+	/** 通信異常リトライ回数 */
+	private int retrycnt;
+	
+	/** LAN接続ウェイト時間 */
+	private int lanwaittime;
+	
+	/** LAN接続リトライ回数 */
+	private int lanretrycnt;
+	
+	/** 在室自動削除機能フラグ */
+	private int zaiautodelflag;
+	
+	/** 在室データ保存期間 */
+	private int zaikeepterm;
+	
+	/** 在室自動削除時刻 */
+//	private String zaideltime;
+
+	/** 在室自動削除時刻(時) */
+	private String zaideltimeHour;
+
+	/** 在室自動削除時刻(分) */
+	private String zaideltimeMinutes;
+	
+	/** データモニター表示件数 */
+	private int datamoncnt;
+	
+	/** 自動アップロード機能フラグ */
+	private int autoupflag;
+	
+	/** 自動送信機能フラグ */
+	private int autosendflag;
+	
+	/** 自動アップロード時刻 */
+//	private String autouptime;
+	
+	/** 自動アップロード時刻(時) */
+	private String autouptimeHour;
+	
+	/** 自動アップロード時刻(分) */
+	private String autouptimeMinutes;
+	
+	/** 自動アップロードリアルタイム読込間隔 */
+	private int autouprealtime;
+	
+	/** 自動アップロードデータ格納場所 */
+	private String autouppath;
+	
+	/** 自動アップロードファイル名称 */
+	private String autoupfname;
+	
+	/** 自動アップロード消去データ格納場所 */
+	private String autoupoutpath;
+	
+	/** 履歴データ出力場所 */
+	private String recvoutpath;
+	
+	/** モニター表示機能フラグ */
+	private int dispmonflag;
+	
+	/** 「ゲート・閉扉施錠」カラーコード */
+	private String gatedclkcl;
+	
+	/** 「ゲート・閉扉解錠」カラーコード */
+	private String gatedclkop;
+	
+	/** 「ゲート・異常」カラーコード */
+	private String gateerror;
+	
+	/** 「ゲート・解扉施錠」カラーコード */
+	private String gatedopkcl;
+	
+	/** 「ゲート・開扉解錠」カラーコード */
+	private String gatedopkop;
+	
+	/** 「ゲート・警備セット」カラーコード */
+	private String gateguardset;
+	
+	/** 「ゲート・警備異常」カラーコード */
+	private String gateguarderror;
+	
+	/** 「センサー・未使用」カラーコード */
+	private String sensornouse;
+	
+	/** 「センサー・ループ正常警備セット」カラーコード */
+	private String sensorguardset;
+	
+	/** 「センサー・ループ正常警備解除」カラーコード */
+	private String sensorguardfree;
+	
+	/** 「センサー・異常」カラーコード */
+	private String sensorerror;
+	
+	/** 「センサー・ループ異常警備解除」カラーコード */
+	private String sensorlerrguardfree;
+	
+	/** 自動時刻送信フラグ */
+	private int autotimesendflag;
+	
+	/** 自動時刻送信時刻 */
+	private String autotimesendtime;
+	
+	/** 自動時刻設定最終更新日時 */
+	private String autotimesetlastdate;
+	
+	/** 臨時入退室制限時間帯マスタ最終更新日時 */	
+	private String tctmp_lastupdate;
+	
+	/** メッセージ */
+	private String message;
+
+	/** 操作コード */
+	private String opecode;
+	
+	//　以下、ゲッター、セッター　-----------------------
+	public List<Integer> getCodesizeList() {
+		return codesizeList;
+	}
+	public void setCodesizeList(List<Integer> codesizeList) {
+		this.codesizeList = codesizeList;
+	}
+	
+	public List<Integer> getScodesizeList() {
+		return scodesizeList;
+	}
+	public void setScodesizeList(List<Integer> scodesizeList) {
+		this.scodesizeList = scodesizeList;
+	}
+	
+	public List<Integer> getPcodesizeList() {
+		return pcodesizeList;
+	}
+	public void setPcodesizeList(List<Integer> pcodesizeList) {
+		this.pcodesizeList = pcodesizeList;
+	}	
+	
+	public List<Integer> getKcodesizeList() {
+		return kcodesizeList;
+	}
+	public void setKcodesizeList(List<Integer> kcodesizeList) {
+		this.kcodesizeList = kcodesizeList;
+	}	
+	
+	public List<Integer> getPasorireadList() {
+		return pasorireadList;
+	}
+	public void setPasorireadList(List<Integer> pasorireadList) {
+		this.pasorireadList = pasorireadList;
+	}
+	
+	public int getCodesize() {
+		return codesize;
+	}
+	public void setCodesize(int codesize) {
+		this.codesize = codesize;
+	}
+	
+	public int getScodesize() {
+		return scodesize;
+	}
+	public void setScodesize(int scodesize) {
+		this.scodesize = scodesize;
+	}	
+	
+	public int getPcodesize() {
+		return pcodesize;
+	}
+	public void setPcodesize(int pcodesize) {
+		this.pcodesize = pcodesize;
+	}	
+	
+	public int getKcodesize() {
+		return kcodesize;
+	}
+	public void setKcodesize(int kcodesize) {
+		this.kcodesize = kcodesize;
+	}	
+	
+	public String getHolidaySunflag() {
+		return holidaySunflag;
+	}
+	public void setHolidaySunflag(String holidaySunflag) {
+		this.holidaySunflag = holidaySunflag;
+	}
+	
+	public String getHolidayMonflag() {
+		return holidayMonflag;
+	}
+	public void setHolidayMonflag(String holidayMonflag) {
+		this.holidayMonflag = holidayMonflag;
+	}	
+	
+	public String getHolidayTueflag() {
+		return holidayTueflag;
+	}
+	public void setHolidayTueflag(String holidayTueflag) {
+		this.holidayTueflag = holidayTueflag;
+	}
+	
+	public String getHolidayWedflag() {
+		return holidayWedflag;
+	}
+	public void setHolidayWedflag(String holidayWedflag) {
+		this.holidayWedflag = holidayWedflag;
+	}
+	
+	public String getHolidayThuflag() {
+		return holidayThuflag;
+	}
+	public void setHolidayThuflag(String holidayThuflag) {
+		this.holidayThuflag = holidayThuflag;
+	}
+	
+	public String getHolidayFriflag() {
+		return holidayFriflag;
+	}
+	public void setHolidayFriflag(String holidayFriflag) {
+		this.holidayFriflag = holidayFriflag;
+	}
+	
+	public String getHolidaySatflag() {
+		return holidaySatflag;
+	}
+	public void setHolidaySatflag(String holidaySatflag) {
+		this.holidaySatflag = holidaySatflag;
+	}
+	
+	public int getAntimode() {
+		return antimode;
+	}
+	public void setAntimode(int antimode) {
+		this.antimode = antimode;
+	}	
+	
+	public int getGlobalantiflag() {
+		return globalantiflag;
+	}
+	public void setGlobalantiflag(int globalantiflag) {
+		this.globalantiflag = globalantiflag;
+	}
+	
+	public int getBioflag() {
+		return bioflag;
+	}
+	public void setBioflag(int bioflag) {
+		this.bioflag = bioflag;
+	}
+
+	public int getBiosize() {
+		return biosize;
+	}
+	public void setBiosize(int biosize) {
+		this.biosize = biosize;
+	}
+
+	public int getUpcntflag() {
+		return upcntflag;
+	}
+	public void setUpcntflag(int upcntflag) {
+		this.upcntflag = upcntflag;
+	}
+	
+	public int getUpcntsize() {
+		return upcntsize;
+	}
+	public void setUpcntsize(int upcntsize) {
+		this.upcntsize = upcntsize;
+	}
+	
+	public int getCardpostupdownmode() {
+		return cardpostupdownmode;
+	}
+	public void setCardpostupdownmode(int cardpostupdownmode) {
+		this.cardpostupdownmode = cardpostupdownmode;
+	}
+	
+	public int getFilterflag() {
+		return filterflag;
+	}
+	public void setFilterflag(int filterflag) {
+		this.filterflag = filterflag;
+	}
+	
+	public int getLoginflag() {
+		return loginflag;
+	}
+	public void setLoginflag(int loginflag) {
+		this.loginflag = loginflag;
+	}
+	
+	public int getPasorireadtype() {
+		return pasorireadtype;
+	}
+	public void setPasorireadtype(int pasorireadtype) {
+		this.pasorireadtype = pasorireadtype;
+	}
+	
+	public int getPasorireadstart1() {
+		return pasorireadstart1;
+	}
+	public void setPasorireadstart1(int pasorireadstart1) {
+		this.pasorireadstart1 = pasorireadstart1;
+	}
+	
+	public int getPasorireadend1() {
+		return pasorireadend1;
+	}
+	public void setPasorireadend1(int pasorireadend1) {
+		this.pasorireadend1 = pasorireadend1;
+	}
+	
+	public int getPasorireadstart2() {
+		return pasorireadstart2;
+	}
+	public void setPasorireadstart2(int pasorireadstart2) {
+		this.pasorireadstart2 = pasorireadstart2;
+	}
+	
+	public int getPasorireadend2() {
+		return pasorireadend2;
+	}
+	public void setPasorireadend2(int pasorireadend2) {
+		this.pasorireadend2 = pasorireadend2;
+	}
+	
+	public int getPasorireadstart3() {
+		return pasorireadstart3;
+	}
+	public void setPasorireadstart3(int pasorireadstart3) {
+		this.pasorireadstart3 = pasorireadstart3;
+	}
+	
+	public int getPasorireadend3() {
+		return pasorireadend3;
+	}
+	public void setPasorireadend3(int pasorireadend3) {
+		this.pasorireadend3 = pasorireadend3;
+	}
+	
+	public int getWaittime() {
+		return waittime;
+	}
+	public void setWaittime(int waittime) {
+		this.waittime = waittime;
+	}
+	
+	public int getRetrycnt() {
+		return retrycnt;
+	}
+	public void setRetrycnt(int retrycnt) {
+		this.retrycnt = retrycnt;
+	}
+	
+	public int getLanwaittime() {
+		return lanwaittime;
+	}
+	public void setLanwaittime(int lanwaittime) {
+		this.lanwaittime = lanwaittime;
+	}
+	
+	public int getLanretrycnt() {
+		return lanretrycnt;
+	}
+	public void setLanretrycnt(int lanretrycnt) {
+		this.lanretrycnt = lanretrycnt;
+	}
+	
+	public int getZaiautodelflag() {
+		return zaiautodelflag;
+	}
+	public void setZaiautodelflag(int zaiautodelflag) {
+		this.zaiautodelflag = zaiautodelflag;
+	}
+	
+	public int getZaikeepterm() {
+		return zaikeepterm;
+	}
+	public void setZaikeepterm(int zaikeepterm) {
+		this.zaikeepterm = zaikeepterm;
+	}
+/*	
+	public String getZaideltime() {
+		return zaideltime;
+	}
+	public void setZaideltime(String zaideltime) {
+		this.zaideltime = zaideltime;
+	}
+*/
+	public String getZaideltimeHour() {
+		return zaideltimeHour;
+	}
+	public void setZaideltimeHour(String zaideltimeHour) {
+		this.zaideltimeHour = zaideltimeHour;
+	}
+	
+	public String getZaideltimeMinutes() {
+		return zaideltimeMinutes;
+	}
+	public void setZaideltimeMinutes(String zaideltimeMinutes) {
+		this.zaideltimeMinutes = zaideltimeMinutes;
+	}
+	
+	public int getDatamoncnt() {
+		return datamoncnt;
+	}
+	public void setDatamoncnt(int datamoncnt) {
+		this.datamoncnt = datamoncnt;
+	}
+	
+	public int getAutoupflag() {
+		return autoupflag;
+	}
+	public void setAutoupflag(int autoupflag) {
+		this.autoupflag = autoupflag;
+	}
+	
+	public int getAutosendflag() {
+		return autosendflag;
+	}
+	public void setAutosendflag(int autosendflag) {
+		this.autosendflag = autosendflag;
+	}
+	
+	public String getAutouptimeHour() {
+		return autouptimeHour;
+	}
+	public void setAutouptimeHour(String autouptimeHour) {
+		this.autouptimeHour = autouptimeHour;
+	}
+
+	public String getAutouptimeMinutes() {
+		return autouptimeMinutes;
+	}
+	public void setAutouptimeMinutes(String autouptimeMinutes) {
+		this.autouptimeMinutes = autouptimeMinutes;
+	}
+	
+	public int getAutouprealtime() {
+		return autouprealtime;
+	}
+	public void setAutouprealtime(int autouprealtime) {
+		this.autouprealtime = autouprealtime;
+	}
+	
+	public String getAutouppath() {
+		return autouppath;
+	}
+	public void setAutouppath(String autouppath) {
+		this.autouppath = autouppath;
+	}
+	
+	public String getAutoupfname() {
+		return autoupfname;
+	}
+	public void setAutoupfname(String autoupfname) {
+		this.autoupfname = autoupfname;
+	}
+	
+	public String getAutoupoutpath() {
+		return autoupoutpath;
+	}
+	public void setAutoupoutpath(String autoupoutpath) {
+		this.autoupoutpath = autoupoutpath;
+	}
+	
+	public String getRecvoutpath() {
+		return recvoutpath;
+	}
+	public void setRecvoutpath(String recvoutpath) {
+		this.recvoutpath = recvoutpath;
+	}
+	
+	public int getDispmonflag() {
+		return dispmonflag;
+	}
+	public void setDispmonflag(int dispmonflag) {
+		this.dispmonflag = dispmonflag;
+	}
+	
+	public String getGatedclkcl() {
+		return gatedclkcl;
+	}
+	public void setGatedclkcl(String gatedclkcl) {
+		this.gatedclkcl = gatedclkcl;
+	}
+	
+	public String getGatedclkop() {
+		return gatedclkop;
+	}
+	public void setGatedclkop(String gatedclkop) {
+		this.gatedclkop = gatedclkop;
+	}
+	
+	public String getGateerror() {
+		return gateerror;
+	}
+	public void setGateerror(String gateerror) {
+		this.gateerror = gateerror;
+	}
+	
+	public String getGatedopkcl() {
+		return gatedopkcl;
+	}
+	public void setGatedopkcl(String gatedopkcl) {
+		this.gatedopkcl = gatedopkcl;
+	}
+	
+	public String getGatedopkop() {
+		return gatedopkop;
+	}
+	public void setGatedopkop(String gatedopkop) {
+		this.gatedopkop = gatedopkop;
+	}
+	
+	public String getGateguardset() {
+		return gateguardset;
+	}
+	public void setGateguardset(String gateguardset) {
+		this.gateguardset = gateguardset;
+	}
+	
+	public String getGateguarderror() {
+		return gateguarderror;
+	}
+	public void setGateguarderror(String gateguarderror) {
+		this.gateguarderror = gateguarderror;
+	}
+	
+	public String getSensornouse() {
+		return sensornouse;
+	}
+	public void setSensornouse(String sensornouse) {
+		this.sensornouse = sensornouse;
+	}
+	
+	public String getSensorguardset() {
+		return sensorguardset;
+	}
+	public void setSensorguardset(String sensorguardset) {
+		this.sensorguardset = sensorguardset;
+	}
+	
+	public String getSensorguardfree() {
+		return sensorguardfree;
+	}
+	public void setSensorguardfree(String sensorguardfree) {
+		this.sensorguardfree = sensorguardfree;
+	}
+	
+	public String getSensorerror() {
+		return sensorerror;
+	}
+	public void setSensorerror(String sensorerror) {
+		this.sensorerror = sensorerror;
+	}
+	
+	public String getSensorlerrguardfree() {
+		return sensorlerrguardfree;
+	}
+	public void setSensorlerrguardfree(String sensorlerrguardfree) {
+		this.sensorlerrguardfree = sensorlerrguardfree;
+	}
+	
+	public int getAutotimesendflag() {
+		return autotimesendflag;
+	}
+	public void setAutotimesendflag(int autotimesendflag) {
+		this.autotimesendflag = autotimesendflag;
+	}
+	
+	public String getAutotimesendtime() {
+		return autotimesendtime;
+	}
+	public void setAutotimesendtime(String autotimesendtime) {
+		this.autotimesendtime = autotimesendtime;
+	}
+	
+	public String getAutotimesetlastdate() {
+		return autotimesetlastdate;
+	}
+	public void setAutotimesetlastdate(String autotimesetlastdate) {
+		this.autotimesetlastdate = autotimesetlastdate;
+	}
+	
+	public String getTctmp_lastupdate() {
+		return tctmp_lastupdate;
+	}
+	public void setTctmp_lastupdate(String tctmp_lastupdate) {
+		this.tctmp_lastupdate = tctmp_lastupdate;
+	}		
+	
+	public String getMessage() {
+		return message;
+	}
+	public void setMessage(String message) {
+		this.message = message;
+	}
+
+	public String getOpecode() {
+		return opecode;
+	}
+	public void setOpecode(String opecode) {
+		this.opecode = opecode;
+	}
+}

@@ -1,0 +1,51 @@
+package jp.co.art.trident.controller;
+
+import java.util.Map;
+
+import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.ResponseBody;
+
+import jp.co.art.trident.exception.TridentException;
+import jp.co.art.trident.model.ServiceResult;
+import jp.co.art.trident.service.common.MOperationlogService;
+
+/**共通のコントローラークラス**/
+@Controller
+public class TridentCommonController {
+	
+	/** 操作ログサービスクラス */
+	private final MOperationlogService mOperationlogService;	
+	
+	/**
+	 * コンストラクタ
+	 */
+	TridentCommonController(MOperationlogService mOperationlogService){
+		this.mOperationlogService = mOperationlogService;
+	}
+	
+	/**
+	 * 操作ログ
+	 * @param data
+	 * @return result
+	 * @throws TridentException
+	 */
+	@PostMapping({ "/operation" })
+	@ResponseBody
+	public ServiceResult<Boolean> registOperation(@RequestBody Map<String, String> data) throws TridentException{
+
+		// 戻り値		
+		ServiceResult<Boolean> result = new ServiceResult<Boolean>();
+		String type1 = data.get("type1");
+		
+		Boolean bRet = mOperationlogService.RegistOperation(type1);
+		if(bRet == true) {
+			result.setSuccess(true);
+		} else {
+			result.setSuccess(false);
+		}
+		return result;
+		
+	}	
+}

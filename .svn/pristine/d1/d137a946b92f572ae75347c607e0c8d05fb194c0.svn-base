@@ -1,0 +1,61 @@
+package jp.co.art.trident.repository;
+
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.util.List;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.jdbc.core.RowMapper;
+import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
+import org.springframework.stereotype.Repository;
+
+import jp.co.art.trident.model.entity.MDevicetype;
+
+/**装置タイプマスタのリポジトリクラス**/
+
+@Repository
+public class MDevicetypeRepository {
+
+	@Autowired
+	private final NamedParameterJdbcTemplate namedParameterJdbcTemplate;
+	
+    public MDevicetypeRepository(NamedParameterJdbcTemplate namedParameterJdbcTemplate) {
+        this.namedParameterJdbcTemplate = namedParameterJdbcTemplate;
+    }
+    
+    private RowMapper<MDevicetype> resultSetMapper() {
+    	
+    	
+    	return new RowMapper<MDevicetype>() {
+
+			@Override
+			public MDevicetype mapRow(ResultSet rs, int rowNum) throws SQLException {
+			
+				MDevicetype mdevicetype = new MDevicetype();
+				mdevicetype.setDevicetype_no(rs.getInt("devicetype_no"));
+				mdevicetype.setDevicetype_name(rs.getString("devicetype_name"));
+				mdevicetype.setDevicetype_setcnt(rs.getInt("devicetype_setcnt"));
+				return mdevicetype;
+			}
+		};
+    }
+    
+    /**
+     * 装置タイプ一覧を取得する関数
+     * @return　装置タイプ一覧
+     */
+    public List<MDevicetype> getDeviceTypeList(){
+    	
+    	StringBuilder sb = new StringBuilder();
+    	sb.append("SELECT ");
+    	sb.append(" devicetype_no ");
+    	sb.append(" ,devicetype_name ");
+    	sb.append(" ,devicetype_setcnt ");
+    	sb.append("FROM ");
+    	sb.append(" \"TRIDENT\".m_devicetype ");
+    	sb.append("ORDER BY ");
+    	sb.append(" devicetype_no  ");
+		
+    	return namedParameterJdbcTemplate.query(sb.toString(), resultSetMapper());
+    }
+}

@@ -1,0 +1,67 @@
+package jp.co.art.trident.model;
+
+import java.util.Collection;
+
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.userdetails.UserDetails;
+
+/**UserDetails実装クラス**/
+public class UserDetailsImpl implements UserDetails {
+
+	private static final long serialVersionUID = -1725203970015701982L;
+	
+	/** ユーザ情報を保持するクラス */
+	private final User user;
+	
+	/** 権限 */
+	private final Collection<? extends GrantedAuthority> authorities;
+	
+	/**
+	 * コンストラクタ
+	 * @param user ユーザ情報を保持するクラス
+	 * @param authorities 権限
+	 */
+	public UserDetailsImpl(User user, Collection<? extends GrantedAuthority> authorities) {
+		this.user = user;
+		this.authorities = authorities;
+	}
+
+	@Override
+	public Collection<? extends GrantedAuthority> getAuthorities() {
+		return this.authorities;
+	}
+
+	public User getUser() {
+		return this.user;
+	}
+
+	@Override
+	public String getUsername() {
+		return this.user.getUserName();
+	}
+
+	@Override
+	public String getPassword() {
+		return this.user.getPassword();
+	}
+
+	public int getLevel() {
+		return this.user.getLevel();
+	}
+	
+	public String getEntrytime() {
+		return this.user.getEntrytime();
+	}
+
+	public String getUptime() {
+		return this.user.getUptime();
+	}
+	
+	public String getAuthority() {
+		return this.user.getAuthority();
+	}
+
+	public String getTenantno() {
+		return this.user.getTenantno();
+	}
+}

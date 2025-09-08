@@ -1,0 +1,208 @@
+package jp.co.art.trident.service.common;
+
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
+
+import org.springframework.dao.DataAccessException;
+import org.springframework.stereotype.Service;
+
+import jp.co.art.trident.exception.TridentException;
+import jp.co.art.trident.repository.common.CommonRepository;
+
+/**共通処理のサービスクラス**/
+@Service
+public class MSendService {
+
+	/**汎用項目テーブルのリポジトリ */
+	private final CommonRepository commonRepository;
+	
+	/**
+	 * コンストラクタ
+	 * 
+	 * @param commonRepository
+	 */	
+	public MSendService(CommonRepository commonRepository) {
+		this.commonRepository = commonRepository;
+	}
+	
+	// ------------------------------------------------------------------------------------------------------
+	// 最大送信ゲート数(最大接続回線数)の定数
+	// ------------------------------------------------------------------------------------------------------
+	private final int SENDMAXGATE_XA0102 = 2; // XA-01/02(12) (WA-01/02(12)) / XA-01/02(20) (WA-01/02(20))
+	private final int SENDMAXGATE_XA08 = 16;  // XA-08(12) (WA-08/16(12)) / XA-08(20) (WA-08/16(20))
+	private final int SENDMAXGATE_ELV08 = 8;  // ELV-08(12) / ELV-08(20)
+	private final int SENDMAXGATE_ELV24 = 24; // ELV-24(12) / ELV-24(20)
+	
+	/**
+	 * パラメータ名列挙型(コマンド類)
+	 */
+	public enum SendCommand{
+		GATEEDIT_SENDCOMMAND("06"),  // ゲート編集　コマンド
+		GATEEDIT_SENDSUBID("00"),    // ゲート編集　補助識別
+		GATEEDIT_SENDEXEID("002"),   // ゲート編集　exe番号
+		GATEEDIT_RESPONSE("0");      // ゲート編集　レスポンスフラグ
+		
+	    private final String code;
+
+	    SendCommand(String code) {
+	        this.code = code;
+	    }
+	    
+	    public String getCode() {
+	        return code;
+	    }
+	}
+	
+	/**
+	 * パラメータ名列挙型(制御コード)
+	 */
+	public enum ControlCode {
+	    SOH((char)0x01),  // パケットの始まり(ヘッダー部の直前)
+	    STX((char)0x02),  // テキストデータの始まり(テキストデータ部の直前)
+	    ETB((char)0x17),  // 1レコードの終わり(送信内容によっては使用しない)
+	    ETX((char)0x03),  // テキストデータの終わり(テキストデータ部の直後)
+	    EOT((char)0x04),  // パケットの終わり(ETXの直後)
+	    DLE((char)0x10),  // ステータスデータ使用時
+		BEL((char)0x07);  // ゲート編集画面　送信時
+		
+	    private final char value;
+
+	    // コンストラクタ
+	    ControlCode(char value) {
+	        this.value = value;
+	    }
+
+	    // charを返す(1文字として取得)
+	    public char getChar() {
+	        return value;
+	    }
+
+	    // Stringとして返す(文字列として取得)
+	    public String getString() {
+	        return String.valueOf(value);
+	    }
+	}
+	
+	/**
+	 * 連続解錠時間帯の送信データを作成する
+	 * @param parameterName パラメータ名
+	 * @return
+	 * @throws TridentException
+	 */
+	public String createCtimerSendData(String key, List<Map<String, Object>> sendGateList, String serialno, String dayOfWeekflag, String sendhostno, String sendaddressno, String sendhosttype) throws TridentException {
+		
+		StringBuilder commonData = new StringBuilder();
+		StringBuilder headerData = new StringBuilder();
+		StringBuilder textData = new StringBuilder();
+		
+		try {
+		    
+			// テキストデータ部の作成
+			 textData.append(SendCommand.GATEEDIT_SENDCOMMAND.getCode())
+	            	 .append(SendCommand.GATEEDIT_SENDSUBID.getCode())
+	            	 .append(dayOfWeekflag);
+			
+			 int maxLoop;
+			 
+			 // 最大送信ゲート数を設定
+			if("0".equals(sendhosttype) || "1".equals(sendhosttype)) {
+				// 装置タイプ0or1の場合
+				// 最大送信ゲート数を2に設定
+				maxLoop = SENDMAXGATE_XA0102;
+			} else if  ("2".equals(sendhosttype) || "3".equals(sendhosttype)) {
+				// 装置タイプ2or3の場合
+				// 最大送信ゲート数を16に設定
+				maxLoop = SENDMAXGATE_XA08;
+			} else if  ("6".equals(sendhosttype) || "7".equals(sendhosttype)) {
+				// 装置タイプ6or7の場合
+				// 最大送信ゲート数を8に設定
+				maxLoop = SENDMAXGATE_ELV08;
+			} else{
+				// 装置タイプ8or9の場合
+				// 最大送信ゲート数を24に設定
+				maxLoop = SENDMAXGATE_ELV24;
+			}
+			
+			// 開始時刻と終了時刻の送信データ作成を行う
+			// rgateno(装置内回線番号) をキーにした Map を作成
+			Map<Integer, Map<String, Object>> rgatenoMap = sendGateList.stream()
+			        .collect(Collectors.toMap(
+			            m -> Integer.parseInt(m.get("rgateno").toString()),
+			            m -> m
+			        ));
+
+			// maxLoop回数ループ
+			for (int i = 1; i <= maxLoop; i++) {
+				// ループ番号 i に対応するデータを取得
+			    Map<String, Object> gateMap = rgatenoMap.get(i);
+			    String appendStr;
+			    
+			    if (gateMap != null) {
+			        // rgateno が存在する場合
+			    	// 送信データ取得(nullの場合は空白を取得)
+			    	String value = java.util.Objects.toString(gateMap.get(key), "");
+			    	
+			    	if (value != null && !value.isEmpty()) {
+			    		// dataが存在する場合
+				        if ("0".equals(sendhosttype) || "1".equals(sendhosttype)) {
+				            // 装置タイプ0or1の場合 → 値をそのまま利用
+				            appendStr = value;
+				        } else {
+				            // 装置タイプ0or1以外の場合 → 先頭40桁だけ利用
+				            appendStr = value.length() > 40 ? value.substring(0, 40) : value;
+				        }
+			    	} else {
+			    		// dataが存在しない場合
+				        if ("0".equals(sendhosttype) || "1".equals(sendhosttype)) {
+				            // 装置タイプ0or1の場合 → データ桁数(120桁)分9で埋める
+				        	appendStr = "9".repeat(120);
+				        } else {
+				            // 装置タイプ0or1以外の場合 → 40桁分9で埋める
+				            appendStr = "9".repeat(40);
+				        }
+			    	}
+			    } else {
+			    	// rgateno が存在しない場合
+			        if ("0".equals(sendhosttype) || "1".equals(sendhosttype)) {
+			            // 装置タイプ0or1の場合 → データ桁数(120桁)分9で埋める
+			        	appendStr = "9".repeat(120);
+			        } else {
+			            // 装置タイプ0or1以外の場合 → 40桁分9で埋める
+			            appendStr = "9".repeat(40);
+			        }
+			    }
+
+			    textData.append(appendStr);
+			}
+		    
+			textData.append(ControlCode.ETX.getChar())
+					.append(ControlCode.EOT.getChar());
+			
+			// ヘッダー部の作成(データ長判断のために2番目に作成)
+			headerData.append(sendaddressno)
+        	 		  .append(serialno)
+        	 		  .append(String.format("%03d", textData.length()))
+        	 		  .append(ControlCode.BEL.getChar())
+        	 		  .append(ControlCode.STX.getChar())
+        			  .append(textData);
+					  
+					
+			// 共通データの作成(送信データサイズ判断のために最後に作成)
+			commonData.append(SendCommand.GATEEDIT_SENDEXEID.getCode())
+	 		  		  .append(SendCommand.GATEEDIT_RESPONSE.getCode())
+	 		  		  .append(serialno)
+	 		  		  .append(sendhostno)
+	 		  		  .append(String.format("%04d", headerData.length()))
+	 		  		  .append(ControlCode.SOH.getChar())
+	 		  		  .append(headerData);
+	 		  		  
+			
+		} catch(DataAccessException e) {
+			// エラーログ出力
+			// throw new TridentException("send.error.createSendData");
+		}
+
+		return commonData.toString();
+	}
+}

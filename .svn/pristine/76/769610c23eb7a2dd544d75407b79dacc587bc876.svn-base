@@ -1,0 +1,80 @@
+package jp.co.art.trident.controller;
+
+import java.util.Locale;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.context.MessageSource;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.web.WebAttributes;
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
+import org.springframework.web.bind.annotation.ModelAttribute;
+import org.springframework.web.bind.annotation.RequestAttribute;
+import org.springframework.web.bind.annotation.RequestMapping;
+import jakarta.servlet.http.HttpServletRequest;
+import jp.co.art.trident.exception.TridentException;
+
+/**ログイン画面のコントローラークラス**/
+@Controller
+public class LoginController {
+
+	/** メッセージソース */
+	private final MessageSource messageSource;
+
+	/** ロガークラス */
+	private final Logger logger;
+	
+	public LoginController(MessageSource messageSource){	
+		this.messageSource = messageSource;
+		this.logger = LoggerFactory.getLogger(getClass());
+	}
+	
+	/**
+	 * ログイン画面表示処理
+	 * @param request   HttpServletRequest
+	 * @param model     モデル
+	 * @return HTML画面名
+	 */
+	@RequestMapping({ "/login*"})
+	public String init(
+			@ModelAttribute("username") String username,
+			@RequestAttribute(name = WebAttributes.AUTHENTICATION_EXCEPTION, required = false) Exception exception,
+			Model model, HttpServletRequest request){
+
+		Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+		
+		if (auth != null && auth.getPrincipal().equals("anonymousUser") == false) {
+			// 認証情報がanonymousUserではない（認証済）場合、ホーム画面を表示する	
+				return "redirect:/home";
+		}
+		return "login/index";	
+	}
+	
+	/**
+	 * 認証処理
+	 * @param model     モデル
+	 * @param request   HttpServletRequest
+	 * @return HTML画面名
+	 */
+	@RequestMapping("/login/auth")
+	public String auth(Model model,HttpServletRequest request)throws TridentException {
+		return "login/index";
+	}
+	
+	/**
+	 * 認証処理(失敗)
+	 * @param model     モデル
+	 * @param request   HttpServletRequest
+	 * @return HTML画面名
+	 */
+	@RequestMapping("/login-fail")
+	public String loginFail(Model model,HttpServletRequest request)throws TridentException {
+		model.addAttribute("isError", true);
+		String errMessage = messageSource.getMessage("errMsg.login.userNotFound", null, Locale.JAPAN);
+		// エラーメッセージ設定
+		model.addAttribute("invalidinfo", errMessage);	
+		logger.info(errMessage);
+		return "login/index";
+	}
+}

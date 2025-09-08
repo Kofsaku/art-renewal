@@ -1,0 +1,811 @@
+package jp.co.art.trident.service;
+
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
+import org.springframework.context.MessageSource;
+import org.springframework.context.i18n.LocaleContextHolder;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import jakarta.servlet.http.HttpServletRequest;
+import jp.co.art.trident.component.StringCheckUtility;
+import jp.co.art.trident.config.TridentProperties;
+import jp.co.art.trident.exception.TridentException;
+import jp.co.art.trident.model.ServiceResult;
+import jp.co.art.trident.model.UserDetailsImpl;
+import jp.co.art.trident.model.entity.MInitial;
+import jp.co.art.trident.model.entity.common.MCommon.ParameterName;
+import jp.co.art.trident.model.form.InitialForm;
+import jp.co.art.trident.repository.MCardRepository;
+import jp.co.art.trident.repository.MCtRepository;
+import jp.co.art.trident.repository.MDeviceRepository;
+import jp.co.art.trident.repository.MErrpopRepository;
+import jp.co.art.trident.repository.MFgateRepository;
+import jp.co.art.trident.repository.MFloorRepository;
+import jp.co.art.trident.repository.MGateRepository;
+import jp.co.art.trident.repository.MHistoryRepository;
+import jp.co.art.trident.repository.MHolidayRepository;
+import jp.co.art.trident.repository.MInitialRepository;
+import jp.co.art.trident.repository.MKgateRepository;
+import jp.co.art.trident.repository.MKgroupRepository;
+import jp.co.art.trident.repository.MKubunRepository;
+import jp.co.art.trident.repository.MOperationRepository;
+import jp.co.art.trident.repository.MPostRepository;
+import jp.co.art.trident.repository.MReceivehistoryRepository;
+import jp.co.art.trident.repository.MReceivestatusRepository;
+import jp.co.art.trident.repository.MSendRepository;
+import jp.co.art.trident.repository.MStatusRepository;
+import jp.co.art.trident.repository.MTaizaiRepository;
+import jp.co.art.trident.repository.MTcRepository;
+import jp.co.art.trident.repository.MTctmpRepository;
+import jp.co.art.trident.repository.MTenantRepository;
+import jp.co.art.trident.repository.MZaishituRepository;
+import jp.co.art.trident.service.common.CommonService;
+import jp.co.art.trident.service.common.MOperationlogService;
+import jp.co.art.trident.service.common.MOperationlogService.OperationCode;
+
+/**初期設定画面のサービスクラス**/
+
+@Service
+public class InitialService {
+
+	/**カードマスタのリポジトリ */
+	private final MCardRepository mCardRepository;
+	
+	/**連続解錠時間帯マスタのリポジトリ */
+	private final MCtRepository mCtRepository;
+
+	/**装置マスタのリポジトリ */
+	private final MDeviceRepository mDeviceRepository;
+
+	/**エラーブザーポップアップマスタのリポジトリ */
+	private final MErrpopRepository mErrpopRepository;
+
+	/**フロアゲートマスタのリポジトリ */
+	private final MFgateRepository mFgateRepository;
+	
+	/**フロアマスタのリポジトリ */
+	private final MFloorRepository mFloorRepository;
+	
+	/**ゲートマスタのリポジトリ */
+	private final MGateRepository mGateRepository;
+	
+	/**履歴データマスタのリポジトリ */
+	private final MHistoryRepository mHistoryRepository;
+
+	/**休日マスタのリポジトリ */
+	private final MHolidayRepository mHolidayRepository;
+	
+	/**初期設定マスタのリポジトリ */
+	private final MInitialRepository mInitialRepository;
+	
+	/**一斉制御ゲートマスタのリポジトリ */
+	private final MKgateRepository mKgateRepository;
+
+	/**一斉制御グループゲートマスタのリポジトリ */
+	private final MKgroupRepository mKgroupRepository;
+
+	/**区分マスタのリポジトリ */
+	private final MKubunRepository mKubunRepository;
+
+	/**操作データマスタのリポジトリ */
+	private final MOperationRepository mOperationRepository;
+	
+	/**所属マスタのリポジトリ */
+	private final MPostRepository mPostRepository;
+	
+	/**受信履歴データマスタのリポジトリ */
+	private final MReceivehistoryRepository mReceivehistoryRepository;
+
+	/**受信ステータスデータマスタのリポジトリ */
+	private final MReceivestatusRepository mReceivestatusRepository;
+
+	/**送信データマスタのリポジトリ */
+	private final MSendRepository mSendRepository;
+
+	/**ステータスデータマスタのリポジトリ */
+	private final MStatusRepository mStatusRepository;
+	
+	/**滞在マスタのリポジトリ */
+	private final MTaizaiRepository mTaizaiRepository;
+
+	/**入退室制限時間帯マスタのリポジトリ */
+	private final MTcRepository mTcRepository;
+	
+	/**臨時入退室制限時間帯マスタのリポジトリ */
+	private final MTctmpRepository mTctmpRepository;
+
+	/**テナントマスタのリポジトリ */
+	private final MTenantRepository mTenantRepository;
+
+	/**在室マスタのリポジトリ */
+	private final MZaishituRepository mZaishituRepository;
+	
+	/** 文字列関連のチェックユーティリティクラス */
+	private final StringCheckUtility stringCheckUtility;
+
+	/** 汎用項目サービスクラス */
+	private final CommonService commonService;
+
+	/** 操作ログサービスクラス */
+	private final MOperationlogService mOperationlogService;
+	
+	/** メッセージソースクラス */
+	private final MessageSource messageSource;
+	
+    /** アプリケーション固有設定ファイルクラス */
+    private final TridentProperties tridentProperties;
+    
+	/**
+	 * コンストラクタ
+	 */
+	public InitialService(
+			MCardRepository mCardRepository
+			,MCtRepository mCtRepository
+			,MDeviceRepository mDeviceRepository
+			,MErrpopRepository mErrpopRepository
+			,MFgateRepository mFgateRepository
+			,MFloorRepository mFloorRepository
+			,MGateRepository mGateRepository
+			,MHistoryRepository mHistoryRepository
+			,MHolidayRepository mHolidayRepository
+			,MInitialRepository mInitialRepository
+			,MKgateRepository mKgateRepository
+			,MKgroupRepository mKgroupRepository
+			,MKubunRepository mKubunRepository
+			,MOperationRepository mOperationRepository
+			,MPostRepository mPostRepository
+			,MReceivehistoryRepository mReceivehistoryRepository
+			,MReceivestatusRepository mReceivestatusRepository
+			,MSendRepository mSendRepository
+			,MStatusRepository mStatusRepository
+			,MTaizaiRepository mTaizaiRepository
+			,MTcRepository mTcRepository
+			,MTctmpRepository mTctmpRepository
+			,MTenantRepository mTenantRepository
+			,MZaishituRepository mZaishituRepository
+			,StringCheckUtility stringCheckUtility
+			,CommonService commonService
+			,MOperationlogService mOperationlogService
+			,MessageSource messageSource
+			,TridentProperties tridentProperties)
+	{
+		this.mCardRepository = mCardRepository;
+		this.mCtRepository = mCtRepository;
+		this.mDeviceRepository = mDeviceRepository;
+		this.mErrpopRepository = mErrpopRepository;
+		this.mFgateRepository = mFgateRepository;
+		this.mFloorRepository = mFloorRepository;
+		this.mGateRepository = mGateRepository;
+		this.mHistoryRepository = mHistoryRepository;
+		this.mHolidayRepository = mHolidayRepository;
+		this.mInitialRepository = mInitialRepository;
+		this.mKgateRepository = mKgateRepository;
+		this.mKgroupRepository = mKgroupRepository;
+		this.mKubunRepository = mKubunRepository;
+		this.mOperationRepository = mOperationRepository;
+		this.mPostRepository = mPostRepository;
+		this.mReceivehistoryRepository = mReceivehistoryRepository;
+		this.mReceivestatusRepository = mReceivestatusRepository;
+		this.mSendRepository = mSendRepository;
+		this.mStatusRepository = mStatusRepository;
+		this.mTaizaiRepository = mTaizaiRepository;
+		this.mTcRepository = mTcRepository;
+		this.mTctmpRepository = mTctmpRepository;
+		this.mTenantRepository = mTenantRepository;
+		this.mZaishituRepository = mZaishituRepository;
+		this.stringCheckUtility = stringCheckUtility;
+		this.commonService = commonService;
+		this.mOperationlogService = mOperationlogService;
+		this.messageSource= messageSource; 
+		this.tridentProperties = tridentProperties;
+	}
+	
+	/**
+	 * メニュー画面テナント登録表示判断
+	 *　@return　bAuthResult
+	 */
+	public boolean getJudgmentTenant() {
+		
+		List<MInitial> initialList = mInitialRepository.getInitialList();
+		
+		if(initialList.size() > 0) {
+			// フィルター機能がONの場合
+			if(initialList.get(0).getFilterflag() == 1) {
+				return true;
+			}
+		}
+		return false;
+	}
+	
+	/**
+	 * 初期設定画面初期表示
+	 *　@return　bAuthResult
+	 */
+	public InitialForm initScreen() {
+		
+		InitialForm initialForm = new InitialForm();
+		
+		List<MInitial> initialList = mInitialRepository.getInitialList();
+		
+		// 各項目を設定
+		if(initialList.size() > 0) {
+			// 初期設定
+			initialForm.setCodesize(initialList.get(0).getCodesize());
+			initialForm.setScodesize(initialList.get(0).getScodesize());
+			initialForm.setPcodesize(initialList.get(0).getPcodesize());
+			initialForm.setKcodesize(initialList.get(0).getKcodesize());
+			initialForm.setHolidaySunflag(stringCheckUtility.getNthByte(initialList.get(0).getHolidayflag(),1));
+			initialForm.setHolidayMonflag(stringCheckUtility.getNthByte(initialList.get(0).getHolidayflag(),2));
+			initialForm.setHolidayTueflag(stringCheckUtility.getNthByte(initialList.get(0).getHolidayflag(),3));
+			initialForm.setHolidayWedflag(stringCheckUtility.getNthByte(initialList.get(0).getHolidayflag(),4));
+			initialForm.setHolidayThuflag(stringCheckUtility.getNthByte(initialList.get(0).getHolidayflag(),5));
+			initialForm.setHolidayFriflag(stringCheckUtility.getNthByte(initialList.get(0).getHolidayflag(),6));
+			initialForm.setHolidaySatflag(stringCheckUtility.getNthByte(initialList.get(0).getHolidayflag(),7));
+			initialForm.setAntimode(initialList.get(0).getAntimode());
+			initialForm.setGlobalantiflag(initialList.get(0).getGlobalantiflag());
+			initialForm.setBioflag(initialList.get(0).getBioflag());
+			initialForm.setBiosize(initialList.get(0).getBiosize());
+			initialForm.setUpcntflag(initialList.get(0).getUpcntflag());
+			initialForm.setUpcntsize(initialList.get(0).getUpcntsize());
+			initialForm.setCardpostupdownmode(initialList.get(0).getCardpostupdownmode());
+			initialForm.setFilterflag(initialList.get(0).getFilterflag());
+			initialForm.setLoginflag(initialList.get(0).getLoginflag());
+			initialForm.setPasorireadtype(initialList.get(0).getPasorireadtype());
+			initialForm.setPasorireadstart1(initialList.get(0).getPasorireadstart1());
+			initialForm.setPasorireadend1(initialList.get(0).getPasorireadend1());
+			initialForm.setPasorireadstart2(initialList.get(0).getPasorireadstart2());
+			initialForm.setPasorireadend2(initialList.get(0).getPasorireadend2());
+			initialForm.setPasorireadstart3(initialList.get(0).getPasorireadstart3());
+			initialForm.setPasorireadend3(initialList.get(0).getPasorireadend3());
+			// 詳細設定
+			initialForm.setWaittime(initialList.get(0).getWaittime());
+			initialForm.setRetrycnt(initialList.get(0).getRetrycnt());
+			initialForm.setLanwaittime(initialList.get(0).getLanwaittime());
+			initialForm.setLanretrycnt(initialList.get(0).getLanretrycnt());
+			initialForm.setZaiautodelflag(initialList.get(0).getZaiautodelflag());
+			initialForm.setZaikeepterm(initialList.get(0).getZaikeepterm());
+			if(initialList.get(0).getZaideltime().length() == 4 ) {
+				initialForm.setZaideltimeHour(initialList.get(0).getZaideltime().substring(0,2));
+				initialForm.setZaideltimeMinutes(initialList.get(0).getZaideltime().substring(2,4));
+			}
+			initialForm.setDatamoncnt(initialList.get(0).getDatamoncnt());
+			initialForm.setAutoupflag(initialList.get(0).getAutoupflag());
+			initialForm.setAutosendflag(initialList.get(0).getAutosendflag());
+			if(initialList.get(0).getAutouptime().length() == 4 ) {
+				initialForm.setAutouptimeHour(initialList.get(0).getAutouptime().substring(0,2));
+				initialForm.setAutouptimeMinutes(initialList.get(0).getAutouptime().substring(2,4));
+			}
+			initialForm.setAutouprealtime(initialList.get(0).getAutouprealtime());
+			initialForm.setAutouppath(initialList.get(0).getAutouppath());
+			initialForm.setAutoupfname(initialList.get(0).getAutoupfname());
+			initialForm.setAutoupoutpath(initialList.get(0).getAutoupoutpath());
+			initialForm.setRecvoutpath(initialList.get(0).getRecvoutpath());
+			initialForm.setDispmonflag(initialList.get(0).getDispmonflag());
+			initialForm.setGatedclkcl("#" + initialList.get(0).getGatedclkcl());
+			initialForm.setGatedclkop("#" + initialList.get(0).getGatedclkop());
+			initialForm.setGateerror("#" + initialList.get(0).getGateerror());
+			initialForm.setGatedopkcl("#" + initialList.get(0).getGatedopkcl());
+			initialForm.setGatedopkop("#" + initialList.get(0).getGatedopkop());
+			initialForm.setGateguardset("#" + initialList.get(0).getGateguardset());
+			initialForm.setGateguarderror("#" + initialList.get(0).getGateguarderror());
+			initialForm.setSensornouse("#" + initialList.get(0).getSensornouse());
+			initialForm.setSensorguardset("#" + initialList.get(0).getSensorguardset());
+			initialForm.setSensorguardfree("#" + initialList.get(0).getSensorguardfree());
+			initialForm.setSensorerror("#" + initialList.get(0).getSensorerror());
+			initialForm.setSensorlerrguardfree("#" + initialList.get(0).getSensorlerrguardfree());
+		} else {
+			// ★初期設定マスタにデフォルトデータを登録しておくため、このパターンに来ることはないはず
+			// 初期値を設定
+			initialForm.setCodesize(6);
+			initialForm.setScodesize(6);
+			initialForm.setPcodesize(3);
+			initialForm.setKcodesize(3);		
+			initialForm.setHolidaySunflag("0");
+			initialForm.setHolidayMonflag("0");
+			initialForm.setHolidayTueflag("0");
+			initialForm.setHolidayWedflag("0");
+			initialForm.setHolidayThuflag("0");
+			initialForm.setHolidayFriflag("0");
+			initialForm.setHolidaySatflag("0");	
+			initialForm.setAntimode(0);
+			initialForm.setGlobalantiflag(0);
+			initialForm.setBiosize(0);
+			initialForm.setBiosize(4);
+			initialForm.setUpcntflag(0);
+			initialForm.setUpcntsize(1);
+			initialForm.setCardpostupdownmode(0);
+			initialForm.setFilterflag(0);
+			initialForm.setLoginflag(0);
+			initialForm.setPasorireadtype(1);
+			initialForm.setPasorireadstart1(2);
+			initialForm.setPasorireadend1(17);	
+			initialForm.setPasorireadstart2(0);
+			initialForm.setPasorireadend2(0);
+			initialForm.setPasorireadstart3(0);
+			initialForm.setPasorireadend3(0);
+			// 詳細設定
+			initialForm.setWaittime(3);
+			initialForm.setRetrycnt(3);
+			initialForm.setLanwaittime(50);
+			initialForm.setLanretrycnt(3);
+			initialForm.setZaiautodelflag(1);
+			initialForm.setZaikeepterm(3);
+			initialForm.setZaideltimeHour("01");
+			initialForm.setZaideltimeMinutes("00");
+			initialForm.setDatamoncnt(30);
+			initialForm.setAutoupflag(0);
+			initialForm.setAutosendflag(0);
+			initialForm.setAutouptimeHour("01");
+			initialForm.setAutouptimeMinutes("00");
+			initialForm.setAutouprealtime(1);
+			initialForm.setAutouppath("");
+			initialForm.setAutoupfname("Upload.csv");
+			initialForm.setAutoupoutpath("");
+			initialForm.setRecvoutpath("");
+			initialForm.setDispmonflag(1);
+			initialForm.setGatedclkcl("#0000FF");
+			initialForm.setGatedclkop("#00FF00");
+			initialForm.setGateerror("#FF0000");
+			initialForm.setGatedopkcl("#00FFFF");
+			initialForm.setGatedopkop("#00FFFF");
+			initialForm.setGateguardset("#FFFF00");
+			initialForm.setGateguarderror("#FF0000");
+			initialForm.setSensornouse("#0000FF");
+			initialForm.setSensorguardset("#FFFF00");
+			initialForm.setSensorguardfree("#0000FF");
+			initialForm.setSensorerror("#FF0000");
+			initialForm.setSensorlerrguardfree("#00FFFF");			
+		}
+		
+		// リストボックスの内容を設定
+		// 1から20までのリストを生成
+		List<Integer> listOf1to20 = new ArrayList<>();
+        for (int i = 1; i <= 20; i++) {
+        	listOf1to20.add(i);
+        }
+        // 1から10までのリストを生成
+		List<Integer> listOf1to10 = new ArrayList<>();
+        for (int i = 1; i <= 10; i++) {
+        	listOf1to10.add(i);
+        }
+        // 2から49までのリストを生成
+		List<Integer> listOf2to49 = new ArrayList<>();
+        for (int i = 2; i <= 49; i++) {
+        	listOf2to49.add(i);
+        }
+        initialForm.setCodesizeList(listOf1to20);
+        initialForm.setScodesizeList(listOf1to20);
+        initialForm.setPcodesizeList(listOf1to10);
+        initialForm.setKcodesizeList(listOf1to10);
+        initialForm.setPasorireadList(listOf2to49);
+		
+		return initialForm;
+	}
+	
+	/**
+	 * 存在チェック
+	 * @param 
+	 * @param 
+	 *　@return　
+	 */
+	public ServiceResult<Boolean> checkExistenceInitialData() throws TridentException  {
+		
+		// 戻り値		
+		ServiceResult<Boolean> result = new ServiceResult<Boolean>();
+		// データが存在するか確認
+		List<MInitial> initialList = mInitialRepository.getInitialList();
+		
+		if(initialList.size() > 0) {
+			// データが存在する場合
+			result.setContent(true);
+		} else {
+			// データが存在しない場合、エラー
+			result.setContent(false);	
+		}
+		
+		result.setSuccess(true);
+		return result;
+	}
+
+	
+	/**
+	 * 初期設定登録
+	 * @param 
+	 * @param 
+	 *　@return　
+	 */	
+	@Transactional
+	public InitialForm initialRegist(HttpServletRequest request) throws TridentException  {
+	
+		InitialForm initialForm = new InitialForm();
+		
+		//操作ログ
+		// 操作ログを登録
+		mOperationlogService.RegistOperation(OperationCode.INITIAL_INITIAL_REGISTRATION.getCode());
+		
+		//画面からの値を取得する
+		String codesize = request.getParameter("codesize");
+		String scodesize = request.getParameter("scodesize");
+		String pcodesize = request.getParameter("pcodesize");
+		String kcodesize = request.getParameter("kcodesize");
+		String holidaySun = request.getParameter("holidaySun");
+		String holidayMon = request.getParameter("holidayMon");
+		String holidayTue = request.getParameter("holidaySun");
+		String holidayWed = request.getParameter("holidayWed");
+		String holidayThu = request.getParameter("holidayThu");
+		String holidayFri = request.getParameter("holidayFri");
+		String holidaySat = request.getParameter("holidaySat");
+		String antimode = request.getParameter("antimode");
+		String globalantiflag = request.getParameter("globalantiflag");
+		String bioflag = request.getParameter("bioflag");
+		String biosize = request.getParameter("biosize");
+		String cardpostupdownmode = request.getParameter("cardpostupdownmode");
+		String upcntflag = request.getParameter("upcntflag");
+		String upcntsize = request.getParameter("upcntsize");
+		String filterflag = request.getParameter("filterflag");
+		String pasorireadtype = request.getParameter("pasorireadtype");
+		String pasorireadstart1 = request.getParameter("pasorireadstart1");
+		String pasorireadend1 = request.getParameter("pasorireadend1");
+		String pasorireadstart2 = request.getParameter("pasorireadstart2");
+		String pasorireadend2 = request.getParameter("pasorireadend2");
+		String pasorireadstart3 = request.getParameter("pasorireadstart3");
+		String pasorireadend3 = request.getParameter("pasorireadend3");
+		
+		// 初期化ボタン押下判断
+		String holidayInitializationFlg = request.getParameter("holidayInitializationFlg");
+		String initializationFlg = request.getParameter("initializationFlg");
+		
+		// 登録する値を設定
+		MInitial mInitial = new MInitial();
+		mInitial.setAntimode(Integer.parseInt(antimode));
+		if(globalantiflag == null || "".equals(globalantiflag) == true) {
+			globalantiflag = "0";
+		}	
+		mInitial.setGlobalantiflag(Integer.parseInt(globalantiflag));
+		mInitial.setCardpostupdownmode(Integer.parseInt(cardpostupdownmode));
+		if(filterflag == null || "".equals(filterflag) == true) {
+			filterflag = "0";
+		}		
+		mInitial.setFilterflag(Integer.parseInt(filterflag));
+		mInitial.setPasorireadtype(Integer.parseInt(pasorireadtype));
+		if(pasorireadstart1 != null && "".equals(pasorireadstart1) == false) {
+			mInitial.setPasorireadstart1(Integer.parseInt(pasorireadstart1));
+		}	
+		if(pasorireadend1 != null && "".equals(pasorireadend1) == false) {
+			mInitial.setPasorireadend1(Integer.parseInt(pasorireadend1));
+		}		
+		if(pasorireadstart2 != null && "".equals(pasorireadstart2) == false) {
+			mInitial.setPasorireadstart2(Integer.parseInt(pasorireadstart2));
+		}	
+		if(pasorireadend2 != null && "".equals(pasorireadstart2) == false) {
+			mInitial.setPasorireadend2(Integer.parseInt(pasorireadstart2));
+		}			
+		if(pasorireadstart3 != null && "".equals(pasorireadstart3) == false) {
+			mInitial.setPasorireadstart3(Integer.parseInt(pasorireadstart3));
+		}	
+		if(pasorireadend3 != null && "".equals(pasorireadend3) == false) {
+			mInitial.setPasorireadend3(Integer.parseInt(pasorireadend3));
+		}		
+		
+		if("1".equals(holidayInitializationFlg) || "1".equals(initializationFlg)) {
+			if(holidaySun == null || "".equals(holidaySun) == true) {
+				holidaySun = "0";
+			}
+			if(holidayMon == null || "".equals(holidayMon) == true) {
+				holidayMon = "0";
+			}
+			if(holidayTue == null || "".equals(holidayTue) == true) {
+				holidayTue = "0";
+			}
+			if(holidayWed == null || "".equals(holidayWed) == true) {
+				holidayWed = "0";
+			}
+			if(holidayThu == null || "".equals(holidayThu) == true) {
+				holidayThu = "0";
+			}
+			if(holidayFri == null || "".equals(holidayFri) == true) {
+				holidayFri = "0";
+			}
+			if(holidaySat == null || "".equals(holidaySat) == true) {
+				holidaySat = "0";
+			}
+			mInitial.setHolidayflag(holidaySun + holidayMon + holidayTue + holidayWed + holidayThu + holidayFri + holidaySat);
+		}
+		if("1".equals(initializationFlg)) {
+			mInitial.setCodesize(Integer.parseInt(codesize));
+			mInitial.setScodesize(Integer.parseInt(scodesize));
+			mInitial.setPcodesize(Integer.parseInt(pcodesize));
+			mInitial.setKcodesize(Integer.parseInt(kcodesize));
+			if(bioflag == null || "".equals(bioflag) == true) {
+				bioflag = "0";
+			}			
+			mInitial.setBioflag(Integer.parseInt(bioflag));
+			mInitial.setBiosize(Integer.parseInt(biosize));
+			if(upcntflag == null || "".equals(upcntflag) == true) {
+				upcntflag = "0";
+			}				
+			mInitial.setUpcntflag(Integer.parseInt(upcntflag));
+			mInitial.setUpcntsize(Integer.parseInt(upcntsize));			
+		}
+		
+		//DBバックアップ
+		boolean bret = true;
+		if("1".equals(holidayInitializationFlg) || "1".equals(initializationFlg)) {
+			bret = this.dbBackup(holidayInitializationFlg,initializationFlg);
+		}
+		
+		if (bret == false) {
+			String errorMsg = messageSource.getMessage("initial.error.backupFail", null, LocaleContextHolder.getLocale());
+			initialForm.setMessage(errorMsg);
+			
+		} else {
+			// 登録
+			mInitialRepository.updateInitialInfo(mInitial,holidayInitializationFlg,initializationFlg);			
+		}
+
+		// メニューのテナント登録の表示・非表示判定のセッション情報を書き換える
+		Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+		UserDetailsImpl user = (UserDetailsImpl) auth.getPrincipal();
+		// 初期設定マスタのフィルター機能フラグを取得し、User情報に保持しておく
+		if ("1".equals(filterflag) == true){
+			// テナント登録表示
+			user.getUser().setFilterflag(1);
+		} else {
+			// テナント登録非表示
+			user.getUser().setFilterflag(0);
+		}
+		
+		// 画面表示のための値を取得
+		initialForm = this.initScreen();
+		initialForm.setMessage(messageSource.getMessage("initial.regist.completed", null, LocaleContextHolder.getLocale()));
+		return initialForm;
+	}
+	
+	private boolean dbBackup(String holidayInitializationFlg, String initializationFlg) throws TridentException {
+		
+		// 汎用テーブルからバックアップ先のパスを取得する
+		String filePath = commonService.getParameterValue1(ParameterName.INIMAKE_INIT_BACKUP_FILEPATH);
+
+		Date now = new Date();
+		SimpleDateFormat sdfDbYmdHhMmSs = new SimpleDateFormat("yyyyMMddHHmmss");
+		SimpleDateFormat sdfDbYmd = new SimpleDateFormat("yyyyMMdd");
+		String fileymd = sdfDbYmdHhMmSs.format(now);
+		String fileName = sdfDbYmd.format(now);
+		
+		filePath = filePath + "/" + fileymd + "/";
+		File dir = new File(filePath);
+		dir.mkdir();
+	
+		if ("1".equals(initializationFlg) == true) {
+			fileName = "TRIDENT_backup_" + fileName + ".dump";
+		} else {
+			fileName = "TRIDENT_＜m_holiday＞_backup_" + fileName + ".dump";
+		}
+		// ★DBサーバにあるexeを実行するため、ローカルでは動かせない。ローカルで実行する際はコメントアウトして下さい。
+		Boolean bRet = postgresBackup(filePath,fileName, holidayInitializationFlg,initializationFlg);
+		if (bRet == false) {
+			return false;
+		}	
+		// テーブルのデータを削除する(次のテーブルは除く。)
+		/*
+		 *  ①	m_user
+			②	m_initial
+			③	m_operationlog
+			④	m_gatetype
+			⑤	m_devicetype
+			⑥	m_sendorder
+			⑦	m_note
+			⑧	m_common
+		 */
+		//DELETE(TRUNCATEはコミットしても戻せないため)
+		if ("1".equals(initializationFlg) == true) {
+			mCardRepository.deleteAll();
+			mCtRepository.deleteAll();
+			mDeviceRepository.deleteAll();
+			mErrpopRepository.deleteAll();
+			mFgateRepository.deleteAll();
+			mFloorRepository.deleteAll();
+			mGateRepository.deleteAll();
+			mHistoryRepository.deleteAll();
+			mKgateRepository.deleteAll();
+			mKgroupRepository.deleteAll();
+			mKubunRepository.deleteAll();
+			mOperationRepository.deleteAll();
+			mPostRepository.deleteAll();
+			mReceivehistoryRepository.deleteAll();
+			mReceivestatusRepository.deleteAll();
+			mSendRepository.deleteAll();
+			mStatusRepository.deleteAll();
+			mTaizaiRepository.deleteAll();
+			mTcRepository.deleteAll();
+			mTctmpRepository.deleteAll();
+			mTenantRepository.deleteAll();
+			mZaishituRepository.deleteAll();
+		}
+		mHolidayRepository.deleteAll();
+		
+		return true;
+	}
+
+	
+	private boolean postgresBackup(String filePath, String fileName, String holidayInitializationFlg, String initializationFlg) throws TridentException {
+
+		/* コマンド例
+		 * 	
+		  	pg_dump -U TRIDENT -d TRIDENT -f C:\TRIDENTApplication\InitBK\mydatabase.dump
+			TRIDENTPASS
+
+			pg_dump -U TRIDENT -d TRIDENT -t m_holiday -f C:\TRIDENTApplication\InitBK\TRIDENT_m_holiday_backup_YYYYMMDD.dump
+			TRIDENTPASS		
+		*/
+		String pgDumpPath = tridentProperties.getPgDumpPath();
+		String host = tridentProperties.getHost();
+		String port = tridentProperties.getPort();
+		String database = tridentProperties.getDatabase();
+		String user = tridentProperties.getUser();
+		String password = tridentProperties.getPassword();
+		/*
+	        String pgDumpPath = "C:/Program Files/PostgreSQL/16/bin/pg_dump.exe"; // pg_dumpのパス   
+	        String host = "192.168.4.230"; //"localhost";
+	        String port = "5432";
+	        String database = "TRIDENT"; //"your_database";
+	        String user = "TRIDENT"; //"your_user";
+	        String password = "TRIDENTPASS"; //"your_password";
+		 */	
+	        String outputFile = filePath + fileName;// "/path/to/backup.sql";
+	        ProcessBuilder pb = new ProcessBuilder();
+	        if ("1".equals(initializationFlg) == true) {
+	            pb = new ProcessBuilder(
+	                    pgDumpPath,
+	    	                "-h", host,
+	    	                "-p", port,
+		                    "-U", user,
+		                    "-F", "c", // SQL形式でバックアップ
+		                    "-f", outputFile,
+		                    "-d", database
+	                );	        	
+	        } else {
+	        	// 休日マスタテーブルのみバックアップ
+	            pb = new ProcessBuilder(
+	                    pgDumpPath,
+	    	                "-h", host,
+	    	                "-p", port,
+		                    "-U", user,
+		                    "-F", "c", // SQL形式でバックアップ
+		                    "-f", outputFile,
+		                    "-d", database,
+		                    "-t", "m_holiday"
+	                );	        	
+	        }
+
+            // 環境変数にパスワードを設定
+            pb.environment().put("PGPASSWORD", password);
+   
+			try {
+
+				Process process = pb.start();
+
+	            BufferedReader reader = new BufferedReader(new InputStreamReader(process.getErrorStream()));
+	            String line;
+	            while ((line = reader.readLine()) != null) {
+	                System.err.println(line);
+	            }
+
+	            int exitCode = process.waitFor();
+	            if (exitCode == 0) {
+	                System.out.println("バックアップが正常に完了しました: " + outputFile);
+	                
+	            } else {
+	                System.err.println("バックアップ中にエラーが発生しました。");
+	                return false;
+	            }
+	           
+			} catch (IOException e) {
+				e.printStackTrace();
+				return false;
+			} catch (InterruptedException e) {
+				e.printStackTrace();
+				return false;
+			}
+            return true;
+	    }
+	
+	
+	/**
+	 * 初期設定登録
+	 * @param 
+	 * @param 
+	 *　@return　
+	 */	
+	@Transactional
+	public InitialForm advancedsettingsRegist(HttpServletRequest request) throws TridentException  {
+	
+		InitialForm initialForm = new InitialForm();
+		
+		//操作ログ
+		// 操作ログを登録
+		mOperationlogService.RegistOperation(OperationCode.INITIAL_ADVANCEDSETTING_REGISTRATION.getCode());
+		
+		//画面からの値を取得する
+		String waittime = request.getParameter("waittime");
+		String retrycnt = request.getParameter("retrycnt");
+		String lanwaittime = request.getParameter("lanwaittime");
+		String lanretrycnt = request.getParameter("lanretrycnt");
+		String zaiautodelflag = request.getParameter("zaiautodelflag");
+		String zaikeepterm = request.getParameter("zaikeepterm");
+		String zaideltimeHour = request.getParameter("zaideltimeHour");
+		String zaideltimeMinutes = request.getParameter("zaideltimeMinutes");
+		String datamoncnt = request.getParameter("datamoncnt");
+		String autoupflag = request.getParameter("autoupflag");
+		String autosendflag = request.getParameter("autosendflag");
+		String autouptimeHour = request.getParameter("autouptimeHour");
+		String autouptimeMinutes = request.getParameter("autouptimeMinutes");
+		String autouprealtime = request.getParameter("autouprealtime");
+		String autouppath = request.getParameter("autouppath");
+		String autoupfname = request.getParameter("autoupfname");
+		String autoupoutpath = request.getParameter("autoupoutpath");
+		String recvoutpath = request.getParameter("recvoutpath");
+		String dispmonflag = request.getParameter("dispmonflag");
+		String gatedclkcl = request.getParameter("gatedclkcl");
+		String gatedclkop = request.getParameter("gatedclkop");
+		String gateerror = request.getParameter("gateerror");
+		String gatedopkcl = request.getParameter("gatedopkcl");
+		String gateguardset = request.getParameter("gateguardset");
+		String gatedopkop = request.getParameter("gatedopkop");
+		String gateguarderror = request.getParameter("gateguarderror");
+		String sensornouse = request.getParameter("sensornouse");
+		String sensorguardset = request.getParameter("sensorguardset");
+		String sensorguardfree = request.getParameter("sensorguardfree");
+		String sensorerror = request.getParameter("sensorerror");
+		String sensorlerrguardfree = request.getParameter("sensorlerrguardfree");
+
+		// 登録する値を設定
+		MInitial mInitial = new MInitial();
+		mInitial.setWaittime(Integer.parseInt(waittime));
+		mInitial.setRetrycnt(Integer.parseInt(retrycnt));
+		mInitial.setLanwaittime(Integer.parseInt(lanwaittime));
+		mInitial.setLanretrycnt(Integer.parseInt(lanretrycnt));
+		mInitial.setZaiautodelflag(Integer.parseInt(zaiautodelflag));
+		mInitial.setZaikeepterm(Integer.parseInt(zaikeepterm));
+		mInitial.setZaideltime(zaideltimeHour + zaideltimeMinutes);
+		mInitial.setDatamoncnt(Integer.parseInt(datamoncnt));
+		mInitial.setAutoupflag(Integer.parseInt(autoupflag));
+		mInitial.setAutosendflag(Integer.parseInt(autosendflag));
+		mInitial.setAutouptime(autouptimeHour + autouptimeMinutes);
+		mInitial.setAutouprealtime(Integer.parseInt(autouprealtime));
+		mInitial.setAutouppath(autouppath);
+		mInitial.setAutoupfname(autoupfname);
+		mInitial.setAutoupoutpath(autoupoutpath);
+		mInitial.setRecvoutpath(recvoutpath);
+		mInitial.setDispmonflag(Integer.parseInt(dispmonflag));
+		mInitial.setGatedclkcl(gatedclkcl.substring(1, gatedclkcl.length()));
+		mInitial.setGatedclkop(gatedclkop.substring(1, gatedclkop.length()));
+		mInitial.setGateerror(gateerror.substring(1, gateerror.length()));
+		mInitial.setGatedopkcl(gatedopkcl.substring(1, gatedopkcl.length()));
+		mInitial.setGateguardset(gateguardset.substring(1, gateguardset.length()));
+		mInitial.setGatedopkop(gatedopkop.substring(1, gatedopkop.length()));
+		mInitial.setGateguarderror(gateguarderror.substring(1, gateguarderror.length()));
+		mInitial.setSensornouse(sensornouse.substring(1, sensornouse.length()));
+		mInitial.setSensorguardset(sensorguardset.substring(1, sensorguardset.length()));
+		mInitial.setSensorguardfree(sensorguardfree.substring(1, sensorguardfree.length()));
+		mInitial.setSensorerror(sensorerror.substring(1, sensorerror.length()));
+		mInitial.setSensorlerrguardfree(sensorlerrguardfree.substring(1, sensorlerrguardfree.length()));
+		
+		// 登録
+		mInitialRepository.updateAdvancedsettings(mInitial);		
+		
+		// 画面表示のための値を取得
+		initialForm = this.initScreen();
+		initialForm.setMessage(messageSource.getMessage("initial.regist.completed", null, LocaleContextHolder.getLocale()));
+
+		return initialForm;
+	}
+}

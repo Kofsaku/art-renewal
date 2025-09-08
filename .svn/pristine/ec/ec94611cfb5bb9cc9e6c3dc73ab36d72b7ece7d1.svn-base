@@ -1,0 +1,285 @@
+package jp.co.art.trident.repository;
+
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.jdbc.core.RowMapper;
+import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
+import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
+import org.springframework.stereotype.Repository;
+
+import jp.co.art.trident.model.entity.GateEdit;
+
+/**ゲート編集画面のリポジトリクラス**/
+@Repository
+public class GateEditRepository {
+
+	@Autowired
+	private final NamedParameterJdbcTemplate namedParameterJdbcTemplate;
+	
+    public GateEditRepository(NamedParameterJdbcTemplate namedParameterJdbcTemplate) {
+        this.namedParameterJdbcTemplate = namedParameterJdbcTemplate;
+    }
+    
+    private RowMapper<GateEdit> resultSetMapper() {
+    	
+    	
+    	return new RowMapper<GateEdit>() {
+
+			@Override
+			public GateEdit mapRow(ResultSet rs, int rowNum) throws SQLException {
+			
+				GateEdit mgate = new GateEdit();
+				mgate.setGateno(rs.getString("gateno"));
+				mgate.setHosttype(rs.getString("hosttype"));
+				mgate.setHostno(rs.getString("hostno"));
+				mgate.setAddressno(rs.getString("addressno"));
+				mgate.setGatename(rs.getString("gatename"));
+				mgate.setGatetype_4(rs.getInt("gatetype_4"));
+				mgate.setCtimer(rs.getString("ctimer"));
+				mgate.setCtimername(rs.getString("ctimername"));
+				return mgate;
+			}
+		};
+    }
+    
+    private RowMapper<Map<String, Object>> resultSetSendMapper() {
+    	
+    	
+    	return new RowMapper<Map<String, Object>>() {
+
+			@Override
+			public Map<String, Object> mapRow(ResultSet rs, int rowNum) throws SQLException {
+				Map<String, Object> map = new HashMap<>();
+				
+				map.put("gateno", rs.getString("gateno"));
+				map.put("hosttype", rs.getString("hosttype"));
+				map.put("hostno", rs.getString("hostno"));
+				map.put("addressno", rs.getString("addressno"));
+				map.put("rgateno", rs.getString("rgateno"));
+				map.put("ctimer", rs.getString("ctimer"));
+				map.put("data1", rs.getString("data1"));
+				map.put("data2", rs.getString("data2"));
+				map.put("data3", rs.getString("data3"));
+				map.put("data4", rs.getString("data4"));
+				map.put("data5", rs.getString("data5"));
+				map.put("data6", rs.getString("data6"));
+				map.put("data7", rs.getString("data7"));
+				map.put("data8", rs.getString("data8"));
+				map.put("data9", rs.getString("data9"));
+				map.put("data10", rs.getString("data10"));
+				map.put("data11", rs.getString("data11"));
+				map.put("data12", rs.getString("data12"));
+				map.put("data13", rs.getString("data13"));
+				map.put("data14", rs.getString("data14"));
+				map.put("data15", rs.getString("data15"));
+				map.put("data16", rs.getString("data16"));
+				
+				return map;
+			}
+		};
+    }
+    
+    /**
+     * 指定した条件をもとに、DBからゲート情報を取得し、リストとして返す
+     * @param gateno ゲート番号(登録時以外はnull)
+     * @param tenantGate テナントゲート(フィルター機能なしの場合はnull)
+     * @return
+     */
+    public List<GateEdit> getGateList(Integer gateno, String tenantGate){
+    	
+    	StringBuilder sb = new StringBuilder();
+    	sb.append("SELECT ");
+    	sb.append(" TO_CHAR(gateno,'FM0000') as gateno ");
+    	sb.append(" ,hosttype ");
+    	sb.append(" ,TO_CHAR(hostno,'FM000') as hostno ");
+    	sb.append(" ,TO_CHAR(addressno,'FM00') as addressno ");
+    	sb.append(" ,m_gate.name  as gatename ");
+    	sb.append(" ,gatetype_4 ");
+    	sb.append("    ,CASE ");
+		sb.append("        WHEN gatetype_4 = 0 THEN 'XXX'");
+		sb.append("        ELSE TO_CHAR(ctimer, 'FM000')");
+		sb.append("    END AS ctimer,");
+		sb.append("    CASE");
+		sb.append("        WHEN gatetype_4 = 0 THEN '設定できません'");
+		sb.append("        ELSE COALESCE(m_ct.name, '該当なし')");
+		sb.append("    END AS ctimername ");
+    	sb.append("FROM ");
+    	sb.append(" \"TRIDENT\".m_gate ");
+
+    	sb.append("LEFT OUTER JOIN ");
+    	sb.append(" \"TRIDENT\".m_ct ");
+    	sb.append("ON m_gate.ctimer = m_ct.ctno ");
+    	
+    	sb.append("WHERE");
+    	sb.append("    gatetype_0 = '1'");
+    	
+    	// ログインテナントゲートあり(フィルター機能あり)の場合、対象ゲート番号を条件に追加する
+    	if (tenantGate != null && !tenantGate.isEmpty()) {
+
+    	    sb.append(" AND (");
+
+    	    boolean hasOne = false;
+
+    	    // 1920バイトの文字列を1文字ずつチェック
+    	    for (int i = 0; i < tenantGate.length(); i++) {
+    	        char c = tenantGate.charAt(i);
+    	        int tenantGateno = i + 1; // バイト位置 = tenantGateno番号
+
+    	        if (c == '1') {
+    	            if (hasOne) {
+    	                sb.append(" OR ");
+    	            }
+    	            sb.append("gateno = ").append(tenantGateno);
+    	            hasOne = true;
+    	        }
+    	    }
+
+    	    if (!hasOne) {
+    	        // テナントのゲートがすべて0の場合、絶対にマッチしない条件にする
+    	        sb.append("1=0");
+    	    }
+
+    	    sb.append(") "); // 閉じ括弧
+    	}
+    	
+    	// ゲート番号の指定がある場合、ゲート番号も条件に追加する
+    	// ※登録時のみ
+    	if (gateno != null) {
+    	    sb.append(" AND");
+    	    sb.append(" gateno = " + gateno + " ");
+    	}
+    	
+    	sb.append("ORDER BY ");
+    	sb.append(" gateno  ");
+		
+    	return namedParameterJdbcTemplate.query(sb.toString(), resultSetMapper());
+    }
+    
+    /**
+     * 送信時、指定したホスト番号とアドレス番号をもとに、DBからゲートデータと連続解錠時間帯データを取得する
+     * @param hostno ゲート番号(登録時以外はnull)
+     * @param addressno テナントゲート(フィルター機能なしの場合はnull)
+     * @return
+     */
+    public List<Map<String, Object>> getGateANDCTList(Integer hostno, Integer addressno){
+    	
+    	StringBuilder sb = new StringBuilder();
+    	sb.append("SELECT ");
+    	sb.append(" TO_CHAR(gateno,'FM0000') as gateno ");
+    	sb.append(" ,hosttype ");
+    	sb.append(" ,TO_CHAR(hostno,'FM000') as hostno ");
+    	sb.append(" ,TO_CHAR(addressno,'FM000') as addressno ");
+    	sb.append(" ,rgateno ");
+    	sb.append(" ,TO_CHAR(ctimer,'FM000') as ctimer ");
+    	sb.append(" ,m_ct.data1 ");
+    	sb.append(" ,m_ct.data2 ");
+    	sb.append(" ,m_ct.data3 ");
+    	sb.append(" ,m_ct.data4 ");
+    	sb.append(" ,m_ct.data5 ");
+    	sb.append(" ,m_ct.data6 ");
+    	sb.append(" ,m_ct.data7 ");
+    	sb.append(" ,m_ct.data8 ");
+    	sb.append(" ,m_ct.data9 ");
+    	sb.append(" ,m_ct.data10 ");
+    	sb.append(" ,m_ct.data11 ");
+    	sb.append(" ,m_ct.data12 ");
+    	sb.append(" ,m_ct.data13 ");
+    	sb.append(" ,m_ct.data14 ");
+    	sb.append(" ,m_ct.data15 ");
+    	sb.append(" ,m_ct.data16 ");
+    	sb.append("FROM ");
+    	sb.append(" \"TRIDENT\".m_gate ");
+
+    	sb.append("LEFT OUTER JOIN ");
+    	sb.append(" \"TRIDENT\".m_ct ");
+    	sb.append("ON m_gate.ctimer = m_ct.ctno ");
+    	
+    	sb.append("WHERE");
+    	sb.append("    gatetype_0 = '1'");
+    	sb.append(" AND hostno = :hostno ");
+    	sb.append(" AND addressno = :addressno ");
+    	
+    	sb.append("ORDER BY ");
+    	sb.append(" gateno  ");
+		
+        MapSqlParameterSource param = new MapSqlParameterSource();
+        param.addValue("hostno", hostno );
+        param.addValue("addressno", addressno );
+        
+    	return namedParameterJdbcTemplate.query(sb.toString(), param, resultSetSendMapper());
+    }
+    
+    /**
+     * 指定した条件で、DBのゲート情報を更新する
+     * @param gate 画面入力された更新内容・更新条件
+     * @param ctimerflag 連解フラグ(連解番号がXXXかどうか)
+     * @return
+     */
+    public void update(GateEdit gate,boolean ctimerflag){
+    	
+    	StringBuilder sb = new StringBuilder();
+    	sb.append("UPDATE ");
+    	sb.append(" \"TRIDENT\".m_gate ");
+    	sb.append("SET ");
+    	sb.append(" name = :name ");
+    	
+    	// 連解フラグがfalse(連解番号"XXX"以外)の場合、SQL分を追加
+    	if(ctimerflag == false) {
+    		sb.append(" ,ctimer = :ctimer ");
+    	}
+    	
+    	sb.append("WHERE ");
+    	sb.append(" gateno = :gateno ");
+    	
+		//パラメータを設定
+		MapSqlParameterSource  param = new MapSqlParameterSource();
+    		
+		param.addValue("gateno", Integer.parseInt(gate.getGateno()));
+		param.addValue("name", gate.getGatename());
+		param.addValue("ctimer", Integer.parseInt(gate.getCtimer()));
+    	
+		namedParameterJdbcTemplate.update(sb.toString(), param);
+    }
+    
+    /**
+     * 削除時、指定した連解番号を設定しているゲートデータを取得(取得できれば削除しない)
+     * @param ctimerno 連解番号
+     * @return
+     */
+    public List<GateEdit> getGateListByCtimer(Integer ctimerno){
+    	
+    	StringBuilder sb = new StringBuilder();
+    	sb.append("SELECT ");
+    	sb.append(" TO_CHAR(gateno,'FM0000') as gateno ");
+    	sb.append(" ,hosttype ");
+    	sb.append(" ,TO_CHAR(hostno,'FM000') as hostno ");
+    	sb.append(" ,TO_CHAR(addressno,'FM00') as addressno ");
+    	sb.append(" ,m_gate.name  as gatename ");
+    	sb.append(" ,gatetype_4 ");
+    	sb.append("    ,CASE ");
+		sb.append("        WHEN gatetype_4 = 0 THEN 'XXX'");
+		sb.append("        ELSE TO_CHAR(ctimer, 'FM000')");
+		sb.append("    END AS ctimer,");
+		sb.append("    CASE");
+		sb.append("        WHEN gatetype_4 = 0 THEN '設定できません'");
+		sb.append("        ELSE COALESCE(m_ct.name, '該当なし')");
+		sb.append("    END AS ctimername ");
+    	sb.append("FROM ");
+    	sb.append(" \"TRIDENT\".m_gate ");
+
+    	sb.append("LEFT OUTER JOIN ");
+    	sb.append(" \"TRIDENT\".m_ct ");
+    	sb.append("ON m_gate.ctimer = m_ct.ctno ");
+    	
+    	sb.append("WHERE");
+	    sb.append("    m_gate.ctimer = " + ctimerno + " ");
+		
+    	return namedParameterJdbcTemplate.query(sb.toString(), resultSetMapper());
+    }
+    
+}

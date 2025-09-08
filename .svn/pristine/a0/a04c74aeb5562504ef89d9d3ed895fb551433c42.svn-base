@@ -1,0 +1,53 @@
+package jp.co.art.trident.model.entity;
+
+import java.io.Serializable;
+
+/**ゲートタイプマスタを保持するクラス**/
+
+public class MGatetype implements Serializable {
+
+	private static final long serialVersionUID = -4550795792305381402L;
+
+	/**
+     * デフォルトコンストラクタ
+     */	
+	public MGatetype(){};
+	
+	/**
+     * デフォルトコンストラクタ
+     */
+	public MGatetype(int gatetype_no, String gatetype_name, int can_edit){
+		this.gatetype_no = gatetype_no;
+		this.gatetype_name = gatetype_name;
+		this.can_edit = can_edit;
+	};
+	
+	/** ゲートタイプ番号 */
+	private int gatetype_no;
+	
+	/** ゲートタイプ名称 */
+	private String gatetype_name;
+	
+	/** 変更可否フラグ */
+	private int can_edit;
+	
+	//　以下、ゲッター、セッター　-----------------------
+	public int getGatetype_no() {
+		return gatetype_no;
+	}
+	public void setGatetype_no(int gatetype_no) {
+		this.gatetype_no = gatetype_no;
+	}
+	public String getGatetype_name() {
+		return gatetype_name;
+	}
+	public void setGatetype_name(String gatetype_name) {
+		this.gatetype_name = gatetype_name;
+	}
+	public int getCan_edit() {
+		return can_edit;
+	}
+	public void setCan_edit(int can_edit) {
+		this.can_edit = can_edit;
+	}
+}

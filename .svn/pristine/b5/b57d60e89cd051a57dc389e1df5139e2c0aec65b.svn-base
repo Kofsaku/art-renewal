@@ -1,0 +1,77 @@
+
+
+package jp.co.art.trident.model.entity;
+
+import java.io.Serializable;
+
+/**テナントマスタクラス**/
+public class MTenant implements Serializable {
+
+	private static final long serialVersionUID = -9023874381032306738L;
+
+	/**
+     * デフォルトコンストラクタ
+     */
+	public MTenant() {};
+	
+	/**
+     * デフォルトコンストラクタ
+     */
+	public MTenant(String tenantno
+			,String name
+			,String kana
+			,String gate
+			) {
+		this.tenantno = tenantno;
+		this.name = name;
+		this.kana = kana;
+		this.gate = gate;
+	};
+	
+	/** テナント番号 */
+    private String tenantno;
+    
+    /** テナント名称 */
+    private String name;
+    
+    /** テナント名称カナ */
+    private String kana;
+    
+    /** ゲート(1920バイト) */
+    private String gate;
+
+	//　以下、ゲッター、セッター　-----------------------
+
+    public String getTenantno() {
+        return tenantno;
+    }
+
+    public void setTenantno(String tenantno) {
+        this.tenantno = tenantno;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    public String getKana() {
+        return kana;
+    }
+
+    public void setKana(String kana) {
+        this.kana = kana;
+    }
+
+    public String getGate() {
+        return gate;
+    }
+
+    public void setGate(String gate) {
+        this.gate = gate;
+    }
+
+}

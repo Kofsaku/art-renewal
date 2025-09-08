@@ -1,0 +1,40 @@
+package jp.co.art.trident.service.common;
+
+import org.springframework.stereotype.Service;
+
+/**
+ * <b>権限情報のサービスクラス.</b> <br/>
+ * 
+ * <pre>
+ * </pre>
+ */
+@Service
+public class AuthorityService {
+	
+	/**
+	 * コンストラクタ
+	 * 
+	 */	
+	public AuthorityService() {
+	}
+	
+	/**
+	 * パラメータ名列挙型
+	 */
+	public enum AuthorityNum{
+		GATEEDIT_REGIST_NUM(22),
+		GATEEDIT_PRINT_NUM(23),
+		GATEEDIT_DATAOUT_NUM(24),
+		CTIMER_REGIST_NUM(25);
+		
+	    private final int num;
+
+	    AuthorityNum(int num) {
+	        this.num = num;
+	    }
+	    
+	    public int getNum() {
+	        return num;
+	    }
+	}
+}

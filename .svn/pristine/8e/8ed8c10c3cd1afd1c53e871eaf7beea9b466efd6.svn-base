@@ -1,0 +1,496 @@
+package jp.co.art.trident.service;
+
+import java.util.ArrayList;
+import java.util.List;
+
+import org.springframework.context.MessageSource;
+import org.springframework.context.i18n.LocaleContextHolder;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import jakarta.servlet.http.HttpServletRequest;
+import jp.co.art.trident.component.StringCheckUtility;
+import jp.co.art.trident.exception.TridentException;
+import jp.co.art.trident.model.ServiceResult;
+import jp.co.art.trident.model.entity.MDevice;
+import jp.co.art.trident.model.form.DeviceForm;
+import jp.co.art.trident.repository.MDeviceRepository;
+import jp.co.art.trident.repository.MDevicetypeRepository;
+import jp.co.art.trident.service.common.MOperationlogService;
+import jp.co.art.trident.service.common.MOperationlogService.OperationCode;
+
+/**装置登録・編集画面のサービスクラス**/
+@Service
+public class DeviceService {
+	/**装置マスタのリポジトリ */
+	private final MDeviceRepository mDeviceRepository;
+	
+	/** 操作ログサービスクラス */
+	private final MOperationlogService mOperationlogService;
+	
+	/** メッセージソースクラス */
+	private final MessageSource messageSource;
+	
+	/** 文字列関連のチェックユーティリティクラス */
+	private final StringCheckUtility stringCheckUtility;
+	
+	/*コンストラクタ*/
+	public DeviceService(MDevicetypeRepository mDevicetypeRepository
+			,MDeviceRepository mDeviceRepository
+			,MOperationlogService mOperationlogService
+			,MessageSource messageSource
+			,StringCheckUtility stringCheckUtility) {
+		this. mDeviceRepository = mDeviceRepository;
+		this.mOperationlogService = mOperationlogService;
+		this.messageSource = messageSource;
+		this.stringCheckUtility = stringCheckUtility;
+	}
+
+	/**
+	 * 装置登録・編集画面の初期表示処理を行う関数
+	 * @return 初期化済みの DeviceForm オブジェクト
+	 * @throws TridentException 
+	 */
+	public DeviceForm initScreen() throws TridentException {
+	    // オブジェクト生成
+	    DeviceForm deviceForm = new DeviceForm();
+	    // データベースなどから登録済みの装置一覧（MDevice のリスト）を取得
+	    List<MDevice> mdeviceList = mDeviceRepository.getDeviceList();
+	 
+	    // 取得した MDevice の一覧を DeviceForm にセット
+	    deviceForm.setMstDeviceList(mdeviceList);
+	    // 入力欄を空欄に
+	    deviceForm.setHostno("");
+	    deviceForm.setAddressno("");
+	    deviceForm.setIpaddress("");
+	    deviceForm.setPortno("");
+	    deviceForm.setDevicename("");
+	    // コントローラに返却
+	    //deviceForm=一覧表示用データと入力フォーム用データ保持
+	    return deviceForm;
+	}
+	
+	/**
+	 * 装置情報を取得する関数
+	 * （ホスト番号とアドレス番号を使用しデータを取得)
+	 * @param deviceForm 入力されたホスト番号・アドレス番号を含むフォーム
+	 * @return result 検索結果（該当する装置情報があればフォームにセット）
+	 * @throws TridentException
+	 */
+	public ServiceResult<DeviceForm> getDeviceData(DeviceForm deviceForm) throws TridentException {
+
+	    // 結果を返すための ServiceResult を用意
+	    ServiceResult<DeviceForm> result = new ServiceResult<>();
+
+	    // フォームからホスト番号とアドレス番号を取得
+	    String hostnoStr = deviceForm.getHostno();
+	    String addressnoStr = deviceForm.getAddressno();
+
+	    // ホスト番号またはアドレス番号が空欄の場合は処理を中断し、そのままフォームを返却
+	    if (hostnoStr == null || hostnoStr.trim().isEmpty() ||
+	        addressnoStr == null || addressnoStr.trim().isEmpty()) {
+
+	        result.setSuccess(true);
+	        result.setContent(deviceForm);
+	        return result;
+	    }
+
+	    // 入力チェック（数値であるか、桁数が適切かなど）
+	    List<String> errorList = new ArrayList<>();
+	    boolean isValidHost = this.checkHostNo(errorList, hostnoStr, -1);
+	    boolean isValidAddress = this.checkAddressNo(errorList, addressnoStr, -1);
+
+	    // どちらかが不正な場合は検索を行わず、そのままフォームを返却
+	    if (!isValidHost || !isValidAddress) {
+	        result.setSuccess(true);
+	        result.setContent(deviceForm);
+	        return result;
+	    }
+
+	    // 入力されたホスト番号とアドレス番号を数値に変換
+	    Integer hostno = Integer.valueOf(hostnoStr);
+	    Integer addressno = Integer.valueOf(addressnoStr);
+
+	    // ホスト番号とアドレス番号を条件に、該当する装置データを1件検索
+	    List<MDevice> deviceList = mDeviceRepository.getDeviceListByHostnoAndAddressno(hostno, addressno);
+
+	    // データが見つからなかった場合は、フォームのまま返却（バリデーションエラーではないので成功扱い）
+	    if (deviceList == null || deviceList.isEmpty()) {
+	        result.setSuccess(true);
+	        result.setContent(deviceForm);
+	        return result;
+	    }
+	    // 該当データが見つかった場合は、フォームに装置情報をセット
+	    MDevice device = deviceList.get(0);
+	    deviceForm.setHostno(String.valueOf(device.getHostno()));
+	    deviceForm.setAddressno(String.valueOf(device.getAddressno()));
+	    deviceForm.setIpaddress(device.getIpaddress());
+	    deviceForm.setPortno(String.valueOf(device.getPortno()));
+	    deviceForm.setDevicename(device.getDevicename());
+
+	    // 結果を返却（成功）
+	    result.setSuccess(true);
+	    result.setContent(deviceForm);
+	    return result;
+	}
+
+	/**
+	 * 装置情報の存在チェックを行う関数
+	 * @param deviceForm 
+	 * @return result 該当データが存在する場合は true、存在しない場合は false を返す結果オブジェクト
+	 * @throws TridentException
+	 */
+	public ServiceResult<Boolean> checkExistenceDeviceData(DeviceForm deviceForm) throws TridentException {
+		// 戻り値格納用のServiceResultオブジェクトを初期化
+		ServiceResult<Boolean> result = new ServiceResult<>();
+		// 入力値をフォームから取得
+		String hostno = deviceForm.getHostno();
+		String addressno = deviceForm.getAddressno();
+		
+		// ホスト番号とアドレス番号のいずれかが未入力の場合は、チェックを行わず false を返す（ただし処理は成功扱い）
+		if (hostno == null || hostno.trim().isEmpty() || addressno == null || addressno.trim().isEmpty()) {
+			//正常に処理終了
+			result.setSuccess(true);
+		    //データ不存在
+			result.setContent(false); 
+		    return result;
+		}
+		
+		//入力値のバリデーションチェック（形式や桁数など）
+		List<String> errorList = new ArrayList<>();
+		boolean isValidHost = this.checkHostNo(errorList, hostno, -1);
+		boolean isValidAddress = this.checkAddressNo(errorList, addressno, -1);
+		// どちらかが不正な場合は false を返却（処理は失敗扱い）
+		if (!isValidHost || !isValidAddress) {
+		    result.setSuccess(false);
+		    result.setContent(false);
+		    return result;
+		}
+		
+		try {
+		    // String → Integer 変換
+		    Integer hostnoInt = Integer.valueOf(hostno);
+		    Integer addressnoInt = Integer.valueOf(addressno);
+		
+		    //ホスト番号とアドレス番号で存在チェック
+		    List<MDevice> deviceList = mDeviceRepository.getDeviceListByHostnoAndAddressno(hostnoInt, addressnoInt);
+		    // 検索結果が存在するかどうかを判定し、結果に設定（true: 存在する、false: 存在しない）
+		    result.setContent(deviceList != null && !deviceList.isEmpty());
+		    result.setSuccess(true);
+		    return result;
+		
+		} catch (Exception e) {
+		    //例外時は失敗扱い
+		        result.setSuccess(false);
+		        result.setContent(false);
+		        return result;
+		}
+	}	
+
+	/**
+	 * 装置情報の登録処理を行う関数
+	 * @param request HTTPリクエストで装置情報のパラメータが含まれる
+	 * @return DeviceForm 登録結果のメッセージおよび装置情報・一覧が格納
+	 * @throws TridentException
+	 */
+	@Transactional
+	public DeviceForm deviceRegist(HttpServletRequest request) throws TridentException {
+		DeviceForm deviceForm = new DeviceForm();
+		MDevice mDevice = new MDevice();
+		List<String> errorList = new ArrayList<String>();
+		
+		//ユーザが入力した情報を取得
+		String hostno = request.getParameter("hostno");
+		String addressno = request.getParameter("addressno");
+		String ipaddress = request.getParameter("ipaddress");
+		String portno = request.getParameter("portno");
+		String devicename = request.getParameter("devicename");
+		  
+		// 入力チェック
+		//問題がなければ MDevice オブジェクトに格納される。
+		mDevice = this.checkInputData(hostno,addressno,ipaddress,portno,devicename,errorList, -1);
+		//成功なら登録
+		if(errorList.size() == 0) {
+			
+			//操作ログを記録し,データベースに装置情報を保存し完了メッセージを deviceForm にセット
+			mOperationlogService.RegistOperation(OperationCode.DEVICE_REGISTRATION.getCode());
+			//updateFlag0=更新
+			mDeviceRepository.update(mDevice, 0);
+			// 完了メッセージ　「ホスト情報を登録しました。」
+			deviceForm.setMessage(messageSource.getMessage("device.regist.completed", null, LocaleContextHolder.getLocale()));
+			
+		} else {
+			//エラー内容を明示して画面に返却
+			// エラーメッセージ　「登録時にエラーが発生しました。」
+			String errorMsg = messageSource.getMessage("device.regist.error", null, LocaleContextHolder.getLocale());		
+			for (String msg : errorList) {
+				errorMsg = errorMsg + "\n" + msg;
+			}
+			
+		deviceForm.setMessage(errorMsg);
+		
+		// 入力エラーがあっても、フォームに入力内容を再設定して返す（画面再表示用）
+		deviceForm.setHostno(String.valueOf(mDevice.getHostno()));
+		deviceForm.setAddressno(String.valueOf(mDevice.getAddressno()));
+		deviceForm.setIpaddress(mDevice.getIpaddress());
+		deviceForm.setPortno(String.valueOf(mDevice.getPortno()));
+		deviceForm.setDevicename(mDevice.getDevicename());
+			
+		}  
+		//装置一覧リストの再取得
+		//登録後の最新の装置一覧を取得し、画面に表示するために deviceForm にセット
+	    List<MDevice> mdeviceList = mDeviceRepository.getDeviceList();
+	  
+	    deviceForm.setMstDeviceList(mdeviceList);
+	  
+	    return deviceForm;	
+	}
+	
+	/**
+	 * 装置情報の更新（論理削除）を行う関数
+	 * @param request HTTPリクエスト（削除対象のホスト番号・アドレス番号が含まれる）
+	 * @return DeviceForm
+	 * @throws TridentException
+	 */
+
+	@Transactional
+	public DeviceForm deviceDelete(HttpServletRequest request) throws TridentException  {		
+		DeviceForm deviceForm = new DeviceForm();
+		List<String> errorList = new ArrayList<String>();
+		MDevice  mDevice = new MDevice();
+		
+		// 入力値取得（削除対象のホスト番号・アドレス番号
+		String hostno = request.getParameter("hostno");
+		String addressno = request.getParameter("addressno");
+		// 入力チェック（形式・桁数等）
+		this.checkHostNo(errorList,hostno,-1);
+		this.checkAddressNo(errorList,addressno,-1);
+		
+		//データそのものを削除せず、「使われていない状態」にする方式（＝論理削除）
+		//該当する装置の IP・ポート番号・装置名を 空に設定。
+		mDevice.setHostno(Integer.parseInt(hostno));
+		mDevice.setAddressno(Integer.parseInt(addressno));
+		mDevice.setIpaddress(null);
+		mDevice.setPortno(null);
+		mDevice.setDevicename(null);
+	
+		// 入力エラーがなければ削除処理（論理削除）を実行 入力エラーがなければ削除処理（論理削除）を実行
+		if(errorList.size() == 0) {
+			
+				//操作ログを登録
+				mOperationlogService.RegistOperation(OperationCode.DEVICE_DELETE.getCode());
+				
+				//upgateFlag=1  削除扱い（論理削除）
+				mDeviceRepository.update(mDevice, 1);
+	
+				//削除後の再表示のために、画面のフォーム項目をすべて空に
+			    deviceForm.setHostno("");     
+			    deviceForm.setAddressno("");
+			    deviceForm.setIpaddress("");
+			    deviceForm.setPortno("");
+			    deviceForm.setDevicename("");
+			    //完了メッセージ→「指定したホスト番号のデータを削除しました。」
+			    deviceForm.setMessage(messageSource.getMessage("device.delete.completed", null, LocaleContextHolder.getLocale()));
+		} else {
+				// 入力エラーがある場合：フォームにエラー内容を設定
+				//　エラーメッセージ→「削除するデータが存在しません。」
+				String errorMsg = messageSource.getMessage("device.delete.error", null, LocaleContextHolder.getLocale());		
+				//エラーリストに入っていた全エラーを1つのメッセージにまとめて、フォームに設定して表示
+				for (String msg : errorList) {
+					errorMsg = errorMsg + "\n" + msg;
+				}
+				deviceForm.setMessage(errorMsg);
+				
+				// 入力値をフォームに再設定（再表示のため）
+				deviceForm.setHostno(String.valueOf(mDevice.getHostno()));
+				deviceForm.setAddressno(String.valueOf(mDevice.getAddressno()));
+				deviceForm.setIpaddress(mDevice.getIpaddress());
+				deviceForm.setPortno(String.valueOf(mDevice.getPortno()));
+				deviceForm.setDevicename(mDevice.getDevicename());	
+		}
+		
+		//装置一覧リスト.最新の装置一覧をフォームにセットし、画面に表示する
+		List<MDevice> mdeviceList = mDeviceRepository.getDeviceList();
+		 	
+		deviceForm.setMstDeviceList(mdeviceList);
+	
+		return deviceForm;
+	}
+
+	/**
+	 * 入力チェック
+	 * @param 
+	 * @param 
+	 *　@return　
+	 */	
+	private MDevice checkInputData(String hostno,String addressno,String ipaddress
+			,String portno,String devicename, List<String> errorList, int ilineNum)  {
+		
+
+		/////////////////////////////////////////////
+		// 正しく入力されているか入力チェック 
+		/////////////////////////////////////////////
+		Boolean bRet = true;
+
+		if(this.checkHostNo(errorList, hostno, ilineNum) == false) {
+			bRet = false;
+		}
+
+		if(this.checkAddressNo(errorList, addressno, ilineNum) == false) {
+			bRet = false;
+		}		
+		
+		if(this.checkIpAddress(errorList, ipaddress ,ilineNum) == false) {
+			bRet = false;
+		}
+		
+		if(this.checkPortNo(errorList, portno, ilineNum) == false) {
+			bRet = false;
+		}	
+		
+		if(this.checkDeviceName(errorList, devicename, ilineNum) == false) {
+			bRet = false;
+		}	
+
+		/////////////////////////////////////////////
+		// エラーがない場合入力値をセット　前0は削除して設定しておく
+		/////////////////////////////////////////////
+		
+		MDevice mDevice = new MDevice();
+		//入力値に空がないか確認
+		if (bRet == true) {
+			
+			if(hostno != null && "".equals(hostno) == false) {
+				mDevice.setHostno(Integer.parseInt(hostno));
+			}
+			if(addressno != null && "".equals(addressno) == false) {
+				mDevice.setAddressno(Integer.parseInt(addressno));
+			}
+			if(ipaddress != null && "".equals(ipaddress) == false) {
+				mDevice.setIpaddress(ipaddress);
+			}
+			if(portno != null && "".equals(portno) == false) {
+				mDevice.setPortno(Integer.parseInt(portno));
+			}
+			mDevice.setDevicename(devicename);
+
+		}
+
+		return mDevice;
+	}
+
+////////////////////////以下、各項目の入力内容のチェック処理////////////////////////	
+	
+	// ホスト番号
+	private Boolean checkHostNo (List<String> errorList, String hostNo, int ilineNum) {
+		
+		Boolean bRet = true;
+		
+		if (stringCheckUtility.isDecimalCheck(hostNo,3,0,false) == false) {
+			// 桁数チェック
+			String errorMsg = messageSource.getMessage("device.error.input.hostno", null, LocaleContextHolder.getLocale());
+			// エラーリストにエラーを追加
+			stringCheckUtility.addError(errorList, errorMsg, ilineNum);
+			
+			bRet = false;
+		}	
+		return bRet;
+	}
+	
+	// アドレス番号
+	private Boolean checkAddressNo (List<String> errorList, String addressNo, int ilineNum) {
+		
+		Boolean bRet = true;
+		
+		if (stringCheckUtility.isDecimalCheck(addressNo,2,0,false) == false) {
+			// 桁数チェック
+			String errorMsg = messageSource.getMessage("device.error.input.addressno", null, LocaleContextHolder.getLocale());
+			// エラーリストにエラーを追加
+			stringCheckUtility.addError(errorList, errorMsg, ilineNum);
+			
+			bRet = false;
+		}	
+		return bRet;
+	}
+	
+	//IPアドレス
+	//1IPv4形式の厳しいチェックを設ける
+	private Boolean checkIpAddress(List<String> errorList, String ipaddress, int ilineNum) {
+		
+		Boolean bRet = true;
+	
+		if (ipaddress == null || ipaddress.isEmpty()) {
+			String errorMsg = messageSource.getMessage("device.error.input.ipaddress", null, LocaleContextHolder.getLocale());
+			// エラーリストにエラーを追加
+			stringCheckUtility.addError(errorList, errorMsg, ilineNum);
+			
+			return false;
+		}
+	
+		// 正規表現によるIPv4形式チェック
+		String regex = "^([0-9]{1,3}\\.){3}[0-9]{1,3}$";
+		if (!ipaddress.matches(regex)) {
+			String errorMsg = messageSource.getMessage("device.error.input.ipaddress", null, LocaleContextHolder.getLocale());
+			// エラーリストにエラーを追加
+			stringCheckUtility.addError(errorList, errorMsg, ilineNum);
+			
+			return false;
+		}
+	
+		// 各ブロックの数値が0〜255以内かどうかチェック
+		String[] parts = ipaddress.split("\\.");
+		for (String part : parts) {
+			int value = Integer.parseInt(part);
+			if (value < 0 || value > 255) {
+				String errorMsg = messageSource.getMessage("device.error.input.ipaddress", null, LocaleContextHolder.getLocale());
+				// エラーリストにエラーを追加
+				stringCheckUtility.addError(errorList, errorMsg, ilineNum);
+				
+				return false;
+			}
+		}
+	
+		return bRet;
+	}
+	
+	// ポート番号
+	private Boolean checkPortNo (List<String> errorList, String Portno, int ilineNum) {
+		
+		Boolean bRet = true;
+		
+		if (stringCheckUtility.isDecimalCheck(Portno,5,0,false) == false) {
+			// 桁数チェック
+			String errorMsg = messageSource.getMessage("device.error.input.portno", null, LocaleContextHolder.getLocale());
+			// エラーリストにエラーを追加
+			stringCheckUtility.addError(errorList, errorMsg, ilineNum);
+			
+			bRet = false;
+		}	
+		return bRet;
+	}
+	
+	//装置名称
+	private Boolean checkDeviceName (List<String> errorList, String Devicename, int ilineNum) {
+		
+		Boolean bRet = true;
+		
+		if(Devicename.length() > 20) {
+			// 桁数チェック
+			String errorMsg = messageSource.getMessage("device.error.maxlength.Devicename", null, LocaleContextHolder.getLocale());
+			// エラーリストにエラーを追加
+			stringCheckUtility.addError(errorList, errorMsg, ilineNum);
+			
+			bRet = false;
+		}
+		
+		// 禁止文字「\ / : * ? " <> |」が含まれていないかチェック
+		if (stringCheckUtility.isForbiddenCharsCheck(Devicename) == false) {
+			String errorMsg = messageSource.getMessage("device.error.input.Devicename", null, LocaleContextHolder.getLocale());
+			// エラーリストにエラーを追加
+			stringCheckUtility.addError(errorList, errorMsg, ilineNum);
+			
+			bRet = false;
+		}	
+		return bRet;
+	}
+
+}

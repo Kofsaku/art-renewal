@@ -1,0 +1,79 @@
+package jp.co.art.trident.model.form;
+
+import java.io.Serializable;
+import java.util.List;
+import jp.co.art.trident.model.entity.MDevice;
+
+/**装置登録・編集画面のフォームクラス(画面情報を保持)*/	
+public class DeviceForm implements Serializable {
+
+	private static final long serialVersionUID = 6125292938980676100L;
+	
+	/** 装置一覧リスト */
+	private List<MDevice> mstDeviceList;	
+	
+	/** ホスト番号 */
+	private String hostno;
+	
+	/** アドレス番号 */
+	private String addressno;
+	
+	/** ＩＰアドレス１ */
+	private String ipaddress;
+	
+	/** ポートNO１ */
+	private String portno;
+	
+	/** 装置名称 */
+	private String devicename;
+
+	/** メッセージ */
+	private String message;
+
+	//　以下、ゲッター、セッター　-----------------------
+	public List<MDevice> getMstDeviceList() {
+		return mstDeviceList;
+	}
+	public void setMstDeviceList(List<MDevice> mstDeviceList) {
+		this.mstDeviceList = mstDeviceList;
+	}	
+
+	public String getHostno() {
+		return hostno;
+	}
+	public void setHostno(String hostno) {
+		this.hostno = hostno;
+	}
+	public String getAddressno() {
+		return addressno;
+	}
+	public void setAddressno(String addressno) {
+		this.addressno = addressno;
+	}
+	public String getIpaddress() {
+		return ipaddress;
+	}
+	public void setIpaddress(String ipaddress) {
+		this.ipaddress = ipaddress;
+	}
+	public String getPortno() {
+		return portno;
+	}
+	public void setPortno(String portno) {
+		this.portno = portno;
+	}
+	public String getDevicename() {
+		return devicename;
+	}
+	public void setDevicename(String devicename) {
+		this.devicename = devicename;
+	}
+	
+	public String getMessage() {
+		return message;
+	}
+	public void setMessage(String message) {
+		this.message = message;
+	}
+
+}

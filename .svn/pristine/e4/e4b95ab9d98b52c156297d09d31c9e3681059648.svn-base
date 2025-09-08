@@ -1,0 +1,253 @@
+package jp.co.art.trident.service;
+
+import java.util.Collection;
+
+import org.springframework.security.authentication.BadCredentialsException;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.AuthorityUtils;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
+import org.springframework.stereotype.Service;
+
+import jp.co.art.trident.component.StringCheckUtility;
+import jp.co.art.trident.model.User;
+import jp.co.art.trident.model.UserDetailsImpl;
+import jp.co.art.trident.model.UserRole;
+import jp.co.art.trident.model.entity.MUser;
+import jp.co.art.trident.repository.MUserRepository;
+
+/**ログイン処理時にユーザー情報をインスタンス化する処理に責務を負うクラス**/
+@Service
+public class UserInitService implements UserDetailsService{
+
+	/**ユーザマスタのリポジトリ */
+	private final MUserRepository mUserRepository;
+
+	/** 文字列関連のチェックユーティリティクラス */
+	private final StringCheckUtility stringCheckUtility;
+
+	
+	// ------------------------------------------------------------------------------------------------------
+	// 定数
+	// ------------------------------------------------------------------------------------------------------
+	/** 初期設定メニュー */
+	private final int INITIAL_MENU_NUM = 59;
+	
+	/** 初期設定 */
+	private final int INITIAL_NUM = 60;	
+	
+	/** ゲート登録 */
+	private final int GATEREGISTRATION_NUM = 61;	
+
+	/** 装置登録 */
+	private final int DEVICEREGISTRATION_NUM = 62;	
+	
+	/** テナント登録 */
+	private final int TENANTREGISTRATION_NUM = 63;	
+	
+	/** フロア登録 */
+	private final int FLOORREGISTRATION_NUM = 64;	
+	
+	/** 一斉制御グループ登録 */
+	private final int GROUPCONTROLREGISTRATION_NUM = 65;	
+	
+	/** エラーポップアップ設定 */
+	private final int ERRORPOPUPSETTINGS_NUM = 66;	
+	
+	/** 個人登録 */
+	private final int INDIVIDUALREGISTRATION_NUM = 3;	
+	
+	/** ゲート編集 */
+	private final int GATEEDIT_NUM = 21;	
+	
+	/** 報告書 */
+	private final int REPORT_NUM = 27;	
+	
+	/** 在室一覧 */
+	private final int LISTINTHEROOM_NUM = 35;	
+	
+	/** データモニター */
+	private final int DATAMONITOR_NUM = 44;	
+	
+	/** ステータスモニター */
+	private final int STATUSMONITOR_NUM = 46;	
+	
+	/** マップステータス */
+	private final int MAPSTATUS_NUM = 0;		
+	
+	/** システム */
+	private final int SYSTEM_NUM = 50;	
+	
+	/** 操作ログ報告書 */
+	private final int OPERATIONLOGREPORT_NUM = 51;
+	
+	/** 休日設定 */
+	private final int HOLIDAYSETTINGS_NUM = 52;
+	
+	/** 時刻送信 */
+	private final int TIMETRANSMISSION_NUM = 53;
+	
+	/** バックアップ */
+	private final int BACKUP_NUM = 54;
+	
+	/** 一斉送信 */
+	private final int MASSSENDING_NUM = 55;
+	
+	/** アンチパスフリー */
+	private final int ANTIPASSFREE_NUM = 56;
+	
+	/** ユーザー登録 */
+	private final int USERREGISTRATION_NUM = 57;	
+	
+	/**
+	 * コンストラクタ
+	 * @param mUserRepository       ユーザリポジトリクラス
+	 * @param stringCheckUtility	チェックユーティリティ
+	 */
+	public UserInitService(MUserRepository mUserRepository,StringCheckUtility stringCheckUtility) {
+		this.mUserRepository = mUserRepository;
+		this.stringCheckUtility = stringCheckUtility;
+	}
+	
+	/**
+	 * UserDetails生成
+	 * 
+	 * @param id          ユーザID
+	 * @param password 　　 パスワード
+	 * @return
+	 */
+	public UserDetails userDetailsAuthentication(String id, String password) {
+			return this.createUserAuth(id,password);
+	}
+	
+	/* 未使用 */
+	@Override
+	public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
+		return null;
+	}	
+	
+	/**
+	 * ユーザー情報認証処理プロセス
+	 * @param userId
+	 * @param password
+	 * @return
+	 */
+	private UserDetails createUserAuth(String userId, String password) {
+		//
+		//パスワードチェック処理
+		//
+		if(stringCheckUtility.isNullOrEmpty(password)==true) {
+			//パスワードが空の場合
+			throw new BadCredentialsException("Password not entered.");	
+		}
+
+		//
+		//ユーザー情報生成処理
+		//
+		User user = this.createUser(userId,password);
+		
+		//
+		//ユーザー情報生成処理
+		//
+		UserDetails userDetails = this.createUserInfo(user);
+		
+		return userDetails;
+	}	
+	
+	
+	/**
+	 * ユーザー情報を生成
+	 * @param user
+	 * @return
+	 */
+	private User createUser(String userId,String password) {
+		
+		User user = new User();
+		if (mUserRepository.getUserInfo(userId) == true) {		
+			MUser  mUser = mUserRepository.findOne(userId);	
+			
+			// パスワードが一致しない
+			if(!mUser.getPassword().equals(password)) {
+				throw new BadCredentialsException("Authentication failed");
+			}
+			
+			// ユーザ情報を設定する
+			user.setUserName(mUser.getUsername());
+			user.setPassword(mUser.getPassword());
+			user.setLevel(mUser.getLevel());
+			user.setEntrytime(mUser.getEntrytime());
+			user.setUptime(mUser.getUptime());
+			user.setAuthority(mUser.getAuthority());
+			user.setTenantno(mUser.getTenantno());
+			user.setAuthorities(getUserAuthority(user.getLevel()));
+			
+			// メニュー画面の表示・非表示切り替え情報
+			user.setInitialMenuDispFlg(stringCheckUtility.getNthByte(mUser.getAuthority(), INITIAL_MENU_NUM));
+			user.setInitialDispFlg(stringCheckUtility.getNthByte(mUser.getAuthority(), INITIAL_NUM));
+			user.setGateRegistrationDispFlg(stringCheckUtility.getNthByte(mUser.getAuthority(), GATEREGISTRATION_NUM));
+			user.setDeviceRegistrationDispFlg(stringCheckUtility.getNthByte(mUser.getAuthority(), DEVICEREGISTRATION_NUM));
+			user.setTenantRegistrationDispFlg(stringCheckUtility.getNthByte(mUser.getAuthority(), TENANTREGISTRATION_NUM));
+			user.setFloorRegistrationDispFlg(stringCheckUtility.getNthByte(mUser.getAuthority(), FLOORREGISTRATION_NUM));
+			user.setGroupControlRegistrationDispFlg(stringCheckUtility.getNthByte(mUser.getAuthority(), GROUPCONTROLREGISTRATION_NUM));
+			user.setErrorPopupSettingsDispFlg(stringCheckUtility.getNthByte(mUser.getAuthority(), ERRORPOPUPSETTINGS_NUM));
+			user.setIndividualRegistrationDispFlg(stringCheckUtility.getNthByte(mUser.getAuthority(), INDIVIDUALREGISTRATION_NUM));
+			user.setGateEditDispFlg(stringCheckUtility.getNthByte(mUser.getAuthority(), GATEEDIT_NUM));
+			user.setReportDispFlg(stringCheckUtility.getNthByte(mUser.getAuthority(), REPORT_NUM));
+			user.setListInTheRoomDispFlg(stringCheckUtility.getNthByte(mUser.getAuthority(), LISTINTHEROOM_NUM));
+			user.setSataMonitorDispFlg(stringCheckUtility.getNthByte(mUser.getAuthority(), DATAMONITOR_NUM));
+			user.setStatusMonitorDispFlg(stringCheckUtility.getNthByte(mUser.getAuthority(), STATUSMONITOR_NUM));
+			user.setMapStatusDispFlg(stringCheckUtility.getNthByte(mUser.getAuthority(), MAPSTATUS_NUM));
+			user.setSystemDispFlg(stringCheckUtility.getNthByte(mUser.getAuthority(), SYSTEM_NUM));
+			user.setOperationLogReportDispFlg(stringCheckUtility.getNthByte(mUser.getAuthority(), OPERATIONLOGREPORT_NUM));
+			user.setHolidaySettingsDispFlg(stringCheckUtility.getNthByte(mUser.getAuthority(), HOLIDAYSETTINGS_NUM));
+			user.setTimeTransmissionDispFlg(stringCheckUtility.getNthByte(mUser.getAuthority(), TIMETRANSMISSION_NUM));
+			user.setBackupDispFlg(stringCheckUtility.getNthByte(mUser.getAuthority(), BACKUP_NUM));
+			user.setMassSendingDispFlg(stringCheckUtility.getNthByte(mUser.getAuthority(), MASSSENDING_NUM));
+			user.setAntipassFreeDispFlg(stringCheckUtility.getNthByte(mUser.getAuthority(), ANTIPASSFREE_NUM));
+			user.setUserRegistrationDispFlg(stringCheckUtility.getNthByte(mUser.getAuthority(), USERREGISTRATION_NUM));
+			
+		} else {
+			throw new UsernameNotFoundException("Not Exists in this system.");
+		}
+		
+		return user;
+	}
+
+	/**
+	 * ユーザー権限取得処理
+	 * @param level
+	 * @return
+	 */
+	private Collection<? extends GrantedAuthority> getUserAuthority(int level) {
+		
+		try {
+			switch(level) {
+			case 1:
+				return AuthorityUtils.createAuthorityList(UserRole.ROLE_USER_LV1.name());
+			case 2:
+				return AuthorityUtils.createAuthorityList(UserRole.ROLE_USER_LV2.name());
+			case 3:
+				return AuthorityUtils.createAuthorityList(UserRole.ROLE_USER_LV3.name());
+			case 4:
+				return AuthorityUtils.createAuthorityList(UserRole.ROLE_USER_LV4.name());
+			case 9:
+				return AuthorityUtils.createAuthorityList(UserRole.ROLE_USER_LV9.name());
+			default:
+				return AuthorityUtils.createAuthorityList(UserRole.ROLE_USER_LV1.name());
+			}
+		}catch(Exception e) {
+			throw new BadCredentialsException("Unknown level.");		
+		}
+	}
+	
+	/**
+	 * ユーザー認証情報を生成
+	 * @param user
+	 * @return
+	 */
+	private UserDetails createUserInfo(User user) {
+		return new UserDetailsImpl(user,  user.getAuthorities());
+	}
+	
+}

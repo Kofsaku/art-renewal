@@ -1,0 +1,331 @@
+package jp.co.art.trident.model.entity;
+
+import java.io.Serializable;
+
+/**ゲート登録・編集画面の情報を保持するクラス**/
+
+public class Gate implements Serializable{
+
+	private static final long serialVersionUID = -8256423427027727311L;
+
+	/**
+     * デフォルトコンストラクタ
+     */
+	public Gate() {};
+	
+	/**
+     * デフォルトコンストラクタ
+     */
+	public Gate(String gateno
+			,String hostno
+			,int hosttype
+			,String devicetype_name
+			,String addressno
+			,String rgateno
+			,String name
+			,String zaino
+			,int gatetype_0
+			,int gatetype_1
+			,int gatetype_2
+			,int gatetype_3
+			,int gatetype_4
+			,int gatetype_5
+			,int gatetype_6
+			,int gatetype_7
+			,int gatetype_8
+			,int gatetype_9
+			,int gatetype_A
+			,int gatetype_B
+			,int gatetype_C
+			,int gatetype_D
+			,int gatetype_E
+			,int gatetype_F
+			,int setcnt
+			,int ctimer
+			,String insendgate
+			,String outsendgate
+			) {
+		this.gateno = gateno;
+		this.hostno = hostno;
+		this.hosttype = hosttype;
+		this.devicetype_name = devicetype_name;
+		this.addressno = addressno;
+		this.rgateno = rgateno;
+		this.name = name;
+		this.zaino = zaino;
+		this.gatetype_0 = gatetype_0;
+		this.gatetype_1 = gatetype_1;
+		this.gatetype_2 = gatetype_2;
+		this.gatetype_3 = gatetype_3;
+		this.gatetype_4 = gatetype_4;
+		this.gatetype_5 = gatetype_5;
+		this.gatetype_6 = gatetype_6;
+		this.gatetype_7 = gatetype_7;
+		this.gatetype_8 = gatetype_8;
+		this.gatetype_9 = gatetype_9;
+		this.gatetype_A = gatetype_A;
+		this.gatetype_B = gatetype_B;
+		this.gatetype_C = gatetype_C;
+		this.gatetype_D = gatetype_D;
+		this.gatetype_E = gatetype_E;
+		this.gatetype_F = gatetype_F;
+		this.setcnt = setcnt;
+		this.ctimer = ctimer;
+		this.insendgate = insendgate;
+		this.outsendgate = outsendgate;
+	};
+	
+	/** ゲート番号 */
+	private String gateno;
+
+	/** ホスト番号 */
+	private String hostno;
+	
+	/** 装置タイプ */
+	private int hosttype;
+
+	/** 装置タイプ名称 */
+	private String devicetype_name;
+	
+	/** アドレス番号 */
+	private String addressno;
+
+	/** 装置内回線番号 */
+	private String rgateno;
+	
+	/** ゲート名称 */
+	private String name;
+	
+	/** 在室番号 */
+	private String zaino;
+	
+	/** ゲートタイプ0 */
+	private int gatetype_0;
+	
+	/** ゲートタイプ1 */
+	private int gatetype_1;
+	
+	/** ゲートタイプ2 */
+	private int gatetype_2;
+	
+	/** ゲートタイプ3 */
+	private int gatetype_3;
+	
+	/** ゲートタイプ4 */
+	private int gatetype_4;
+	
+	/** ゲートタイプ5 */
+	private int gatetype_5;
+	
+	/** ゲートタイプ6 */
+	private int gatetype_6;
+	
+	/** ゲートタイプ7 */
+	private int gatetype_7;
+	
+	/** ゲートタイプ8 */
+	private int gatetype_8;
+	
+	/** ゲートタイプ9 */
+	private int gatetype_9;
+	
+	/** ゲートタイプA */
+	private int gatetype_A;
+	
+	/** ゲートタイプB */
+	private int gatetype_B;
+	
+	/** ゲートタイプC */
+	private int gatetype_C;
+	
+	/** ゲートタイプD */
+	private int gatetype_D;
+		
+	/** ゲートタイプE */
+	private int gatetype_E;
+		
+	/** ゲートタイプF */
+	private int gatetype_F;
+	
+	/** 最大接続回線数 */
+	private int setcnt;
+	
+	/** 連続解錠時間番号 */
+	private int ctimer;
+	
+	/** 入室時の送信ゲート状態 */
+	private String insendgate;
+	
+	/** 退室時の送信ゲート状態 */
+	private String outsendgate;
+	
+	//　以下、ゲッター、セッター　-----------------------
+	public String getGateno() {
+		return gateno;
+	}
+	public void setGateno(String gateno) {
+		this.gateno = gateno;
+	}
+	public String getHostno() {
+		return hostno;
+	}
+	public void setHostno(String hostno) {
+		this.hostno = hostno;
+	}	
+	public int getHosttype() {
+		return hosttype;
+	}
+	public void setHosttype(int hosttype) {
+		this.hosttype = hosttype;
+	}	
+	public String getDevicetype_name() {
+		return devicetype_name;
+	}
+	public void setDevicetype_name(String devicetype_name) {
+		this.devicetype_name = devicetype_name;
+	}
+	public String getAddressno() {
+		return addressno;
+	}
+	public void setAddressno(String addressno) {
+		this.addressno = addressno;
+	}	
+	public String getRgateno() {
+		return rgateno;
+	}
+	public void setRgateno(String rgateno) {
+		this.rgateno = rgateno;
+	}
+	public String getName() {
+		return name;
+	}
+	public void setName(String name) {
+		this.name = name;
+	}	
+	public String getZaino() {
+		return zaino;
+	}
+	public void setZaino(String zaino) {
+		this.zaino = zaino;
+	}
+	public int getGatetype_0() {
+		return gatetype_0;
+	}
+	public void setGatetype_0(int gatetype_0) {
+		this.gatetype_0 = gatetype_0;
+	}
+	public int getGatetype_1() {
+		return gatetype_1;
+	}
+	public void setGatetype_1(int gatetype_1) {
+		this.gatetype_1 = gatetype_1;
+	}
+	public int getGatetype_2() {
+		return gatetype_2;
+	}
+	public void setGatetype_2(int gatetype_2) {
+		this.gatetype_2 = gatetype_2;
+	}
+	public int getGatetype_3() {
+		return gatetype_3;
+	}
+	public void setGatetype_3(int gatetype_3) {
+		this.gatetype_3 = gatetype_3;
+	}
+	public int getGatetype_4() {
+		return gatetype_4;
+	}
+	public void setGatetype_4(int gatetype_4) {
+		this.gatetype_4 = gatetype_4;
+	}
+	public int getGatetype_5() {
+		return gatetype_5;
+	}
+	public void setGatetype_5(int gatetype_5) {
+		this.gatetype_5 = gatetype_5;
+	}
+	public int getGatetype_6() {
+		return gatetype_6;
+	}
+	public void setGatetype_6(int gatetype_6) {
+		this.gatetype_6 = gatetype_6;
+	}
+	public int getGatetype_7() {
+		return gatetype_7;
+	}
+	public void setGatetype_7(int gatetype_7) {
+		this.gatetype_7 = gatetype_7;
+	}
+	public int getGatetype_8() {
+		return gatetype_8;
+	}
+	public void setGatetype_8(int gatetype_8) {
+		this.gatetype_8 = gatetype_8;
+	}
+	public int getGatetype_9() {
+		return gatetype_9;
+	}
+	public void setGatetype_9(int gatetype_9) {
+		this.gatetype_9 = gatetype_9;
+	}
+	public int getGatetype_A() {
+		return gatetype_A;
+	}
+	public void setGatetype_A(int gatetype_A) {
+		this.gatetype_A = gatetype_A;
+	}
+	public int getGatetype_B() {
+		return gatetype_B;
+	}
+	public void setGatetype_B(int gatetype_B) {
+		this.gatetype_B = gatetype_B;
+	}
+	public int getGatetype_C() {
+		return gatetype_C;
+	}
+	public void setGatetype_C(int gatetype_C) {
+		this.gatetype_C = gatetype_C;
+	}
+	public int getGatetype_D() {
+		return gatetype_D;
+	}
+	public void setGatetype_D(int gatetype_D) {
+		this.gatetype_D = gatetype_D;
+	}
+	public int getGatetype_E() {
+		return gatetype_E;
+	}
+	public void setGatetype_E(int gatetype_E) {
+		this.gatetype_E = gatetype_E;
+	}
+	public int getGatetype_F() {
+		return gatetype_F;
+	}
+	public void setGatetype_F(int gatetype_F) {
+		this.gatetype_F = gatetype_F;
+	}
+	public int getSetcnt() {
+		return setcnt;
+	}
+	public void setSetcnt(int setcnt) {
+		this.setcnt = setcnt;
+	}
+	public int getCtimer() {
+		return ctimer;
+	}
+	public void setCtimer(int ctimer) {
+		this.ctimer = ctimer;
+	}
+	public String getInsendgate() {
+		return insendgate;
+	}
+	public void setInsendgate(String insendgate) {
+		this.insendgate = insendgate;
+	}
+	public String getOutsendgate() {
+		return outsendgate;
+	}
+	public void setOutsendgate(String outsendgate) {
+		this.outsendgate = outsendgate;
+	}
+}

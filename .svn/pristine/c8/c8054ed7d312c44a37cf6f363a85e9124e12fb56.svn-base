@@ -1,0 +1,371 @@
+package jp.co.art.trident.controller;
+
+import java.io.IOException;
+import java.io.OutputStream;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.Map;
+
+import org.springframework.context.MessageSource;
+import org.springframework.context.i18n.LocaleContextHolder;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.ResponseBody;
+
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+import jp.co.art.trident.exception.TridentException;
+import jp.co.art.trident.model.ServiceResult;
+import jp.co.art.trident.model.UserDetailsImpl;
+import jp.co.art.trident.model.entity.common.MCommon.ParameterName;
+import jp.co.art.trident.model.form.GateEditForm;
+import jp.co.art.trident.service.GateEditService;
+import jp.co.art.trident.service.common.CommonService;
+
+/**
+ * <b>ゲート編集画面のコントローラークラス.</b> <br/>
+ * 
+ * <pre>
+ * </pre>
+ */
+@Controller
+public class GateEditController {
+
+	/** ゲート編集画面サービスクラス */
+	private final GateEditService gateEditService;
+	
+	/** 汎用項目サービスクラス */
+	private final CommonService commonService;	
+	
+	/** メッセージソースクラス */
+	private final MessageSource messageSource;
+	
+	public GateEditController(GateEditService gateEditService
+			,CommonService commonService
+			,MessageSource messageSource) {
+		this.gateEditService = gateEditService;
+		this.commonService = commonService;
+		this.messageSource= messageSource;
+	}
+
+	// ------------------------------------------------------------------------------------------------------
+	// 定数
+	// ------------------------------------------------------------------------------------------------------
+	private final String FILE_TMP_PATH = "C:\\TRIDENT\\Data\\GateEdit\\Temp\\";
+	
+	/**
+	 * ゲート編集画面　初期表示処理
+	 * 
+	 * @param model モデル
+	 * @return HTML画面名
+	 * @throws TrindentException 
+	 */	
+	@RequestMapping(value = { "/gateEdit", "/gateEdit/index" })
+	public String init(Model model) throws TridentException 
+	{
+		
+		GateEditForm form = new GateEditForm();
+		
+		// ログインユーザー情報を取得
+		Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+		UserDetailsImpl user = (UserDetailsImpl) auth.getPrincipal();
+	    
+		// ログインテナントのゲートデータ取得
+	    Map<String, String> result = gateEditService.getLoginTenantGate(user);
+		
+	    // エラーが発生した場合、処理を終了する
+	    if (result.get("errorMessage") != null) {
+	    	form.setMessage(messageSource.getMessage(result.get("errorMessage"), null, LocaleContextHolder.getLocale()));
+	    	model.addAttribute("gateEditForm", form);
+	    	model.addAttribute("isInitError", true);
+	    	return "gateEdit/index";
+	    }
+	    
+		// 初期表示データ取得
+		form = gateEditService.initScreen(result.get("tenantGate"));
+		
+		model.addAttribute("gateEditForm", form);
+		model.addAttribute("isInitError", false);
+		
+	    // ゲートデータが空ならメッセージを追加
+	    if (form.isGateflag() == true) {
+	    	model.addAttribute("isInitError", true);
+	    	form.setMessage(messageSource.getMessage("gateEdit.error.gateData", null, LocaleContextHolder.getLocale()));
+	    }
+	    
+	    // 権限情報を設定
+	    gateEditService.setUserAuthorityLevels(model, user);
+	    
+		return "gateEdit/index";
+	}
+	
+	/**
+	 * ゲート編集画面　連解データ取得
+	 * 
+	 * @param GateEditForm
+	 * @return GateEditForm
+	 * @throws TrindentException 
+	 */	
+	@RequestMapping(value = { "/gateEdit/getCtimerData"}, method = RequestMethod.POST)
+	@ResponseBody
+	public ServiceResult<GateEditForm> getCtimerData(@RequestBody GateEditForm gateEditForm
+			) throws TridentException 
+	{
+		return gateEditService.getCtimerData(gateEditForm);
+	}	
+	/**
+	 * ゲート編集画面　存在チェック
+	 * 
+	 * @param gateEditForm
+	 * @return Boolean
+	 * @throws TrindentException 
+	 */	
+	@RequestMapping(value = { "/gateEdit/exist"}, method = RequestMethod.POST)
+	@ResponseBody
+	public ServiceResult<Boolean> exist(@RequestBody GateEditForm gateEditForm
+			) throws TridentException 
+	{
+		return gateEditService.checkExistenceGateData(gateEditForm);
+	}
+	
+	/**
+	 * ゲート編集画面　連続解錠時間帯登録処理
+	 * 
+	 * @param model モデル
+	 * @param 　request
+	 * @return HTML画面名
+	 * @throws TrindentException 
+	 */	
+	@RequestMapping(value = { "/gateEdit/regist"})
+	public String regist(Model model,HttpServletRequest request
+			) throws TridentException 
+	{
+		
+		GateEditForm form = new GateEditForm();
+		
+		// ログインユーザー情報を取得
+		Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+		UserDetailsImpl user = (UserDetailsImpl) auth.getPrincipal();
+	    
+		// ログインテナントのゲートデータ取得
+	    Map<String, String> result = gateEditService.getLoginTenantGate(user);
+		
+	    // エラーが発生した場合、処理を終了する
+	    if (result.get("errorMessage") != null) {
+	    	form.setMessage(messageSource.getMessage(result.get("errorMessage"), null, LocaleContextHolder.getLocale()));
+	    	model.addAttribute("gateEditForm", form);
+	    	return "gateEdit/index";
+	    }
+		
+	    // ゲート登録
+		form = gateEditService.gateRegist(request, result.get("tenantGate"));
+		
+		model.addAttribute("gateEditForm", form);
+		
+	    // 権限情報を設定
+		gateEditService.setUserAuthorityLevels(model, user);
+	    
+		return "gateEdit/index";
+	}	
+	
+	/**
+	 * ゲート編集画面　連続解錠時間帯送信処理
+	 * 
+	 * @param model モデル
+	 * @param 　request
+	 * @return HTML画面名
+	 * @throws TrindentException 
+	 */	
+	@RequestMapping(value = { "/gateEdit/sendRegist"})
+	public String sendRegist(Model model,HttpServletRequest request
+			) throws TridentException 
+	{
+		
+		GateEditForm form = new GateEditForm();
+		
+		// ログインユーザー情報を取得
+		Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+		UserDetailsImpl user = (UserDetailsImpl) auth.getPrincipal();
+	    
+		// ログインテナントのゲートデータ取得
+	    Map<String, String> result = gateEditService.getLoginTenantGate(user);
+		
+	    // エラーが発生した場合、処理を終了する
+	    if (result.get("errorMessage") != null) {
+	    	form.setMessage(messageSource.getMessage(result.get("errorMessage"), null, LocaleContextHolder.getLocale()));
+	    	model.addAttribute("gateEditForm", form);
+	    	return "gateEdit/index";
+	    }
+	    
+	    // 送信データ登録、ゲート登録
+	    form = gateEditService.gateSendRegist(request, result.get("tenantGate"), user.getUsername());
+		
+		model.addAttribute("gateEditForm", form);
+		
+	    // 権限情報を設定
+		gateEditService.setUserAuthorityLevels(model, user);
+	    
+		return "gateEdit/index";
+	}	
+	
+	/**
+	 * 連続解錠時間帯登録画面　存在チェック
+	 * 
+	 * @param gateEditForm
+	 * @return HTML画面名
+	 * @throws TrindentException 
+	 */	
+	@RequestMapping(value = { "/ctimerRegist/ctimerExist"}, method = RequestMethod.POST)
+	@ResponseBody
+	public ServiceResult<Boolean> ctimerExist(@RequestBody GateEditForm gateEditForm
+			) throws TridentException 
+	{
+		return gateEditService.checkExistenceCtimerData(gateEditForm);
+	}
+	
+	/**
+	 * 連続解錠時間帯登録画面　連続解錠時間帯登録処理
+	 * 
+	 * @param model モデル
+	 * @param 　request
+	 * @return HTML画面名
+	 * @throws TrindentException 
+	 */	
+	@RequestMapping(value = { "/ctimerRegist/ctimerRegist"})
+	public String ctimerRegist(Model model,HttpServletRequest request
+			) throws TridentException 
+	{
+		
+		GateEditForm form = new GateEditForm();
+		
+		// ログインユーザー情報を取得
+		Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+		UserDetailsImpl user = (UserDetailsImpl) auth.getPrincipal();
+	    
+		// ログインテナントのゲートデータ取得
+	    Map<String, String> result = gateEditService.getLoginTenantGate(user);
+		
+	    // エラーが発生した場合、処理を終了する
+	    if (result.get("errorMessage") != null) {
+	    	form.setMessage(messageSource.getMessage(result.get("errorMessage"), null, LocaleContextHolder.getLocale()));
+	    	model.addAttribute("gateEditForm", form);
+	    	return "gateEdit/index";
+	    }
+	    
+	    form = gateEditService.ctimerRegist(request, result.get("tenantGate"));
+		
+		model.addAttribute("gateEditForm", form);
+		
+	    // 権限情報を設定
+		gateEditService.setUserAuthorityLevels(model, user);
+	    
+		return "gateEdit/index";
+	}
+	
+	/**
+	 * 連続解錠時間帯登録画面　削除処理
+	 * 
+	 * @param model モデル
+	 * @param 　request
+	 * @return HTML画面名
+	 * @throws TrindentException 
+	 */	
+	@RequestMapping(value = { "/ctimerRegist/ctimerDelete"})
+	public String ctimerDelete(Model model,HttpServletRequest request
+			) throws TridentException 
+	{
+		
+		GateEditForm form = new GateEditForm();
+		
+		// ログインユーザー情報を取得
+		Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+		UserDetailsImpl user = (UserDetailsImpl) auth.getPrincipal();
+	    
+		// ログインテナントのゲートデータ取得
+	    Map<String, String> result = gateEditService.getLoginTenantGate(user);
+		
+	    // エラーが発生した場合、処理を終了する
+	    if (result.get("errorMessage") != null) {
+	    	form.setMessage(messageSource.getMessage(result.get("errorMessage"), null, LocaleContextHolder.getLocale()));
+	    	model.addAttribute("gateEditForm", form);
+	    	return "gateEdit/index";
+	    }
+	    
+	    form = gateEditService.ctimerDelete(request, result.get("tenantGate"));
+		
+		model.addAttribute("gateEditForm", form);
+		
+	    // 権限情報を設定
+		gateEditService.setUserAuthorityLevels(model, user);
+	    
+		return "gateEdit/index";
+	}		
+	
+	/**
+	 * ゲート編集画面　データ出力処理
+	 * @param request
+	 * @param response
+	 * @return
+	 * @throws GcnException 
+	 */
+	@RequestMapping(value = { "/gateEdit/outputData" }, method = RequestMethod.POST)
+	public String fileDownload(Model model, HttpServletRequest request, HttpServletResponse response) throws TridentException{
+
+		String path = FILE_TMP_PATH;
+		String fileName = "";
+		
+		GateEditForm form = new GateEditForm();
+		
+		// ログインユーザー情報を取得
+		Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+		UserDetailsImpl user = (UserDetailsImpl) auth.getPrincipal();
+	    
+		// ログインテナントのゲートデータ取得
+	    Map<String, String> result = gateEditService.getLoginTenantGate(user);
+		
+	    // エラーが発生した場合、処理を終了する
+	    if (result.get("errorMessage") != null) {
+	    	form.setMessage(messageSource.getMessage(result.get("errorMessage"), null, LocaleContextHolder.getLocale()));
+	    	model.addAttribute("gateEditForm", form);
+	    	
+		    // 権限情報を設定
+	    	gateEditService.setUserAuthorityLevels(model, user);
+		    
+	    	return "gateEdit/index";
+	    }
+		
+		fileName = commonService.getParameterValue1(ParameterName.GATE2_OUTPUT_FILENAME);
+		
+		try (OutputStream os = response.getOutputStream();){
+			
+				gateEditService.createDownloadData(path,fileName,result.get("tenantGate"));
+
+				String downloadPath = path + fileName;
+				Path filePath = Paths.get(downloadPath);
+	
+				byte[] fb1 = Files.readAllBytes(filePath);
+				
+				response.setContentType("application/octet-stream");
+	            response.setHeader("Content-Disposition", "attachment; filename=\"" + URLEncoder.encode(fileName, StandardCharsets.UTF_8) + "\"");
+	            response.setContentLength(fb1.length);
+	            os.write(fb1);
+	            os.flush();
+
+		}
+		catch (IOException e) 
+		{
+				// エラーログ
+			
+		}
+	    return null;
+	}
+	
+}

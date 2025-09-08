@@ -1,0 +1,951 @@
+package jp.co.art.trident.service;
+
+import java.io.BufferedWriter;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.io.PrintWriter;
+import java.lang.reflect.Method;
+import java.sql.Timestamp;
+import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+import org.springframework.context.MessageSource;
+import org.springframework.context.i18n.LocaleContextHolder;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.ui.Model;
+
+import jakarta.servlet.http.HttpServletRequest;
+import jp.co.art.trident.component.StringCheckUtility;
+import jp.co.art.trident.exception.TridentException;
+import jp.co.art.trident.model.ServiceResult;
+import jp.co.art.trident.model.UserDetailsImpl;
+import jp.co.art.trident.model.entity.MTenant;
+import jp.co.art.trident.model.entity.MCT;
+import jp.co.art.trident.model.entity.GateEdit;
+import jp.co.art.trident.model.form.GateEditForm;
+import jp.co.art.trident.repository.GateEditRepository;
+import jp.co.art.trident.repository.MCtRepository;
+import jp.co.art.trident.repository.MTenantRepository;
+import jp.co.art.trident.repository.MSendRepository;
+import jp.co.art.trident.service.common.AuthorityService.AuthorityNum;
+import jp.co.art.trident.service.common.MOperationlogService;
+import jp.co.art.trident.service.common.MOperationlogService.OperationCode;
+import jp.co.art.trident.service.common.MSendOrderService.SendOrderNum;
+import jp.co.art.trident.service.common.MSendService;
+
+/**
+ * <b>ゲート編集画面のサービスクラス.</b> <br/>
+ * 
+ * <pre>
+ * </pre>
+ */
+@Service
+public class GateEditService {
+
+	/**ゲート編集のリポジトリ */
+	private final GateEditRepository gateEditRepository;
+	
+	/**連続解錠時間帯のリポジトリ */
+	private final MCtRepository mCTRepository;
+	
+	/**テナントマスタのリポジトリ**/
+	private MTenantRepository mTenantRepository;
+	
+	/**送信データマスタのリポジトリ**/
+	private MSendRepository mSendRepository;
+	
+	/** 操作ログサービスクラス */
+	private final MOperationlogService mOperationlogService;
+	
+	/** 送信データサービスクラス */
+	private final MSendService mSendService;
+	
+	/** 文字列関連のチェックユーティリティクラス */
+	private final StringCheckUtility stringCheckUtility;
+	
+	/** メッセージソースクラス */
+	private final MessageSource messageSource;
+	
+	/**
+	 * コンストラクタ
+	 */
+	public GateEditService(GateEditRepository gateEditRepository
+			,MCtRepository mCTRepository
+			,MTenantRepository mTenantRepository
+			,MSendRepository mSendRepository
+			,MOperationlogService mOperationlogService
+			,MSendService mSendService
+			,StringCheckUtility stringCheckUtility
+			,MessageSource messageSource
+			) {
+		this.gateEditRepository = gateEditRepository;
+		this.mCTRepository = mCTRepository;
+		this.mTenantRepository = mTenantRepository;
+		this.mSendRepository = mSendRepository;
+		this.mOperationlogService = mOperationlogService;
+		this.mSendService = mSendService;
+		this.stringCheckUtility = stringCheckUtility;
+		this.messageSource= messageSource; 
+	}
+	
+	/**
+	 * ログインテナントのゲートデータ取得
+	 * @param user ログインユーザー情報
+	 * @return result tenantGateとerrorMessageのMap
+	 */
+	public Map<String, String> getLoginTenantGate(UserDetailsImpl user) throws TridentException  {
+		
+		Map<String, String> result = new HashMap<>();
+	    String tenantGate = null;
+	    String errorMessage = null;
+		
+		// ログインユーザーのフィルター機能フラグチェック
+		if(user.getUser().getFilterflag() == 1) {
+			// フィルター機能ありの場合
+			if(user.getUser().getTenantno() != null) {
+				// テナント番号が設定されている場合
+				// ログインユーザーのテナントデータを取得
+				List<MTenant>  tenant = mTenantRepository.getTenantListByTenantno(Integer.parseInt(user.getTenantno()));
+				if(tenant.size() > 0) {
+					// ログインテナント番号が取得できた場合
+					// 表示内容取得処理(フィルター機能あり)
+					tenantGate = tenant.get(0).getGate();
+				} else {
+					// ログインテナント番号が取得できなかった場合
+					// エラーメッセージを追加
+					errorMessage = messageSource.getMessage("user.error.noLoginTenant", null, LocaleContextHolder.getLocale());
+				}
+			} else {
+				// テナント番号が設定されていない場合
+				// エラーメッセージを追加
+				errorMessage = messageSource.getMessage("user.error.tenantno", null, LocaleContextHolder.getLocale());
+			}
+		} else {
+			// フィルター機能なしの場合
+			// 表示内容取得処理(フィルター機能なし)
+			tenantGate = null;
+		}
+		
+		result.put("tenantGate", tenantGate);
+		result.put("errorMessage", errorMessage);
+		return result;
+	}
+	
+    // 
+	/**
+	 * ユーザー権限をまとめてModelにセットする
+	 * @param model
+	 * @param user
+	 */
+    public void setUserAuthorityLevels(Model model, UserDetailsImpl user) {
+
+        model.addAttribute("userGateEditRegistLevel", stringCheckUtility.getNthByte(user.getUser().getAuthority(), AuthorityNum.GATEEDIT_REGIST_NUM.getNum()));
+        model.addAttribute("userGateEditPrintLevel", stringCheckUtility.getNthByte(user.getUser().getAuthority(), AuthorityNum.GATEEDIT_PRINT_NUM.getNum()));
+        model.addAttribute("userGateEditDataoutLevel", stringCheckUtility.getNthByte(user.getUser().getAuthority(), AuthorityNum.GATEEDIT_DATAOUT_NUM.getNum()));
+        model.addAttribute("userCtimerRegistLevel", stringCheckUtility.getNthByte(user.getUser().getAuthority(), AuthorityNum.CTIMER_REGIST_NUM.getNum()));
+    }
+    
+	/**
+	 * ゲート編集初期表示
+	 * @param tenantGate ログインテナントのゲート(フィルター機能なしの場合はnull)
+	 *　@return　gateEditForm
+	 */
+	public GateEditForm initScreen(String tenantGate) throws TridentException  {
+		
+		// 画面に表示する内容を取得
+		GateEditForm gateEditForm = new GateEditForm();
+		
+		// ゲート一覧
+		List<GateEdit> gateList = gateEditRepository.getGateList(null,tenantGate);
+		
+		// 連続解錠時間帯一覧
+		List<MCT> ctList = mCTRepository.getMCTList(null);
+		
+	    // データが空ならゲートフラグをTrueにセット
+	    if (gateList.isEmpty()) {
+	    	gateEditForm.setGateflag(true);
+	    	return gateEditForm;
+	    }
+		
+		gateEditForm.setMstGateList(gateList);
+		gateEditForm.setMstCTList(ctList);
+		
+		return gateEditForm;
+	}
+	
+	/**
+	 * 連続解錠時間帯データ取得
+	 * @param gateEditForm
+	 *　@return　result
+	 */
+	public ServiceResult<GateEditForm> getCtimerData(GateEditForm gateEditForm) throws TridentException  {
+		
+		// 戻り値		
+		ServiceResult<GateEditForm> result = new ServiceResult<GateEditForm>();
+		
+		// 入力チェック
+		String ctimerno = gateEditForm.getCtimer();
+		List<String> errorList = new ArrayList<String>();
+		Boolean bRet = this.checkCtimerNo(errorList,ctimerno,-1);
+		
+		if (bRet == false) {
+			// データが存在しない場合
+			result.setContent(null);
+			result.setSuccess(true);
+			return result;
+		}
+		
+		// データが存在するか確認
+		List<MCT>  ctData = mCTRepository.getMCTList(Integer.parseInt(ctimerno));
+		
+		if(ctData.size() > 0) {
+			// データが存在する場合、取得したデータを設定
+			gateEditForm.setMstCTList(ctData);
+
+			result.setContent(gateEditForm);
+		} else {
+			// データが存在しない場合
+			result.setContent(null);
+		}
+		
+		result.setSuccess(true);
+		return result;
+	}
+	
+	/**
+	 * 存在チェック
+	 * @param gateEditForm
+	 *　@return　result
+	 */
+	public ServiceResult<Boolean> checkExistenceGateData(GateEditForm gateEditForm) throws TridentException  {
+		
+		// 戻り値		
+		ServiceResult<Boolean> result = new ServiceResult<Boolean>();
+
+		String gateno = gateEditForm.getGateno();
+		List<String> errorList = new ArrayList<String>();
+		
+		// 入力チェック
+		Boolean bRet = this.checkGateNo(errorList,gateno,-1);
+		
+		if (bRet == false) {
+			// データが存在しない場合
+			result.setSuccess(false);
+			return result;
+		}
+		
+		// データが存在するか確認
+		List<GateEdit>  gate = gateEditRepository.getGateList(Integer.parseInt(gateno), null);
+		
+		if(gate.size() > 0) {
+			// データが存在する場合
+			result.setContent(true);
+		} else {
+			// データが存在しない場合
+			// ※基本的にはありえない
+			result.setContent(false);	
+		}
+		
+		result.setSuccess(true);
+		return result;
+	}
+	
+	
+	/**
+	 * ゲート登録
+	 * @param request
+	 * @param tenantGate ログインテナントのゲート(フィルター機能なしの場合はnull)
+	 *　@return　gateEditForm
+	 */
+	@Transactional
+	public GateEditForm gateRegist(HttpServletRequest request, String tenantGate) throws TridentException  {
+		
+		GateEditForm gateEditForm = new GateEditForm();
+		
+		GateEdit mGate = new GateEdit();
+		List<String> errorList = new ArrayList<String>();
+
+		// 連解フラグ
+		boolean ctimerflag = false;
+		
+		String gateno = request.getParameter("gateno");
+		String hostno = request.getParameter("hostno");
+		String addressno = request.getParameter("addressno");
+		String gatename = request.getParameter("gatename");
+		String ctimerno = request.getParameter("ctimerno");
+		String ctimername = request.getParameter("ctimername");
+		
+		// 連解番号が"XXX"の場合、フラグをONにし、仮で"000"を設定する
+		if (ctimerno == null) {
+		    ctimerno = "000";
+		    ctimerflag = true;
+		}
+		
+		// 入力チェック
+		mGate = this.checkInputData(gateno,hostno,addressno,gatename,ctimerno,ctimername,errorList, -1);
+
+		if(errorList.size() == 0) {
+			
+			// 操作ログを登録
+			mOperationlogService.RegistOperation(OperationCode.GATEEDIT_GATEEDIT_REGISTRATION.getCode());
+
+			// ゲートデータ更新
+			gateEditRepository.update(mGate,ctimerflag);
+			
+			// 更新完了のメッセージを設定
+			gateEditForm.setMessage(messageSource.getMessage("gateEdit.regist.completed", null, LocaleContextHolder.getLocale()));
+			
+		} else {
+		// エラー	
+			
+			String errorMsg = messageSource.getMessage("gateEdit.regist.error", null, LocaleContextHolder.getLocale());		
+			for (String msg : errorList) {
+				errorMsg = errorMsg + "\n" + msg;
+			}
+			gateEditForm.setMessage(errorMsg);
+			
+			// フォームの値を設定
+			gateEditForm.setGateno(mGate.getGateno());
+			gateEditForm.setHostno(mGate.getHostno());
+			gateEditForm.setAddressno(mGate.getAddressno());
+			gateEditForm.setGatename(mGate.getGatename());
+			gateEditForm.setCtimer(mGate.getCtimer());
+			gateEditForm.setCtimername(mGate.getCtimername());
+		}
+		
+		// ゲート編集画面更新のため、データを再取得
+		List<GateEdit> gateList = gateEditRepository.getGateList(null, tenantGate);
+		List<MCT> ctList = mCTRepository.getMCTList(null);
+		gateEditForm.setMstGateList(gateList);
+		gateEditForm.setMstCTList(ctList);
+		return gateEditForm;
+	}
+
+	/**
+	 * ゲート送信登録
+	 * @param request
+	 * @param tenantGate ログインテナントのゲート(フィルター機能なしの場合はnull)
+	 * @param userName ログインユーザー名
+	 *　@return　gateEditForm
+	 */
+	@Transactional
+	public GateEditForm gateSendRegist(HttpServletRequest request, String tenantGate, String userName) throws TridentException  {
+		
+		GateEditForm gateEditForm = new GateEditForm();
+		
+		GateEdit mGate = new GateEdit();
+		List<String> errorList = new ArrayList<String>();
+
+		// 連解フラグ
+		boolean ctimerflag = false;
+		
+		String gateno = request.getParameter("gateno");
+		String hostno = request.getParameter("hostno");
+		String addressno = request.getParameter("addressno");
+		String gatename = request.getParameter("gatename");
+		String ctimerno = request.getParameter("ctimerno");  // 連解番号が"XXX"の場合は連続解錠時間帯送信ボタン自体が押下できない
+		String ctimername = request.getParameter("ctimername");
+		
+		// 入力チェック
+		mGate = this.checkInputData(gateno,hostno,addressno,gatename,ctimerno,ctimername,errorList, -1);
+
+		if(errorList.size() == 0) {
+
+			// 操作ログを登録
+			mOperationlogService.RegistOperation(OperationCode.GATEEDIT_GATEEDIT_REGISTRATION.getCode());
+	        
+	    	// 現在日時を取得("yyyy-MM-dd HH:mm:ss.xxx(ミリ秒3桁)"形式)
+	    	LocalDateTime now = LocalDateTime.now();
+	    	Timestamp startTimestamp = Timestamp.valueOf(now);
+			
+	    	// 登録している連続解錠時間帯を取得
+	    	List<MCT> sendCTList = mCTRepository.getMCTList(null);
+	    	
+	    	// ゲートデータを取得(ホストに紐づくゲートすべてに送信するため、ログインテナントは考慮しない)
+	    	List<Map<String, Object>> sendGateList = gateEditRepository.getGateANDCTList(Integer.parseInt(mGate.getHostno()), Integer.parseInt(mGate.getAddressno()));
+	    	
+	    	// 画面で選択したゲートに対して、画面上で入力した連解番号のデータ1～16を上書きする
+	    	// 画面選択したゲート番号と取得したゲート番号をチェック
+	    	sendGateList.stream()
+		        .filter(gateMap -> gateno.equals(gateMap.get("gateno")))
+		        .findFirst()
+		        .ifPresent(gateMap -> {
+		            // sendCTList の中から入力した連解番号に一致する連続解錠時間帯データを探す
+		            sendCTList.stream()
+		                .filter(mct -> ctimerno.equals(mct.getCtimer()))
+		                .findFirst()
+		                .ifPresent(mct -> {
+		                    // ctimer を上書き
+		                    gateMap.put("ctimer", mct.getCtimer());
+		                    
+		                    // data1～16 を Map に上書き
+		                    for (int i = 1; i <= 16; i++) {
+		                        try {
+		                            // sendCTListのgetterを呼び出す
+		                            Method getter = MCT.class.getMethod("getData" + i);
+		                            Object value = getter.invoke(mct);
+		                            gateMap.put("data" + i, value);
+		                        } catch (Exception e) {
+		                            e.printStackTrace();
+		                        }
+		                    }
+		                });
+		        });
+	    	
+	    	String sendhostno = "";
+	    	String sendaddressno = "";
+	    	String sendhosttype = "";
+	    	
+	    	// ホスト番号取得
+			if (!sendGateList.isEmpty()) {
+			    Map<String, Object> firstMap = sendGateList.get(0);
+			    Object hostnoObj = firstMap.get("hostno");
+			    if (hostnoObj != null) {
+			        sendhostno = hostnoObj.toString();
+			    }
+			}
+			
+			// アドレス番号取得
+			if (!sendGateList.isEmpty()) {
+			    Map<String, Object> firstMap = sendGateList.get(0);
+			    Object addressnoObj = firstMap.get("addressno");
+			    if (addressnoObj != null) {
+			        sendaddressno = addressnoObj.toString();
+			    }
+			}
+			
+			// 装置タイプ取得
+			if (!sendGateList.isEmpty()) {
+			    Map<String, Object> firstMap = sendGateList.get(0);
+			    Object hosttypeObj = firstMap.get("hosttype");
+			    if (hosttypeObj != null) {
+			        sendhosttype = hosttypeObj.toString();
+			    }
+			}
+			
+	    	// 曜日フラグ数(16回)ループし、送信データの作成・登録を行う
+	    	for (int i = 0; i < 16; i++) {
+	    	    // iを16進数文字列(曜日フラグ)に変換（0-9, A-F）
+	    	    String dayOfWeekflag = Integer.toHexString(i).toUpperCase();
+	    	    
+	    	    // Mapのキーを作成
+	    	    String key = "data" + (i + 1);
+	    	    
+		        // 送信データ作成
+		        String sendData = mSendService.createCtimerSendData(key, sendGateList, String.format("%03d", i), dayOfWeekflag, sendhostno, sendaddressno, sendhosttype);
+		        
+				// 送信データ登録
+				mSendRepository.regist(Integer.parseInt(mGate.getHostno()), Integer.parseInt(mGate.getAddressno()), 0, SendOrderNum.GATEEDIT_SEND_NUM.getNum(), userName, startTimestamp, sendData);
+	    	}
+	    	
+			// ゲートデータ更新
+			gateEditRepository.update(mGate,ctimerflag);
+			
+			// 更新完了のメッセージを設定
+			gateEditForm.setMessage(messageSource.getMessage("gateEdit.regist.completed", null, LocaleContextHolder.getLocale()));
+			
+		} else {
+		// エラー	
+			
+			String errorMsg = messageSource.getMessage("gateEdit.regist.error", null, LocaleContextHolder.getLocale());		
+			for (String msg : errorList) {
+				errorMsg = errorMsg + "\n" + msg;
+			}
+			gateEditForm.setMessage(errorMsg);
+			
+			// フォームの値を設定
+			gateEditForm.setGateno(mGate.getGateno());
+			gateEditForm.setHostno(mGate.getHostno());
+			gateEditForm.setAddressno(mGate.getAddressno());
+			gateEditForm.setGatename(mGate.getGatename());
+			gateEditForm.setCtimer(mGate.getCtimer());
+			gateEditForm.setCtimername(mGate.getCtimername());
+		}
+		
+		// ゲート編集画面更新のため、データを再取得
+		List<GateEdit> gateList = gateEditRepository.getGateList(null, tenantGate);
+		List<MCT> ctList = mCTRepository.getMCTList(null);
+		gateEditForm.setMstGateList(gateList);
+		gateEditForm.setMstCTList(ctList);
+		return gateEditForm;
+	}
+	
+	/**
+	 * 存在チェック(連続解錠時間帯登録)
+	 * @param gateEditForm
+	 *　@return　result
+	 */
+	public ServiceResult<Boolean> checkExistenceCtimerData(GateEditForm gateEditForm) throws TridentException  {
+		
+		// 戻り値		
+		ServiceResult<Boolean> result = new ServiceResult<Boolean>();
+
+		try {
+			
+			String ctimerno = gateEditForm.getCtimer();
+			
+			if(ctimerno != null) {
+				// 参照ボタン押下時以外の場合
+				List<String> errorList = new ArrayList<String>();
+				Boolean bRet = this.checkCtimerNo(errorList,ctimerno,-1);
+				
+				if (bRet == false) {
+					// データが存在しない場合
+					result.setSuccess(false);
+					return result;
+				}
+				
+				// データが存在するか確認
+				List<MCT>  ctData = mCTRepository.getMCTList(Integer.parseInt(ctimerno));
+				
+				if(ctData.size() > 0) {
+					// データが存在する場合、更新登録
+					result.setContent(true);
+				} else {
+					// データが存在しない場合、新規登録
+					result.setContent(false);	
+				}
+				
+				result.setSuccess(true);
+				return result;
+			}else {
+				// 参照ボタン押下時の場合
+				// データが存在するか確認
+				List<MCT>  ctData = mCTRepository.getMCTList(null);
+				
+				if(ctData.size() > 0) {
+					// データが1件以上存在する場合
+					result.setContent(true);
+				} else {
+					// データが1件も存在しない場合(js側でエラー表示)
+					result.setContent(false);	
+				}
+				
+				result.setSuccess(true);
+				return result;
+			}
+		
+		} catch (Exception e) {
+		    // SQLエラー、接続失敗などの例外を補足
+		    result.setSuccess(false);
+		    return result;
+		}
+	}
+	
+	/**
+	 * 連続解錠時間帯登録
+	 * @param request
+	 * @param tenantGate ログインテナントのゲート(フィルター機能なしの場合はnull)
+	 *　@return　gateEditForm
+	 */
+	@Transactional
+	public GateEditForm ctimerRegist(HttpServletRequest request, String tenantGate) throws TridentException  {
+		
+		GateEditForm gateEditForm = new GateEditForm();
+		
+		MCT mCtData = new MCT();
+		List<String> errorList = new ArrayList<String>();
+		
+		String ctimerno = request.getParameter("selectCtimerno");
+		String ctimername = request.getParameter("selectCtimername");
+		String data1 = request.getParameter("Sunday");
+		String data2 = request.getParameter("Monday");
+		String data3 = request.getParameter("Tuesday");
+		String data4 = request.getParameter("Wednesday");
+		String data5 = request.getParameter("Thursday");
+		String data6 = request.getParameter("Friday");
+		String data7 = request.getParameter("Saturday");
+		String data8 = request.getParameter("Holiday");
+		String data9 = request.getParameter("Specialday1");
+		String data10 = request.getParameter("Specialday2");
+		String data11 = request.getParameter("Specialday3");
+		String data12 = request.getParameter("Specialday4");
+		String data13 = request.getParameter("Specialday5");
+		String data14 = request.getParameter("Specialday6");
+		String data15 = request.getParameter("Specialday7");
+		String data16 = request.getParameter("Specialday8");
+		Integer registType = Integer.parseInt(request.getParameter("ctimerRegistType"));
+		
+		// 入力チェック
+		mCtData = this.checkInputCtimerData(ctimerno,ctimername,data1,data2,data3,data4,data5,data6,data7,
+											data8,data9,data10,data11,data12,data13,data14,data15,data16,errorList, -1);
+
+		if(errorList.size() == 0) {
+			
+			// 操作ログを登録
+			mOperationlogService.RegistOperation(OperationCode.GATEEDIT_CTIMERREGIST_REGISTRATION.getCode());
+
+			if(registType == 0) {
+				// データが存在する場合
+				// 連続解錠時間帯データ更新
+				mCTRepository.update(mCtData);
+			} else {
+				// データが存在しない場合
+				// 連続解錠時間帯データ新規登録
+				mCTRepository.regist(mCtData);				
+			}
+			
+			// 更新完了のメッセージを設定
+			gateEditForm.setMessage(messageSource.getMessage("gateEdit.ctimerRegist.completed", null, LocaleContextHolder.getLocale()));
+			
+		} else {
+		// エラー	
+			
+			String errorMsg = messageSource.getMessage("gateEdit.ctimerRegist.error", null, LocaleContextHolder.getLocale());		
+			for (String msg : errorList) {
+				errorMsg = errorMsg + "\n" + msg;
+			}
+			gateEditForm.setMessage(errorMsg);
+			
+			// フォームの値を設定
+			gateEditForm.setCtimer(mCtData.getCtimer());
+			gateEditForm.setCtimername(mCtData.getCtimername());
+		}
+		
+		// ゲート編集画面更新のため、データを再取得
+		List<GateEdit> gateList = gateEditRepository.getGateList(null, tenantGate);
+		List<MCT> ctList = mCTRepository.getMCTList(null);
+		gateEditForm.setMstGateList(gateList);
+		gateEditForm.setMstCTList(ctList);
+		
+		return gateEditForm;
+	}
+	
+	
+	/**
+	 * 連続解錠時間帯削除
+	 * @param request
+	 * @param tenantGate ログインテナントのゲート(フィルター機能なしの場合はnull)
+	 *　@return　gateEditForm
+	 */
+	@Transactional
+	public GateEditForm ctimerDelete(HttpServletRequest request, String tenantGate) throws TridentException  {
+		
+		GateEditForm gateEditForm = new GateEditForm();
+		
+		List<String> errorList = new ArrayList<String>();
+		
+		// 入力チェック
+		String ctimerno = request.getParameter("selectCtimerno");
+		String ctimername = request.getParameter("selectCtimername");
+		
+		// 入力チェック
+		this.checkCtimerNo(errorList,ctimerno,-1);
+		
+		if(errorList.size() == 0) {
+			// データが存在するか確認
+			List<MCT>  mCtData= mCTRepository.getMCTList(Integer.parseInt(ctimerno));
+			
+			if(mCtData.size() > 0) {
+				
+				// 連続解錠時間帯を使用しているデータが存在するか確認
+				List<GateEdit>  gate= gateEditRepository.getGateListByCtimer(Integer.parseInt(ctimerno));
+				
+				if(gate.size() == 0) {
+					// 連続解錠時間帯を使用しているデータが存在しない
+					
+					// 操作ログを登録
+					mOperationlogService.RegistOperation(OperationCode.GATEEDIT_CTIMERREGIST_DELETE.getCode());
+					
+					// データが存在する場合、削除
+					mCTRepository.delete(Integer.parseInt(ctimerno));
+				
+					gateEditForm.setMessage(messageSource.getMessage("gateEdit.ctimerDelete.completed", null, LocaleContextHolder.getLocale()));
+					
+				} else {
+					// 削除対象の連続解錠時間帯が使用されている(設定しているゲートがある)場合
+					gateEditForm.setMessage(messageSource.getMessage("gateEdit.ctimerDelete.usedData", null, LocaleContextHolder.getLocale()));
+					
+					// フォームの値を設定
+					gateEditForm.setCtimer(ctimerno);
+					gateEditForm.setCtimername(ctimername);
+				}
+					
+			} else {
+				// 削除対象のデータなし
+				gateEditForm.setMessage(messageSource.getMessage("gateEdit.ctimerDelete.noData", null, LocaleContextHolder.getLocale()));
+				
+				// フォームの値を設定
+				gateEditForm.setCtimer(ctimerno);
+				gateEditForm.setCtimername(ctimername);
+			}
+					
+		} else {
+			// エラー発生した場合
+			String errorMsg = messageSource.getMessage("gateEdit.ctimerDelete.error", null, LocaleContextHolder.getLocale());	
+			for (String msg : errorList) {
+				errorMsg = errorMsg + "\n" + msg;
+			}
+			gateEditForm.setMessage(errorMsg);
+			
+			// フォームの値を設定
+			gateEditForm.setCtimer(ctimerno);
+			gateEditForm.setCtimername(ctimername);
+		}
+		
+		// ゲート編集画面更新のため、データを再取得
+		List<GateEdit> gateList = gateEditRepository.getGateList(null, tenantGate);
+		List<MCT> ctList = mCTRepository.getMCTList(null);
+		gateEditForm.setMstGateList(gateList);
+		gateEditForm.setMstCTList(ctList);
+		return gateEditForm;
+	}
+	
+	/**
+	 * ダウンロードファイル作成
+	 * @param filePath 作成するファイルパス
+	 * @param fileName 作成するファイル名
+	 * @param tenantGate ログインテナントのゲート(フィルター機能なしの場合はnull)
+	 *　@return　Boolean 成功or失敗
+	 */
+	public Boolean createDownloadData(String filePath, String fileName, String tenantGate) throws TridentException  {
+
+		// ファイルに出力する内容を取得する
+		List<GateEdit> gateList = gateEditRepository.getGateList(null, tenantGate);
+    	
+        // 作成するファイルのファイルパスを格納
+        filePath = filePath + fileName;
+
+		// 操作ログを登録
+    	mOperationlogService.RegistOperation(OperationCode.GATEEDIT_GATEEDIT_DATAOUTPUT.getCode());
+		
+        try (FileWriter writer = new FileWriter(filePath)) {
+ 
+        	PrintWriter pw = new PrintWriter(new BufferedWriter(writer));
+        	for (GateEdit gateEdit : gateList) {
+        		
+        		StringBuilder sb = new StringBuilder();
+        		
+    			// ""で囲んで、20桁(20バイト)にして出力
+        		sb.append("\"" + stringCheckUtility.addCharByByte(gateEdit.getGateno(), 20, " ", -1) + "\"");
+            	sb.append(",");
+            	sb.append("\"" + stringCheckUtility.addCharByByte(gateEdit.getHostno(), 20, " ", -1) + "\"");
+            	sb.append(",");
+            	sb.append("\"" + stringCheckUtility.addCharByByte(gateEdit.getAddressno(), 20, " ", -1) + "\"");
+            	sb.append(","); 
+            	sb.append("\"" + stringCheckUtility.addCharByByte(gateEdit.getGatename(), 20, " ", -1) + "\"");
+            	sb.append(","); 
+            	sb.append("\"" + stringCheckUtility.addCharByByte(gateEdit.getCtimer(), 20, " ", -1) + "\"");
+            	sb.append(","); 
+            	sb.append("\"" + stringCheckUtility.addCharByByte(gateEdit.getCtimername(), 20, " ", -1) + "\"");
+            	
+        		pw.println(sb.toString());
+        	}
+        	
+            //ファイルを閉じる
+            pw.close();
+        }
+        catch(IOException e)
+        {
+        	// ファイルの作成に失敗
+        	return false;
+        }
+		return true;
+	}
+	
+	/**
+	 * 入力チェック(ゲート編集)
+	 */	
+	private GateEdit checkInputData(String gateno,String hostno,String addressno,String gatename,String ctimerno,String ctimername,List<String> errorList, int ilineNum)  {
+		
+
+		/////////////////////////////////////////////
+		// 入力チェック 
+		/////////////////////////////////////////////
+		Boolean bRet = true;
+
+		//ゲート名称
+		if(this.checkGateName(errorList, gatename, ilineNum) == false) {
+			bRet = false;
+		}	
+		
+		//連解番号
+		if(this.checkCtimerNo(errorList, ctimerno, ilineNum) == false) {
+			bRet = false;
+		}		
+		
+		/////////////////////////////////////////////
+		// エラーがない場合入力値をセット　前0は削除して設定しておく
+		/////////////////////////////////////////////
+		GateEdit mGate = new GateEdit();
+		if (bRet == true) {
+			mGate.setGateno(String.valueOf(Integer.parseInt(gateno)));
+			if(hostno != null && "".equals(hostno) == false) {
+				mGate.setHostno(String.valueOf(Integer.parseInt(hostno)));
+			}
+			if(addressno != null && "".equals(addressno) == false) {
+				mGate.setAddressno(String.valueOf(Integer.parseInt(addressno)));
+			}
+			mGate.setGatename(gatename);
+			if(ctimerno != null && "".equals(ctimerno) == false) {
+				mGate.setCtimer(String.valueOf(Integer.parseInt(ctimerno)));
+			}
+			mGate.setCtimername(ctimername);
+		}
+
+		return mGate;
+	}
+	
+	/**
+	 * 入力チェック(連続解錠時間帯登録)
+	 */	
+	private MCT checkInputCtimerData(String ctimerno,String ctimername,String data1,String data2,String data3,String data4,String data5,String data6,String data7,String data8,
+										String data9,String data10,String data11,String data12,String data13,String data14,String data15,String data16,List<String> errorList, int ilineNum)  {
+		
+
+		/////////////////////////////////////////////
+		// 入力チェック 
+		/////////////////////////////////////////////
+		Boolean bRet = true;
+		
+		//連解番号
+		if(this.checkCtimerNo(errorList, ctimerno, ilineNum) == false) {
+			bRet = false;
+		}		
+		
+		//連解名称
+		if(this.checkCtimerName(errorList, ctimername, ilineNum) == false) {
+			bRet = false;
+		}	
+		
+		/////////////////////////////////////////////
+		// エラーがない場合入力値をセット　前0は削除して設定しておく
+		/////////////////////////////////////////////
+		MCT mCtData = new MCT();
+		if (bRet == true) {
+			if(ctimerno != null && "".equals(ctimerno) == false) {
+				mCtData.setCtimer(String.valueOf(Integer.parseInt(ctimerno)));
+			}
+			mCtData.setCtimername(ctimername);
+			mCtData.setData1(data1);
+			mCtData.setData2(data2);
+			mCtData.setData3(data3);
+			mCtData.setData4(data4);
+			mCtData.setData5(data5);
+			mCtData.setData6(data6);
+			mCtData.setData7(data7);
+			mCtData.setData8(data8);
+			mCtData.setData9(data9);
+			mCtData.setData10(data10);
+			mCtData.setData11(data11);
+			mCtData.setData12(data12);
+			mCtData.setData13(data13);
+			mCtData.setData14(data14);
+			mCtData.setData15(data15);
+			mCtData.setData16(data16);
+		}
+
+		return mCtData;
+	}
+	
+	////////////////////////以下、各項目の入力内容のチェック処理////////////////////////
+	// ゲート番号
+	private Boolean checkGateNo (List<String> errorList, String gateNo, int ilineNum) {
+		Boolean bRet = true;
+		if (null == gateNo || "".equals(gateNo) == true) {
+			//　未入力チェック
+			// ゲートを選択して下さい。
+			String errorMsg = messageSource.getMessage("gateEdit.error.empty.gateno", null, LocaleContextHolder.getLocale());	
+			// エラーリストにエラーを追加
+			stringCheckUtility.addError(errorList, errorMsg, ilineNum);
+			
+			bRet = false;
+		}	
+		return bRet;
+	}
+	
+	// ゲート名称
+	private Boolean checkGateName (List<String> errorList, String gateName, int ilineNum) {
+		Boolean bRet = true;
+		if (null == gateName || "".equals(gateName) == true) {
+			//　未入力チェック
+			// ゲートを選択して下さい。
+			String errorMsg = messageSource.getMessage("gateEdit.error.empty.gateName", null, LocaleContextHolder.getLocale());	
+			// エラーリストにエラーを追加
+			stringCheckUtility.addError(errorList, errorMsg, ilineNum);
+			
+			bRet = false;
+		}	
+		
+		if(gateName.length() > 20) {
+			// 桁数チェック
+			String errorMsg = messageSource.getMessage("gateEdit.error.maxlength.gateName", null, LocaleContextHolder.getLocale());
+			// エラーリストにエラーを追加
+			stringCheckUtility.addError(errorList, errorMsg, ilineNum);
+			
+			bRet = false;
+		}
+		
+		// 禁止文字「\ / : * ? " <> |」が含まれていないかチェック
+		if (stringCheckUtility.isForbiddenCharsCheck(gateName) == false) {
+			String errorMsg = messageSource.getMessage("gateEdit.error.input.gateName", null, LocaleContextHolder.getLocale());
+			// エラーリストにエラーを追加
+			stringCheckUtility.addError(errorList, errorMsg, ilineNum);
+			
+			bRet = false;
+		}	
+		return bRet;
+	}
+	
+	// 連解番号
+	private Boolean checkCtimerNo (List<String> errorList, String ctimerno, int ilineNum) {
+		Boolean bRet = true;
+		
+		if (null == ctimerno || "".equals(ctimerno) == true) {
+			//　未入力チェック
+			// 連解番号を入力してください
+			String errorMsg = messageSource.getMessage("gateEdit.error.empty.ctimerno", null, LocaleContextHolder.getLocale());	
+			// エラーリストにエラーを追加
+			stringCheckUtility.addError(errorList, errorMsg, ilineNum);
+			
+			bRet = false;
+		}	
+		
+		if (stringCheckUtility.isDecimalCheck(ctimerno,3,0,false) == false) {
+			// 桁数チェック
+			String errorMsg = messageSource.getMessage("gateEdit.error.input.ctimerno", null, LocaleContextHolder.getLocale());
+			// エラーリストにエラーを追加
+			stringCheckUtility.addError(errorList, errorMsg, ilineNum);
+			
+			bRet = false;
+		}	
+		return bRet;
+	}
+	
+	// 連解名称
+	private Boolean checkCtimerName (List<String> errorList, String ctimerName, int ilineNum) {
+		Boolean bRet = true;
+		if (null == ctimerName || "".equals(ctimerName) == true) {
+			//　未入力チェック
+			// ゲートを選択して下さい。
+			String errorMsg = messageSource.getMessage("gateEdit.error.empty.ctimerName", null, LocaleContextHolder.getLocale());	
+			// エラーリストにエラーを追加
+			stringCheckUtility.addError(errorList, errorMsg, ilineNum);
+			
+			bRet = false;
+		}	
+		
+		if(ctimerName.length() > 20) {
+			// 桁数チェック
+			String errorMsg = messageSource.getMessage("gateEdit.error.maxlength.ctimerName", null, LocaleContextHolder.getLocale());
+			// エラーリストにエラーを追加
+			stringCheckUtility.addError(errorList, errorMsg, ilineNum);
+			
+			bRet = false;
+		}
+		
+		// 禁止文字「\ / : * ? " <> |」が含まれていないかチェック
+		if (stringCheckUtility.isForbiddenCharsCheck(ctimerName) == false) {
+			String errorMsg = messageSource.getMessage("gateEdit.error.input.ctimerName", null, LocaleContextHolder.getLocale());
+			// エラーリストにエラーを追加
+			stringCheckUtility.addError(errorList, errorMsg, ilineNum);
+			
+			bRet = false;
+		}	
+		return bRet;
+	}
+}

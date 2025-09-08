@@ -1,0 +1,23 @@
+package jp.co.art.trident.exception;
+
+/**TridentExceptionクラス**/
+public class TridentException  extends Exception {
+
+	private static final long serialVersionUID = 1746912787005350672L;
+
+	public TridentException(String message) {
+		super(message);
+	}
+	
+	public TridentException(Throwable cause) {
+		super(cause);
+	}
+
+	public TridentException(String message, Throwable cause) {
+		super(message, cause);
+	}
+
+	public TridentException(String message, Throwable cause, boolean enableSuppression, boolean writableStackTrace) {
+		super(message, cause, enableSuppression, writableStackTrace);
+	}
+}

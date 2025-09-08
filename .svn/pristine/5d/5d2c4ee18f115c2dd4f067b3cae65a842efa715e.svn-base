@@ -1,0 +1,99 @@
+package jp.co.art.trident.repository;
+
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.jdbc.core.RowMapper;
+import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
+import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
+import org.springframework.stereotype.Repository;
+import jp.co.art.trident.model.entity.MUser;
+
+/**ユーザーマスタのリポジトリクラス**/
+
+@Repository
+public class MUserRepository {
+
+	@Autowired
+	private final NamedParameterJdbcTemplate namedParameterJdbcTemplate;
+	
+    public MUserRepository(NamedParameterJdbcTemplate namedParameterJdbcTemplate) {
+        this.namedParameterJdbcTemplate = namedParameterJdbcTemplate;
+    }
+    
+    private RowMapper<MUser> resultSetMapper() {	
+    	return new RowMapper<MUser>() {
+
+			@Override
+			public MUser mapRow(ResultSet rs, int rowNum) throws SQLException {		
+				MUser mUser = new MUser();
+				mUser.setUsername(rs.getString("username"));
+				mUser.setPassword(rs.getString("password"));
+				mUser.setLevel(rs.getInt("level"));
+				mUser.setEntrytime(rs.getString("entrytime"));
+				mUser.setUptime(rs.getString("uptime"));
+				mUser.setAuthority(rs.getString("authority"));
+				mUser.setTenantno(rs.getString("tenantno"));
+				return mUser;
+			}
+		};
+    }
+    
+    /**
+     * ユーザー情報があるかを確認する関数
+     * @param userName ユーザー名
+     * @return true:あり false:なし
+     */
+    public boolean getUserInfo(String userName) {
+    	
+    	StringBuilder sb = new StringBuilder();
+    	sb.append("SELECT ");
+    	sb.append(" COUNT(*) ");
+    	sb.append("FROM ");
+    	sb.append(" \"TRIDENT\".m_user ");
+    	sb.append("WHERE");
+    	sb.append(" username =:username ");
+   
+		//パラメータを設定
+		MapSqlParameterSource  param = new MapSqlParameterSource();
+		
+		param.addValue("username", userName);
+		
+    	int count = namedParameterJdbcTemplate.queryForObject(sb.toString(), param, Integer.class);
+    	
+    	return count > 0;
+    }
+    
+    /**
+     * ユーザー情報を取得する関数
+     * @param userName ユーザー名
+     * @return MUser　ユーザー情報
+     */
+    public MUser findOne(String userName) {
+    	
+    	MUser mUser = new MUser(); 
+    	
+    	StringBuilder sb = new StringBuilder();
+    	sb.append("SELECT ");
+    	sb.append(" username ");
+    	sb.append(" ,password ");
+    	sb.append(" ,level ");
+    	sb.append(" ,entrytime ");
+    	sb.append(" ,uptime ");
+    	sb.append(" ,authority ");
+    	sb.append(" ,tenantno ");
+    	sb.append("FROM ");
+    	sb.append(" \"TRIDENT\".m_user ");
+    	sb.append("WHERE");
+    	sb.append(" username =:username ");
+   
+		//パラメータを設定
+		MapSqlParameterSource  param = new MapSqlParameterSource();
+		
+		param.addValue("username", userName);
+
+		mUser =  namedParameterJdbcTemplate.query(sb.toString(), param, resultSetMapper()).getFirst();
+		
+		return mUser;
+    }
+}

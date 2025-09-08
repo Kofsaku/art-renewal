@@ -1,0 +1,143 @@
+package jp.co.art.trident.controller;
+
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
+import org.springframework.web.bind.annotation.ModelAttribute;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.ResponseBody;
+import jakarta.servlet.http.HttpServletRequest;
+import jp.co.art.trident.exception.TridentException;
+import jp.co.art.trident.model.ServiceResult;
+import jp.co.art.trident.model.form.DeviceForm;
+import jp.co.art.trident.service.DeviceService;
+
+/**装置登録・編集画面のコントローラークラス**/
+@Controller
+public class DeviceController {
+	
+	/** 装置登録画面サービスクラス */
+	private final DeviceService deviceService;
+	
+	public DeviceController(DeviceService deviceService)
+			 {
+		this.deviceService = deviceService;		
+	}
+
+	/**
+	 * 装置登録・編集画面の初期表示処理を行います。
+	 * @param  model 
+	 * @return index.html
+	 * @throws TridentException
+	 */
+	@RequestMapping(value = {"/device", "/device/index"},method = RequestMethod.GET)
+     public String init(Model model) throws TridentException
+     {
+    	//画面登録初期表示
+		DeviceForm deviceform = deviceService.initScreen();
+        model.addAttribute("deviceForm", deviceform);
+        // 登録画面（device/index）を再表示
+        return "device/index";
+     }
+
+	/**
+	 * 装置登録・編集画面にて、ホスト番号・アドレス番号などをもとに  
+	 * @param deviceForm クライアントから送信されたフォーム情報
+	 * @param model 画面に渡すモデルオブジェクト。
+	 * @return index.html
+	 * @throws TridentException 
+	 */
+	@RequestMapping(value = {"/device/getDeviceData"}, method = RequestMethod.POST)
+	public String getDeviceData(@ModelAttribute DeviceForm deviceForm, Model model) throws TridentException {
+	    // サービスクラスより装置情報を取得
+	    ServiceResult<DeviceForm> serviceResult = deviceService.getDeviceData(deviceForm);
+	    DeviceForm result = serviceResult.getContent();
+	  
+	    if (result != null) {
+	    	// 装置情報が取得できた場合は model に格納し画面に渡す
+	        model.addAttribute("deviceForm", result);
+	    } else {
+	    	//該当データがない場合はエラーメッセージを設定し、フォーム情報を再表示
+	        deviceForm.setMessage("ホスト情報が見つかりませんでした"); 
+	        model.addAttribute("deviceForm", deviceForm);
+	    }
+	    // 登録画面（device/index）を再表示
+	    return "device/index";
+	}
+
+	/**
+	 * 装置登録・編集画面における存在チェック処理する関数
+	 * @param deviceForm　
+	 * @return ServiceResult　オブジェクトに true（存在）または false（未存在）を格納して返却
+	 * @throws TrindentException 
+	 **/	
+	@RequestMapping(value = {"/device/exist"}, method = RequestMethod.POST)
+	@ResponseBody
+	public ServiceResult<Boolean> exist(@RequestBody DeviceForm deviceForm) throws TridentException {
+		//サービスクラスで該当装置情報の存在可否をチェック
+	    return deviceService.checkExistenceDeviceData(deviceForm);
+	}
+	
+	/**
+	 * 装置情報取得API（非同期通信用）の関数
+	 * @param deviceForm 
+	 * @return ServiceResult 装置情報を格納した DeviceForm を JSON 形式で返却
+	 * @throws TridentException 
+	 */
+	@RequestMapping(value = {"/device/api/get"}, method = RequestMethod.POST)
+	@ResponseBody
+	public ServiceResult<DeviceForm> getDeviceDataApi(@RequestBody DeviceForm deviceForm
+			) throws TridentException 
+	{
+		// ServiceResultの初期化（結果オブジェクト）
+		ServiceResult<DeviceForm> result = new ServiceResult<DeviceForm>();	
+		// サービスクラスを通じて、該当する装置情報を取得
+		result = deviceService.getDeviceData(deviceForm);
+		// 結果をJSON形式で返却（@ResponseBodyによって自動シリアライズされる）
+		return result;
+	}	
+	
+	/**
+	 * 装置登録・編集画面の登録処理する関数
+	 * @param model 登録結果や再表示データを画面に渡すモデルオブジェクト
+	 * @param request HTTPリクエスト（フォームに入力された装置情報を含む）
+	 * @return index.html
+	 * @throws TridentException 
+	 */
+	@RequestMapping(value = {"/device/regist"}, method = RequestMethod.POST)
+	public String regist(Model model,HttpServletRequest request
+			) throws TridentException 
+	{
+		DeviceForm deviceForm = new DeviceForm();
+	    // フォームオブジェクトを初期化し、登録処理を実行
+		deviceForm = deviceService.deviceRegist(request);	
+		// 登録結果を画面に反映
+		model.addAttribute("deviceForm", deviceForm);
+		
+		return "device/index";
+	}	
+		
+	/**
+	 * 装置登録・編集画面で削除処理する関数ｓ
+	 * @param model Viewに渡すためのモデルオブジェクト
+	 * @param request HTTPリクエスト情報（削除対象の装置IDなどを取得）
+	 * @return index.html
+	 * @throws TridentException
+	 */
+	@RequestMapping(value = {"/device/delete"}, method = RequestMethod.POST)
+	public String delete(Model model, HttpServletRequest request) throws TridentException {
+	    // 新しいDeviceFormインスタンスを作成（初期化）
+	    DeviceForm deviceForm = new DeviceForm();
+	    
+	    // サービスクラスから装置削除処理を呼び出し、結果をdeviceFormにセット
+	    deviceForm = deviceService.deviceDelete(request);    
+	     
+	    model.addAttribute("deviceForm", deviceForm);
+
+	    return "device/index";
+	}
+
+}
+
+

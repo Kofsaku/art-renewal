@@ -1,0 +1,1246 @@
+package jp.co.art.trident.service;
+
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.io.PrintWriter;
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
+import java.util.Random;
+import org.springframework.context.MessageSource;
+import org.springframework.context.i18n.LocaleContextHolder;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.StringUtils;
+import org.springframework.web.multipart.MultipartFile;
+import jakarta.servlet.http.HttpServletRequest;
+import jp.co.art.trident.component.CsvUtility;
+import jp.co.art.trident.component.StringCheckUtility;
+import jp.co.art.trident.exception.TridentException;
+import jp.co.art.trident.model.ServiceResult;
+import jp.co.art.trident.model.entity.MDevicetype;
+import jp.co.art.trident.model.entity.Gate;
+import jp.co.art.trident.model.entity.MDevice;
+import jp.co.art.trident.model.entity.MGatetype;
+import jp.co.art.trident.model.form.GateRegistrationForm;
+import jp.co.art.trident.repository.GateRepository;
+import jp.co.art.trident.repository.MDeviceRepository;
+import jp.co.art.trident.repository.MDevicetypeRepository;
+import jp.co.art.trident.repository.MGateRepository;
+import jp.co.art.trident.repository.MGatetypeRepository;
+import jp.co.art.trident.service.common.MOperationlogService;
+import jp.co.art.trident.service.common.MOperationlogService.OperationCode;
+
+/**ゲート登録・編集画面のサービスクラス**/
+
+@Service
+public class GateRegistrationService {
+
+	/**ゲートマスタのリポジトリ */
+	private final MGateRepository mGateRepository;
+
+	/**装置タイプマスタのリポジトリ */
+	private final MDevicetypeRepository mDevicetypeRepository;
+	
+	/**ゲートタイプマスタのリポジトリ */
+	private final MGatetypeRepository mGatetypeRepository;
+	
+	/**装置マスタのリポジトリ */
+	private final MDeviceRepository mDeviceRepository;
+
+	/**ゲート登録のリポジトリ */
+	private final GateRepository gateRepository;
+	
+	/** 操作ログサービスクラス */
+	private final MOperationlogService mOperationlogService;	
+	
+	/** CSVファイル操作ユーティリティクラス */
+	private final CsvUtility csvUtility;
+	
+	/** 文字列関連のチェックユーティリティクラス */
+	private final StringCheckUtility stringCheckUtility;
+	
+	/** メッセージソースクラス */
+	private final MessageSource messageSource;
+	
+	// ------------------------------------------------------------------------------------------------------
+	// 定数
+	// ------------------------------------------------------------------------------------------------------
+	private final String FILE_TMP_PATH = "C:\\TRIDENT\\Data\\Gate\\Temp\\";
+	
+	/**
+	 * コンストラクタ
+	 */
+	public GateRegistrationService(MGateRepository mGateRepository
+			,MDevicetypeRepository mDevicetypeRepository
+			,MGatetypeRepository mGatetypeRepository
+			,MDeviceRepository mDeviceRepository
+			,GateRepository gateRepository
+			,MOperationlogService mOperationlogService
+			,CsvUtility csvUtility
+			,StringCheckUtility stringCheckUtility
+			,MessageSource messageSource
+			) {
+		this.mGateRepository = mGateRepository;
+		this.mDevicetypeRepository = mDevicetypeRepository;
+		this.mGatetypeRepository = mGatetypeRepository;
+		this.mDeviceRepository = mDeviceRepository;
+		this.gateRepository = gateRepository;
+		this.mOperationlogService = mOperationlogService;
+		this.csvUtility = csvUtility;
+		this.stringCheckUtility = stringCheckUtility;
+		this.messageSource= messageSource; 
+	}
+	
+	/**
+	 * ゲート登録初期表示
+	 * @param 
+	 * @param 
+	 *　@return　
+	 */
+	public GateRegistrationForm initScreen() throws TridentException  {
+		
+		// 画面に表示する内容を取得
+		GateRegistrationForm gateRegistrationForm = new GateRegistrationForm();
+		
+		// ゲート一覧
+		List<Gate> gateList = mGateRepository.getGateList();
+		
+		// 装置タイプ
+		List<MDevicetype> devicetypeList = mDevicetypeRepository.getDeviceTypeList();
+		
+		// ゲートタイプ
+		List<MGatetype> gatetypeList = mGatetypeRepository.getGateTypeList();
+		
+		gateRegistrationForm.setMstGateList(gateList);
+		gateRegistrationForm.setMstGatetypeList(gatetypeList);
+		gateRegistrationForm.setMstDevicetypeList(devicetypeList);
+		
+		return gateRegistrationForm;
+	}
+	
+	/**
+	 * ゲートデータ取得
+	 * @param 
+	 * @param 
+	 *　@return　
+	 */
+	public ServiceResult<GateRegistrationForm> getGateData(GateRegistrationForm gateRegistrationForm) throws TridentException  {
+		
+		// 戻り値		
+		ServiceResult<GateRegistrationForm> result = new ServiceResult<GateRegistrationForm>();
+		
+		// 入力チェック
+		String gateno = gateRegistrationForm.getGateno();
+		List<String> errorList = new ArrayList<String>();
+		Boolean bRet = this.checkGateNo(errorList,gateno,-1);
+		
+		if (bRet == false) {
+			// データが存在しない場合
+			result.setContent(null);
+			result.setSuccess(true);
+			return result;
+		}
+		
+		// データが存在するか確認
+		List<Gate>  gate = mGateRepository.getGateListByGateno(Integer.parseInt(gateno));
+		
+		if(gate.size() > 0) {
+			// データが存在する場合、取得したデータを設定
+			gateRegistrationForm.setGateno(gate.get(0).getGateno());
+			gateRegistrationForm.setHosttype(gate.get(0).getHosttype());
+			gateRegistrationForm.setHostno(gate.get(0).getHostno());
+			gateRegistrationForm.setAddressno(gate.get(0).getAddressno());
+			gateRegistrationForm.setRgateno(gate.get(0).getRgateno());
+			gateRegistrationForm.setName(gate.get(0).getName());
+			gateRegistrationForm.setZaino(gate.get(0).getZaino());
+			gateRegistrationForm.setGatetype_0(gate.get(0).getGatetype_0());
+			gateRegistrationForm.setGatetype_1(gate.get(0).getGatetype_1());
+			gateRegistrationForm.setGatetype_2(gate.get(0).getGatetype_2());
+			gateRegistrationForm.setGatetype_3(gate.get(0).getGatetype_3());
+			gateRegistrationForm.setGatetype_4(gate.get(0).getGatetype_4());
+			gateRegistrationForm.setGatetype_5(gate.get(0).getGatetype_5());
+			gateRegistrationForm.setGatetype_6(gate.get(0).getGatetype_6());
+			gateRegistrationForm.setGatetype_7(gate.get(0).getGatetype_7());
+			gateRegistrationForm.setGatetype_8(gate.get(0).getGatetype_8());
+			gateRegistrationForm.setGatetype_9(gate.get(0).getGatetype_9());
+			gateRegistrationForm.setGatetype_A(gate.get(0).getGatetype_A());
+			gateRegistrationForm.setGatetype_B(gate.get(0).getGatetype_B());
+			gateRegistrationForm.setGatetype_C(gate.get(0).getGatetype_C());
+			gateRegistrationForm.setGatetype_D(gate.get(0).getGatetype_D());
+			gateRegistrationForm.setGatetype_E(gate.get(0).getGatetype_E());
+			gateRegistrationForm.setGatetype_F(gate.get(0).getGatetype_F());
+
+			result.setContent(gateRegistrationForm);
+		} else {
+			// データが存在しない場合
+			result.setContent(null);
+		}
+		
+		result.setSuccess(true);
+		return result;
+	}
+	
+	/**
+	 * 存在チェック
+	 * @param 
+	 * @param 
+	 *　@return　
+	 */
+	public ServiceResult<Boolean> checkExistenceGateData(GateRegistrationForm gateRegistrationForm) throws TridentException  {
+		
+		// 戻り値		
+		ServiceResult<Boolean> result = new ServiceResult<Boolean>();
+
+		String gateno = gateRegistrationForm.getGateno();
+		List<String> errorList = new ArrayList<String>();
+		Boolean bRet = this.checkGateNo(errorList,gateno,-1);
+		
+		if (bRet == false) {
+			// データが存在しない場合
+			result.setSuccess(false);
+			return result;
+		}
+		
+		// データが存在するか確認
+		List<Gate>  gate = mGateRepository.getGateListByGateno(Integer.parseInt(gateno));
+		
+		if(gate.size() > 0) {
+			// データが存在する場合
+			result.setContent(true);
+		} else {
+			// データが存在しない場合、新規登録
+			result.setContent(false);	
+		}
+		
+		result.setSuccess(true);
+		return result;
+	}
+	
+	
+	/**
+	 * ゲート登録
+	 * @param 
+	 * @param 
+	 *　@return　
+	 */
+	@Transactional
+	public GateRegistrationForm gateRegist(HttpServletRequest request) throws TridentException  {
+		
+		GateRegistrationForm gateRegistrationForm = new GateRegistrationForm();
+		
+		Gate mGate = new Gate();
+		List<String> errorList = new ArrayList<String>();
+
+		String gateno = request.getParameter("gateno");
+		String hosttype = request.getParameter("hosttype");
+		String hostno = request.getParameter("hostno");
+		String addressno = request.getParameter("addressno");
+		String rgateno = request.getParameter("rgateno");
+		String name = request.getParameter("name");
+		String zaino = request.getParameter("zaino");
+		String gatetype_0 = request.getParameter("gatetype_0");
+		String gatetype_1 = request.getParameter("gatetype_1");
+		String gatetype_2 = request.getParameter("gatetype_2");
+		String gatetype_3 = request.getParameter("gatetype_3");
+		String gatetype_4 = request.getParameter("gatetype_4");
+		String gatetype_5 = request.getParameter("gatetype_5");
+		String gatetype_6 = request.getParameter("gatetype_6");
+		String gatetype_7 = request.getParameter("gatetype_7");
+		String gatetype_8 = request.getParameter("gatetype_8");
+		String gatetype_9 = request.getParameter("gatetype_9");
+		String gatetype_A = request.getParameter("gatetype_A");
+		String gatetype_B = request.getParameter("gatetype_B");
+		String gatetype_C = request.getParameter("gatetype_C");
+		String gatetype_D = request.getParameter("gatetype_D");
+		String gatetype_E = request.getParameter("gatetype_E");
+		String gatetype_F = request.getParameter("gatetype_F");
+	
+		String insendgate = "";
+		String outsendgate = "";		
+		
+		// 入力チェック
+		mGate = this.checkInputData(gateno,hosttype,hostno,addressno,rgateno
+				,name,zaino,gatetype_0,gatetype_1,gatetype_2
+				,gatetype_3,gatetype_4,gatetype_5,gatetype_6,gatetype_7
+				,gatetype_8,gatetype_9,gatetype_A,gatetype_B,gatetype_C
+				,gatetype_D,gatetype_E,gatetype_F,insendgate,outsendgate,
+				errorList, -1);
+
+		if(errorList.size() == 0) {
+			
+			// 操作ログを登録
+			mOperationlogService.RegistOperation(OperationCode.GATE_GATEINFO_REGISTRATION.getCode());
+
+			// データが存在するか確認
+			List<Gate>  gate= mGateRepository.getGateListByGateno(Integer.parseInt(mGate.getGateno()));
+			
+			if(gate.size() > 0) {
+			// データが存在する場合、更新
+				mGateRepository.update(mGate);
+			} else {
+				// データが存在しない場合、新規登録
+				// ゲートマスタ登録
+				mGate.setCtimer(0);//　固定で「0」を設定
+				mGateRepository.regist(mGate);				
+			}
+			
+			// 装置マスタ登録・削除
+			// ゲートマスタにあって、装置マスタにない場合、装置マスタを登録する
+			List<Gate> registDeviceList = gateRepository.getGateListNotExistMDevice();
+			for (Gate registGate :registDeviceList) {
+				MDevice mDevice = new MDevice();
+				mDevice.setHostno(Integer.parseInt(registGate.getHostno()));
+				mDevice.setAddressno(Integer.parseInt(registGate.getAddressno()));
+				mDevice.setPortno(10001);
+				
+				List<MDevice> deviceList = mDeviceRepository.getDeviceListByHostnoAndAddressno(mDevice.getHostno(),mDevice.getAddressno());
+				if (deviceList.size() == 0) {				
+					mDeviceRepository.regist(mDevice);							
+				}						
+			}
+			
+			// ゲートマスタになくて装置マスタにある場合、装置マスタを削除する
+			List<Gate> deleteDeviceList = gateRepository.getDeviceListNotExistMGate();
+			for (Gate deleteGate :deleteDeviceList) {
+				mDeviceRepository.delete(Integer.parseInt(deleteGate.getHostno()),Integer.parseInt(deleteGate.getAddressno()));
+			}
+			
+			gateRegistrationForm.setMessage(messageSource.getMessage("gateRegistration.regist.completed", null, LocaleContextHolder.getLocale()));
+			
+		} else {
+		// エラー	
+			
+			String errorMsg = messageSource.getMessage("gateRegistration.regist.error", null, LocaleContextHolder.getLocale());		
+			for (String msg : errorList) {
+				errorMsg = errorMsg + "\n" + msg;
+			}
+			gateRegistrationForm.setMessage(errorMsg);
+			
+			// フォームの値を設定
+			gateRegistrationForm.setGateno(mGate.getGateno());
+			gateRegistrationForm.setHostno(mGate.getHostno());
+			gateRegistrationForm.setHosttype(mGate.getHosttype());
+			gateRegistrationForm.setAddressno(mGate.getAddressno());
+			gateRegistrationForm.setRgateno(mGate.getRgateno());
+			gateRegistrationForm.setName(mGate.getName());
+			gateRegistrationForm.setZaino(mGate.getZaino());
+		}
+		
+		List<Gate> gateList = mGateRepository.getGateList();
+		List<MDevicetype> devicetypeList = mDevicetypeRepository.getDeviceTypeList();
+		List<MGatetype> gatetypeList = mGatetypeRepository.getGateTypeList();
+		gateRegistrationForm.setMstGateList(gateList);
+		gateRegistrationForm.setMstGatetypeList(gatetypeList);
+		gateRegistrationForm.setMstDevicetypeList(devicetypeList);
+		return gateRegistrationForm;
+		
+	}
+
+	
+	/**
+	 * アンチパス送信登録
+	 * @param 
+	 * @param 
+	 *　@return　
+	 */
+	@Transactional
+	public GateRegistrationForm antipassRegist(HttpServletRequest request) throws TridentException  {
+		
+		GateRegistrationForm gateRegistrationForm = new GateRegistrationForm();
+		
+		Gate mGate = new Gate();
+		
+		String gateNo = request.getParameter("antipassGateno");
+		String insendgate = request.getParameter("insendgate");
+		String outsendgate = request.getParameter("outsendgate");
+
+		mGate.setGateno(gateNo);
+		mGate.setInsendgate(insendgate);
+		mGate.setOutsendgate(outsendgate);
+		
+		// データが存在するか確認
+		List<Gate>  gate= mGateRepository.getGateListByGateno(Integer.parseInt(gateNo));
+		
+		if(gate.size() > 0) {
+		// データが存在する場合、更新
+			
+			// 操作ログを登録
+			mOperationlogService.RegistOperation(OperationCode.GATE_ANTIPASS_REGISTRATION.getCode());
+			
+			mGateRepository.updateSendgate(mGate);
+			gateRegistrationForm.setMessage(messageSource.getMessage("gateRegistration.regist.antipass.completed", null, LocaleContextHolder.getLocale()));
+		} else {
+			// データが存在しない場合、エラー？
+			// 他社に削除された可能性あり
+			gateRegistrationForm.setMessage(messageSource.getMessage("gateRegistration.regist.antipass.error", null, LocaleContextHolder.getLocale()));	
+		}
+
+		List<Gate> gateList = mGateRepository.getGateList();
+		List<MDevicetype> devicetypeList = mDevicetypeRepository.getDeviceTypeList();
+		List<MGatetype> gatetypeList = mGatetypeRepository.getGateTypeList();
+		gateRegistrationForm.setMstGateList(gateList);
+		gateRegistrationForm.setMstGatetypeList(gatetypeList);
+		gateRegistrationForm.setMstDevicetypeList(devicetypeList);
+		return gateRegistrationForm;
+	}
+	
+	
+	/**
+	 * ゲート削除
+	 * @param 
+	 * @param 
+	 *　@return　
+	 */
+	@Transactional
+	public GateRegistrationForm gateDelete(HttpServletRequest request) throws TridentException  {
+		
+		GateRegistrationForm gateRegistrationForm = new GateRegistrationForm();
+		List<String> errorList = new ArrayList<String>();
+		Gate mGate = new Gate();
+		// 入力チェック
+		String gateno = request.getParameter("gateno");
+		this.checkGateNo(errorList,gateno,-1);
+		
+		if(errorList.size() == 0) {
+			// データが存在するか確認
+			List<Gate>  gate= mGateRepository.getGateListByGateno(Integer.parseInt(gateno));
+			
+			if(gate.size() > 0) {
+				
+				// 操作ログを登録
+				mOperationlogService.RegistOperation(OperationCode.GATE_GATEINFO_DELETE.getCode());
+				
+				// データが存在する場合、削除
+				mGateRepository.delete(Integer.parseInt(gateno));
+				
+				// 使用されているホスト番号がなければ装置マスタも削除する
+				int count = mGateRepository.getGateByHostnoAndAddressno(Integer.parseInt(gate.get(0).getHostno()),Integer.parseInt(gate.get(0).getAddressno()));
+				
+				if(count == 0) {
+					mDeviceRepository.delete(Integer.parseInt(gate.get(0).getHostno()),Integer.parseInt(gate.get(0).getAddressno()));
+				}
+				
+				gateRegistrationForm.setMessage(messageSource.getMessage("gateRegistration.delete.completed", null, LocaleContextHolder.getLocale()));
+			} else {
+				// 削除対象のデータなし
+				gateRegistrationForm.setMessage(messageSource.getMessage("gateRegistration.delete.noData", null, LocaleContextHolder.getLocale()));
+				
+			}
+					
+		} else {
+			String errorMsg = messageSource.getMessage("gateRegistration.delete.error", null, LocaleContextHolder.getLocale());	
+			for (String msg : errorList) {
+				errorMsg = errorMsg + "\n" + msg;
+			}
+			gateRegistrationForm.setMessage(errorMsg);
+			
+			// フォームの値を設定
+			gateRegistrationForm.setGateno(mGate.getGateno());
+			gateRegistrationForm.setHostno(mGate.getHostno());
+			gateRegistrationForm.setHosttype(mGate.getHosttype());
+			gateRegistrationForm.setAddressno(mGate.getAddressno());
+			gateRegistrationForm.setRgateno(mGate.getRgateno());
+			gateRegistrationForm.setName(mGate.getName());
+			gateRegistrationForm.setZaino(mGate.getZaino());	
+		}
+		
+		List<Gate> gateList = mGateRepository.getGateList();
+		List<MDevicetype> devicetypeList = mDevicetypeRepository.getDeviceTypeList();
+		List<MGatetype> gatetypeList = mGatetypeRepository.getGateTypeList();
+		gateRegistrationForm.setMstGateList(gateList);
+		gateRegistrationForm.setMstGatetypeList(gatetypeList);
+		gateRegistrationForm.setMstDevicetypeList(devicetypeList);
+		return gateRegistrationForm;
+	}
+	
+	
+	/**
+	 * 入力チェック
+	 * @param 
+	 * @param 
+	 *　@return　
+	 */	
+	private Gate checkInputData(String gateno,String hosttype,String hostno,String addressno,String rgateno
+			,String name,String zaino,String gatetype_0,String gatetype_1,String gatetype_2
+			,String gatetype_3,String gatetype_4,String gatetype_5,String gatetype_6,String gatetype_7
+			,String gatetype_8,String gatetype_9,String gatetype_A,String gatetype_B,String gatetype_C
+			,String gatetype_D,String gatetype_E,String gatetype_F
+			,String insendgate,String outsendgate, List<String> errorList, int ilineNum)  {
+		
+
+		/////////////////////////////////////////////
+		// 入力チェック 
+		/////////////////////////////////////////////
+		Boolean bRet = true;
+		if(this.checkGateNo(errorList, gateno, ilineNum) == false) {
+			bRet = false;
+		}
+		
+		// 装置マスタを取得
+		int[] devicetypeSetcntArr = new int[1];
+		List<MDevicetype> mstDevicetypeList = mDevicetypeRepository.getDeviceTypeList();
+		if(this.checkHostType(errorList, hosttype, mstDevicetypeList,devicetypeSetcntArr, ilineNum) == false) {
+			bRet = false;
+		}
+
+		// checkHostTypeで取得した値を格納
+		int devicetypeSetcnt = devicetypeSetcntArr[0];
+
+		if(this.checkHostNo(errorList, hostno, ilineNum) == false) {
+			bRet = false;
+		}		
+
+		if(this.checkAddressNo(errorList, addressno, ilineNum) == false) {
+			bRet = false;
+		}		
+
+		if(this.checkRgateNo(errorList, rgateno, devicetypeSetcnt, ilineNum) == false) {
+			bRet = false;
+		}	
+
+		if(this.checkGateName(errorList, name, ilineNum) == false) {
+			bRet = false;
+		}	
+
+		if(this.checkZaiNo(errorList, zaino, ilineNum) == false) {
+			bRet = false;
+		}
+
+		if(this.checkGatetype(errorList, gatetype_0, ilineNum, "0") == false) {
+			bRet = false;
+		}		
+		if(this.checkGatetype(errorList, gatetype_1, ilineNum, "1") == false) {
+			bRet = false;
+		}
+		if(this.checkGatetype(errorList, gatetype_2, ilineNum, "2") == false) {
+			bRet = false;
+		}
+		if(this.checkGatetype(errorList, gatetype_3, ilineNum, "3") == false) {
+			bRet = false;
+		}		
+		if(this.checkGatetype(errorList, gatetype_4, ilineNum, "4") == false) {
+			bRet = false;
+		}	
+		if(this.checkGatetype(errorList, gatetype_5, ilineNum, "5") == false) {
+			bRet = false;
+		}	
+		if(this.checkGatetype(errorList, gatetype_6, ilineNum, "6") == false) {
+			bRet = false;
+		}
+		if(this.checkGatetype(errorList, gatetype_7, ilineNum, "7") == false) {
+			bRet = false;
+		}
+		if(this.checkGatetype(errorList, gatetype_8, ilineNum, "8") == false) {
+			bRet = false;
+		}
+		if(this.checkGatetype(errorList, gatetype_9, ilineNum, "9") == false) {
+			bRet = false;
+		}
+		if(this.checkGatetype(errorList, gatetype_A, ilineNum, "A") == false) {
+			bRet = false;
+		}
+		if(this.checkGatetype(errorList, gatetype_B, ilineNum, "B") == false) {
+			bRet = false;
+		}		
+		if(this.checkGatetype(errorList, gatetype_C, ilineNum, "C") == false) {
+			bRet = false;
+		}
+		if(this.checkGatetype(errorList, gatetype_D, ilineNum, "D") == false) {
+			bRet = false;
+		}
+		if(this.checkGatetype(errorList, gatetype_E, ilineNum, "E") == false) {
+			bRet = false;
+		}
+		if(this.checkGatetype(errorList, gatetype_F, ilineNum, "F") == false) {
+			bRet = false;
+		}
+		if(this.checkSendgate(errorList, insendgate, ilineNum,messageSource.getMessage("gateRegistration.upload.item.sendgate.in", null, LocaleContextHolder.getLocale())) == false) {
+			bRet = false;
+		}		
+		if(this.checkSendgate(errorList, outsendgate, ilineNum,messageSource.getMessage("gateRegistration.upload.item.sendgate.out", null, LocaleContextHolder.getLocale())) == false) {
+			bRet = false;
+		}			
+		
+		/////////////////////////////////////////////
+		// エラーがない場合入力値をセット　前0は削除して設定しておく
+		/////////////////////////////////////////////
+		Gate mGate = new Gate();
+		if (bRet == true) {
+			mGate.setGateno(String.valueOf(Integer.parseInt(gateno)));
+			if(hosttype != null && "".equals(hosttype) == false) {
+				mGate.setHosttype(Integer.parseInt(hosttype));
+			}
+			if(hostno != null && "".equals(hostno) == false) {
+				mGate.setHostno(String.valueOf(Integer.parseInt(hostno)));
+			}
+			if(addressno != null && "".equals(addressno) == false) {
+				mGate.setAddressno(String.valueOf(Integer.parseInt(addressno)));
+			}
+			if(rgateno != null && "".equals(rgateno) == false) {
+				mGate.setRgateno(String.valueOf(Integer.parseInt(rgateno)));
+			}
+			mGate.setName(name);
+			if(zaino != null && "".equals(zaino) == false) {
+				mGate.setZaino(String.valueOf(Integer.parseInt(zaino)));
+			}
+			if(gatetype_0 != null && "".equals(gatetype_0) == false) {
+				mGate.setGatetype_0(Integer.parseInt(gatetype_0));
+			} else {
+				mGate.setGatetype_0(0);
+			}
+			if(gatetype_1 != null && "".equals(gatetype_1) == false) {
+				mGate.setGatetype_1(Integer.parseInt(gatetype_1));
+			} else {
+				mGate.setGatetype_1(0);
+			}
+			if(gatetype_2 != null && "".equals(gatetype_2) == false) {
+				mGate.setGatetype_2(Integer.parseInt(gatetype_2));
+			} else {
+				mGate.setGatetype_2(0);
+			}
+			if(gatetype_3 != null && "".equals(gatetype_3) == false) {
+				mGate.setGatetype_3(Integer.parseInt(gatetype_3));
+			} else {
+				mGate.setGatetype_3(0);
+			}
+			if(gatetype_4 != null && "".equals(gatetype_4) == false) {
+				mGate.setGatetype_4(Integer.parseInt(gatetype_4));
+			} else {
+				mGate.setGatetype_4(0);
+			}
+			if(gatetype_5 != null && "".equals(gatetype_5) == false) {
+				mGate.setGatetype_5(Integer.parseInt(gatetype_5));
+			} else {
+				mGate.setGatetype_5(0);
+			}
+			if(gatetype_6 != null && "".equals(gatetype_6) == false) {
+				mGate.setGatetype_6(Integer.parseInt(gatetype_6));
+			} else {
+				mGate.setGatetype_6(0);
+			}
+			if(gatetype_7 != null && "".equals(gatetype_7) == false) {
+				mGate.setGatetype_7(Integer.parseInt(gatetype_7));
+			} else {
+				mGate.setGatetype_7(0);
+			}
+			if(gatetype_8 != null && "".equals(gatetype_8) == false) {
+				mGate.setGatetype_8(Integer.parseInt(gatetype_8));
+			} else {
+				mGate.setGatetype_8(0);
+			}
+			if(gatetype_9 != null && "".equals(gatetype_9) == false) {
+				mGate.setGatetype_9(Integer.parseInt(gatetype_9));
+			} else {
+				mGate.setGatetype_9(0);
+			}
+			if(gatetype_A != null && "".equals(gatetype_A) == false) {
+				mGate.setGatetype_A(Integer.parseInt(gatetype_A));
+			} else {
+				mGate.setGatetype_A(0);
+			}
+			if(gatetype_B != null && "".equals(gatetype_B) == false) {
+				mGate.setGatetype_B(Integer.parseInt(gatetype_B));
+			} else {
+				mGate.setGatetype_B(0);
+			}
+			if(gatetype_C != null && "".equals(gatetype_C) == false) {
+				mGate.setGatetype_C(Integer.parseInt(gatetype_C));
+			} else {
+				mGate.setGatetype_C(0);
+			}
+			if(gatetype_D != null && "".equals(gatetype_D) == false) {
+				mGate.setGatetype_D(Integer.parseInt(gatetype_D));
+			} else {
+				mGate.setGatetype_D(0);
+			}
+			if(gatetype_E != null && "".equals(gatetype_E) == false) {
+				mGate.setGatetype_E(Integer.parseInt(gatetype_E));
+			} else {
+				mGate.setGatetype_E(0);
+			}
+			if(gatetype_F != null && "".equals(gatetype_F) == false) {
+				mGate.setGatetype_F(Integer.parseInt(gatetype_F));
+			} else {
+				mGate.setGatetype_F(0);
+			}	
+			// 最大接続回線数
+			mGate.setSetcnt(devicetypeSetcnt);	
+			
+			mGate.setInsendgate(insendgate);
+			mGate.setOutsendgate(outsendgate);
+		}
+
+		return mGate;
+	}
+
+	/**
+	 * チェックとファイルアップロード処理
+	 * @param uploadFile
+	 * @param dcc
+	 * @param request 
+	 * @return
+	 * @throws GcnException 
+	 * @throws IOException 
+	 */
+	@Transactional
+	public ServiceResult<GateRegistrationForm> checkAndUpload(MultipartFile uploadFile) throws IOException, TridentException{
+	
+		ServiceResult<GateRegistrationForm> result = new ServiceResult<GateRegistrationForm>();
+		GateRegistrationForm form = new GateRegistrationForm();
+		
+		// ファイル名の日時
+		SimpleDateFormat sdfDbYmd = new SimpleDateFormat("yyyyMMddHHmmss");
+		Date now = new Date();
+		String dbDate = sdfDbYmd.format(now);
+		
+		Random random = new Random();
+		int number = random.nextInt(10000);
+		String fileNo = String.format("%04d", number);
+		
+		// アップロードファイル一時保管パス
+		String uploadTmpFile = FILE_TMP_PATH;
+		uploadTmpFile = uploadTmpFile + dbDate + "_" + fileNo + "_" + uploadFile.getOriginalFilename();
+		
+		try {	
+			// ファイルの一時保存
+			File saveFile = new File(uploadTmpFile);
+			uploadFile.transferTo(saveFile); // ファイルを保存
+			
+			// エラー内容保持
+			List<String> errorList = new ArrayList<String>();	// エラー内容
+			List<Gate> gateList = new ArrayList<Gate>(); // 新規登録・更新データ
+			int errorCount = 0;
+			
+			// CSVファイルの内容を読み込む
+			List<String> readList = new ArrayList<String>();
+			csvUtility.readCsv(uploadTmpFile,readList);
+			
+			// ファイルの内容チェック 入退室の送信ゲートデータが255文字ずつカンマ区切りでデータが来る可能性がある
+            for (int i = 0; i < readList.size(); i++) {
+                String[] data = readList.get(i).split(",",-1);
+
+                // 項目数が少ない場合
+                if (data.length != 25) {
+                	errorList.add(String.valueOf(i + 1) + "," + messageSource.getMessage("gateRegistration.upload.item.count", null, LocaleContextHolder.getLocale()));
+                	errorCount = errorCount + 1;
+                	continue;
+                }
+                
+                String gateno = data[0];
+                String hosttype = data[1];
+        		String hostno = data[2];
+        		String addressno = data[3];
+        		String rgateno = data[4];
+        		String name = data[5];
+        		String zaino = data[6];
+        		String gatetype_0 = data[7];
+        		String gatetype_1 = data[8];
+        		String gatetype_2 = data[9];
+        		String gatetype_3 = data[10];
+        		String gatetype_4 = data[11];
+        		String gatetype_5 = data[12];
+        		String gatetype_6 = data[13];
+        		String gatetype_7 = data[14];
+        		String gatetype_8 = data[15];
+        		String gatetype_9 = data[16];
+        		String gatetype_A = data[17];
+        		String gatetype_B = data[18];
+        		String gatetype_C = data[19];
+        		String gatetype_D = data[20];
+        		String gatetype_E = data[21];
+        		String gatetype_F = data[22];   
+        			
+        		// アンチパス送信のデータを設定している場合
+        		String insendgate = data[23];
+        		String outsendgate = data[24];    		
+        		
+        		// 入力内容チェック
+        		// 入力チェック
+        		Gate mGate = new Gate();
+        		mGate = this.checkInputData(gateno,hosttype,hostno,addressno,rgateno
+        				,name,zaino,gatetype_0,gatetype_1,gatetype_2
+        				,gatetype_3,gatetype_4,gatetype_5,gatetype_6,gatetype_7
+        				,gatetype_8,gatetype_9,gatetype_A,gatetype_B,gatetype_C
+        				,gatetype_D,gatetype_E,gatetype_F,insendgate,outsendgate,
+        				errorList, i + 1);
+        		
+        		if (mGate.getGateno() != null) {
+        			gateList.add(mGate);
+        		} else {
+        			errorCount = errorCount + 1;
+        		}
+            }
+			
+            if(gateList.size() > 0 ) { 
+    			// 操作ログを登録
+            	mOperationlogService.RegistOperation(OperationCode.GATE_GATEINFO_UPLOAD.getCode());
+            }
+            
+			// 登録処理 入力チェックでOKの分だけ登録
+			for(Gate mGate : gateList) {
+				// データが存在するか確認
+				List<Gate> gate= mGateRepository.getGateListByGateno(Integer.parseInt(mGate.getGateno()));
+				
+				if(gate.size() > 0) {
+				// データが存在する場合、更新
+					mGateRepository.update(mGate);
+				} else {
+					// データが存在しない場合、新規登録
+					// ゲートマスタ登録
+					mGate.setCtimer(0);//　固定で「0」を設定
+					mGateRepository.regist(mGate);				
+				}	
+			}
+
+			// 装置マスタ登録・削除
+			// ゲートマスタにあって、装置マスタにない場合、装置マスタを登録する
+			List<Gate> registDeviceList = gateRepository.getGateListNotExistMDevice();
+			for (Gate registGate :registDeviceList) {
+				MDevice mDevice = new MDevice();
+				mDevice.setHostno(Integer.parseInt(registGate.getHostno()));
+				mDevice.setAddressno(Integer.parseInt(registGate.getAddressno()));
+				mDevice.setPortno(10001);
+				
+				List<MDevice> deviceList = mDeviceRepository.getDeviceListByHostnoAndAddressno(mDevice.getHostno(),mDevice.getAddressno());
+				if (deviceList.size() == 0) {				
+					mDeviceRepository.regist(mDevice);							
+				}						
+			}
+			
+			// ゲートマスタになくて装置マスタにある場合、装置マスタを削除する
+			List<Gate> deleteDeviceList = gateRepository.getDeviceListNotExistMGate();
+			for (Gate deleteGate :deleteDeviceList) {
+				mDeviceRepository.delete(Integer.parseInt(deleteGate.getHostno()),Integer.parseInt(deleteGate.getAddressno()));
+			}
+
+			form.setUploadCount(readList.size());
+			form.setUpdateCount(gateList.size());
+			form.setErrorCount(errorCount);
+			form.setErrorList(errorList);
+			result.setContent(form);
+			result.setSuccess(true);
+			
+			return result;
+		} finally {
+			this.deleteFile(uploadTmpFile);
+		}		
+	}
+	
+	/**
+	 * ファイル削除処理
+	 * @param uploadTmpPath
+	 */
+	private void deleteFile(String uploadTmpPath) {
+	    if(StringUtils.hasLength(uploadTmpPath) == true) {
+	      File delFile = new File(uploadTmpPath);
+
+	      //ファイルが存在しない場合は終了
+	      if (delFile.exists() == false ){
+	        return;
+	      }
+	      //ファイル削除
+	      delFile.delete();
+	    }
+	    return;
+	}
+	
+	/**
+	 * ダウンロードファイル作成
+	 * @param 
+	 * @param 
+	 *　@return　
+	 */
+	public Boolean createDownloadData(String filePath, String fileName, String downloadType) throws TridentException  {
+
+		// ファイルに出力する内容を取得する
+		List<Gate> gateList = mGateRepository.getGateList();
+    	
+        // 作成するファイルのファイルパスを格納
+        filePath = filePath + fileName;
+
+		// 操作ログを登録
+        if (downloadType.equals("O")) {
+        	mOperationlogService.RegistOperation(OperationCode.GATE_GATEINFO_DATAOUTPUT.getCode());
+        } else {
+        	mOperationlogService.RegistOperation(OperationCode.GATE_GATEINFO_DOWNLOAD.getCode());
+        }
+		
+        try (FileWriter writer = new FileWriter(filePath)) {
+ 
+        	PrintWriter pw = new PrintWriter(new BufferedWriter(writer));
+        	for (Gate gate : gateList) {
+        		
+        		StringBuilder sb = new StringBuilder();
+        		if (downloadType.equals("O")) {
+        			// データ出力の場合、""で囲んで、27桁(27バイト)にして出力
+        			sb.append("\"" + stringCheckUtility.addCharByByte(gate.getGateno(),27, " ", -1) + "\"");
+                	sb.append(",");
+                	sb.append("\"" + stringCheckUtility.addCharByByte(String.valueOf(gate.getDevicetype_name()),27, " ", -1) + "\"");
+                	sb.append(",");
+                	sb.append("\"" + stringCheckUtility.addCharByByte(gate.getHostno(),27, " ", -1) + "\"");
+                	sb.append(",");
+                	sb.append("\"" + stringCheckUtility.addCharByByte(gate.getAddressno(),27, " ", -1) + "\"");
+                	sb.append(","); 
+                	sb.append("\"" + stringCheckUtility.addCharByByte(gate.getRgateno(),27, " ", -1) + "\"");
+                	sb.append(","); 
+                	sb.append("\"" + stringCheckUtility.addCharByByte(gate.getName(),27, " ", -1) + "\"");
+                	sb.append(","); 
+                	sb.append("\"" + stringCheckUtility.addCharByByte(gate.getZaino(),27, " ", -1) + "\"");
+                	sb.append(","); 
+                	sb.append("\"" + gate.getGatetype_0());
+                	sb.append(gate.getGatetype_1());
+                	sb.append(gate.getGatetype_2());
+                	sb.append(gate.getGatetype_3());
+                	sb.append(" ");
+                	sb.append(gate.getGatetype_4());
+                	sb.append(gate.getGatetype_5());
+                	sb.append(gate.getGatetype_6());
+                	sb.append(gate.getGatetype_7());
+                	sb.append(" ");
+                	sb.append(gate.getGatetype_8());
+                	sb.append(gate.getGatetype_9());
+                	sb.append(gate.getGatetype_A());
+                	sb.append(gate.getGatetype_B());
+                	sb.append(" ");
+                	sb.append(gate.getGatetype_C());
+                	sb.append(gate.getGatetype_D());
+                	sb.append(gate.getGatetype_E());
+                	sb.append(gate.getGatetype_F() + "        " + "\"");
+        		} else {
+                	sb.append(gate.getGateno());
+                	sb.append(",");
+                	sb.append(gate.getHosttype());
+                	sb.append(",");
+                	sb.append(gate.getHostno());
+                	sb.append(",");
+                	sb.append(gate.getAddressno());
+                	sb.append(","); 
+                	sb.append(gate.getRgateno());
+                	sb.append(","); 
+                	sb.append(gate.getName());
+                	sb.append(","); 
+                	sb.append(gate.getZaino());
+                	sb.append(","); 
+                	sb.append(gate.getGatetype_0());
+                	sb.append(",");
+                	sb.append(gate.getGatetype_1());
+                	sb.append(",");
+                	sb.append(gate.getGatetype_2());
+                	sb.append(",");
+                	sb.append(gate.getGatetype_3());
+                	sb.append(",");
+                	sb.append(gate.getGatetype_4());
+                	sb.append(",");
+                	sb.append(gate.getGatetype_5());
+                	sb.append(",");
+                	sb.append(gate.getGatetype_6());
+                	sb.append(",");
+                	sb.append(gate.getGatetype_7());
+                	sb.append(",");
+                	sb.append(gate.getGatetype_8());
+                	sb.append(",");
+                	sb.append(gate.getGatetype_9());
+                	sb.append(",");
+                	sb.append(gate.getGatetype_A());
+                	sb.append(",");
+                	sb.append(gate.getGatetype_B());
+                	sb.append(",");
+                	sb.append(gate.getGatetype_C());
+                	sb.append(",");
+                	sb.append(gate.getGatetype_D());
+                	sb.append(",");
+                	sb.append(gate.getGatetype_E());
+                	sb.append(",");
+                	sb.append(gate.getGatetype_F());
+                	sb.append(",");
+                	if(null == gate.getInsendgate()) {
+                	} else {
+                    	sb.append(gate.getInsendgate());                		
+                	}
+                	sb.append(","); 
+                	if(null == gate.getOutsendgate()) {
+                	} else {
+	                	sb.append(gate.getOutsendgate());
+                	}
+        		}
+        		pw.println(sb.toString());
+        	}
+        	
+            //ファイルを閉じる
+            pw.close();
+        }
+        catch(IOException e)
+        {
+        	// ファイルの作成に失敗
+        	return false;
+        }
+		return true;
+	}
+	
+	////////////////////////以下、各項目の入力内容のチェック処理////////////////////////
+	// ゲート番号
+	private Boolean checkGateNo (List<String> errorList, String gateNo, int ilineNum) {
+		Boolean bRet = true;
+		if (null == gateNo || "".equals(gateNo) == true) {
+			//　未入力チェック
+			// ゲート番号入力して下さい。
+			String errorMsg = messageSource.getMessage("gateRegistration.error.empty.gateno", null, LocaleContextHolder.getLocale());	
+			// エラーリストにエラーを追加
+			stringCheckUtility.addError(errorList, errorMsg, ilineNum);
+			
+			bRet = false;
+		} else if (stringCheckUtility.isDecimalCheck(gateNo,4,0,false) == false) {
+			// 桁数チェック
+			String errorMsg = messageSource.getMessage("gateRegistration.error.input.gateno", null, LocaleContextHolder.getLocale());	
+			// エラーリストにエラーを追加
+			stringCheckUtility.addError(errorList, errorMsg, ilineNum);
+			
+			bRet = false;
+		} else if (Integer.parseInt(gateNo) < 1 || Integer.parseInt(gateNo) > 1920) {
+			// 入力可能範囲チェック(1～1920)
+		    String errorMsg = messageSource.getMessage("gateRegistration.error.range.gateno", null, LocaleContextHolder.getLocale());
+			// エラーリストにエラーを追加
+			stringCheckUtility.addError(errorList, errorMsg, ilineNum);
+			
+		    bRet = false;
+		}
+		return bRet;
+	}
+	
+	// 装置タイプ
+	private Boolean checkHostType (List<String> errorList, String hostType, List<MDevicetype> mstDevicetypeList, int[] devicetypeSetcnt, int ilineNum) {
+		Boolean bRet = true;
+		if (null == hostType || "".equals(hostType) == true) {
+			//　未入力チェック
+			// 装置タイプ入力して下さい。
+			String errorMsg = messageSource.getMessage("gateRegistration.error.empty.hosttype", null, LocaleContextHolder.getLocale());
+			// エラーリストにエラーを追加
+			stringCheckUtility.addError(errorList, errorMsg, ilineNum);
+			
+			bRet = false;
+		} else {
+			// マスタに存在するかどうか
+			Boolean bExsit = false;
+			for (MDevicetype deveiceType : mstDevicetypeList) {
+				
+				if(hostType.equals(String.valueOf(deveiceType.getDevicetype_no()))) {
+					
+					// 最大接続回数もセットする
+					devicetypeSetcnt[0] = deveiceType.getDevicetype_setcnt();
+					
+					bExsit = true;
+					break;
+				}
+				
+			}
+			if (bExsit == false) {
+				// マスタに存在しない
+				String errorMsg = messageSource.getMessage("gateRegistration.error.notExsit.master.hosttype", null, LocaleContextHolder.getLocale());
+				// エラーリストにエラーを追加
+				stringCheckUtility.addError(errorList, errorMsg, ilineNum);
+				
+				bRet = false;
+			}
+		}
+		return bRet;
+	}
+	
+	// ホスト番号
+	private Boolean checkHostNo (List<String> errorList, String hostNo, int ilineNum) {
+		Boolean bRet = true;
+		if (stringCheckUtility.isDecimalCheck(hostNo,3,0,false) == false) {
+			// 桁数チェック
+			String errorMsg = messageSource.getMessage("gateRegistration.error.input.hostno", null, LocaleContextHolder.getLocale());
+			// エラーリストにエラーを追加
+			stringCheckUtility.addError(errorList, errorMsg, ilineNum);
+			
+			bRet = false;
+		}
+		
+		if (Integer.parseInt(hostNo) < 1 || Integer.parseInt(hostNo) > 120) {
+			// 入力可能範囲チェック(1～120)
+		    String errorMsg = messageSource.getMessage("gateRegistration.error.range.hostno", null, LocaleContextHolder.getLocale());
+			// エラーリストにエラーを追加
+			stringCheckUtility.addError(errorList, errorMsg, ilineNum);
+			
+		    bRet = false;
+		}
+		return bRet;
+	}
+	
+	// アドレス番号
+	private Boolean checkAddressNo (List<String> errorList, String addressNo, int ilineNum) {
+		Boolean bRet = true;
+		if (stringCheckUtility.isDecimalCheck(addressNo,2,0,false) == false) {
+			// 桁数チェック
+			String errorMsg = messageSource.getMessage("gateRegistration.error.input.addressno", null, LocaleContextHolder.getLocale());
+			// エラーリストにエラーを追加
+			stringCheckUtility.addError(errorList, errorMsg, ilineNum);
+			
+			bRet = false;
+		}
+		
+		if (Integer.parseInt(addressNo) == 0) {
+			// 0入力チェック
+		    String errorMsg = messageSource.getMessage("gateRegistration.error.input.notzero.addressno", null, LocaleContextHolder.getLocale());
+			// エラーリストにエラーを追加
+			stringCheckUtility.addError(errorList, errorMsg, ilineNum);
+			
+		    bRet = false;
+		}
+		return bRet;
+	}
+	
+	// 装置内回線番号
+	private Boolean checkRgateNo (List<String> errorList, String rgateNo, int devicetypeSetcnt, int ilineNum) {
+		Boolean bRet = true;
+		if (stringCheckUtility.isDecimalCheck(rgateNo,2,0,false) == false) {
+			// 桁数チェック
+			String errorMsg = messageSource.getMessage("gateRegistration.error.input.rgateno", null, LocaleContextHolder.getLocale());
+			// エラーリストにエラーを追加
+			stringCheckUtility.addError(errorList, errorMsg, ilineNum);
+			
+			bRet = false;
+		}
+		
+		if (Integer.parseInt(rgateNo) == 0) {
+			// 0入力チェック
+		    String errorMsg = messageSource.getMessage("gateRegistration.error.input.notzero.rgateno", null, LocaleContextHolder.getLocale());
+			// エラーリストにエラーを追加
+			stringCheckUtility.addError(errorList, errorMsg, ilineNum);
+			
+		    bRet = false;
+		}
+		
+		if(devicetypeSetcnt != 0) {
+			// 入力可能範囲チェック
+			if (Integer.parseInt(rgateNo) < 1 || Integer.parseInt(rgateNo) > devicetypeSetcnt) {
+				
+				String errorMsg = "";
+				String[] message = new String[] { String.valueOf(devicetypeSetcnt) };
+				
+				errorMsg = messageSource.getMessage("gateRegistration.error.range.rgateno", message, LocaleContextHolder.getLocale());
+			    
+				// エラーリストにエラーを追加
+				stringCheckUtility.addError(errorList, errorMsg, ilineNum);
+				
+			    bRet = false;
+			}
+		}
+		return bRet;
+	}
+	
+	// ゲート名称
+	private Boolean checkGateName (List<String> errorList, String gateName, int ilineNum) {
+		Boolean bRet = true;
+		if(gateName.length() > 20) {
+			// 桁数チェック
+			String errorMsg = messageSource.getMessage("gateRegistration.error.maxlength.gateName", null, LocaleContextHolder.getLocale());
+			// エラーリストにエラーを追加
+			stringCheckUtility.addError(errorList, errorMsg, ilineNum);
+			
+			bRet = false;
+		}
+		
+		// 禁止文字「\ / : * ? " <> |」が含まれていないかチェック
+		if (stringCheckUtility.isForbiddenCharsCheck(gateName) == false) {
+			String errorMsg = messageSource.getMessage("gateRegistration.error.input.gateName", null, LocaleContextHolder.getLocale());
+			// エラーリストにエラーを追加
+			stringCheckUtility.addError(errorList, errorMsg, ilineNum);
+			
+			bRet = false;
+		}
+		
+		return bRet;
+	}
+	
+	// 在室番号
+	private Boolean checkZaiNo (List<String> errorList, String zaiNo, int ilineNum) {
+		Boolean bRet = true;
+		if (stringCheckUtility.isDecimalCheck(zaiNo,4,0,false) == false) {
+			// 桁数チェック
+			String errorMsg = messageSource.getMessage("gateRegistration.error.input.zaino", null, LocaleContextHolder.getLocale());
+			// エラーリストにエラーを追加
+			stringCheckUtility.addError(errorList, errorMsg, ilineNum);
+			
+			bRet = false;
+		}
+		
+		if (Integer.parseInt(zaiNo) == 0) {
+			// 0入力チェック
+		    String errorMsg = messageSource.getMessage("gateRegistration.error.input.notzero.zaino", null, LocaleContextHolder.getLocale());
+			// エラーリストにエラーを追加
+			stringCheckUtility.addError(errorList, errorMsg, ilineNum);
+			
+		    bRet = false;
+		}
+		return bRet;
+	}
+	
+	// ゲートタイプ
+	private Boolean checkGatetype (List<String> errorList, String gatetype, int ilineNum, String itemName) {
+		Boolean bRet = true;
+		if (null == gatetype || "".equals(gatetype) == true) {
+			// 0を設定
+			gatetype = "0";
+			return bRet;
+		}
+
+		//0または1が設定されているかチェック
+		if ("0".equals(gatetype) || "1".equals(gatetype)) {
+			// OK	
+		} else {
+			
+			String[] message = new String[] {itemName};
+			String errorMsg = messageSource.getMessage("gateRegistration.error.input.gatetype", message, LocaleContextHolder.getLocale());
+			
+			// エラーリストにエラーを追加
+			stringCheckUtility.addError(errorList, errorMsg, ilineNum);
+			
+			bRet = false;
+		}
+		return bRet;
+	}	
+	
+	
+	// 入退室の送信ゲート
+	private Boolean checkSendgate (List<String> errorList, String sendgate, int ilineNum, String itemName) {
+		Boolean bRet = true;
+		if (null == sendgate || "".equals(sendgate) == true) {
+			// 未入力OK
+			return bRet;
+		}
+		// 桁数チェック
+		if (stringCheckUtility.isDecimalCheck(sendgate,1920,0,false) == false) {
+			// 桁数チェック
+			
+			String[] message = new String[] {itemName};
+			String errorMsg = messageSource.getMessage("gateRegistration.error.maxlength.sendgate", message, LocaleContextHolder.getLocale());
+			
+			// エラーリストにエラーを追加
+			stringCheckUtility.addError(errorList, errorMsg, ilineNum);
+			
+			bRet = false;
+		}
+
+		// 0～3の値で設定されているかチェック
+		String pattern = "[0-3]*";
+//		Pattern p = Pattern.compile(pattern);
+		if(!sendgate.matches(pattern)){
+
+			String[] message = new String[] {itemName};
+			String errorMsg = messageSource.getMessage("gateRegistration.error.input.sendgate", message, LocaleContextHolder.getLocale());
+
+			// エラーリストにエラーを追加
+			stringCheckUtility.addError(errorList, errorMsg, ilineNum);
+			
+			bRet = false;
+		}
+		return bRet;
+	}	
+	
+}

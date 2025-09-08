@@ -1,0 +1,123 @@
+package jp.co.art.trident.model.entity.common;
+
+import java.io.Serializable;
+
+/**汎用項目テーブルを保持するクラス**/
+public class MCommon implements Serializable {
+
+	private static final long serialVersionUID = 2974223120567378525L;
+
+	/**
+	 * デフォルトコンストラクタ
+	 */
+	public MCommon() {}
+
+	/**
+	 * コンストラクタ
+	 * @param codeid
+	 * @param code
+	 * @param parametername
+	 * @param purpose
+	 * @param parameter1
+	 * @param parameter2
+	 * @param parameter3
+	 * @param parameter4
+	 */
+	public MCommon(String codeid, int code, String parametername, String purpose,
+			String parameter1, String parameter2, int parameter3, int parameter4) {
+		this.codeid = codeid;
+		this.code = code;
+		this.parametername = parametername;
+		this.purpose = purpose;
+		this.parameter1 = parameter1;
+		this.parameter2 = parameter2;
+		this.parameter3 = parameter3;
+		this.parameter4 = parameter4;
+	}
+	
+	/**
+	 * パラメータ名列挙型
+	 */
+	public enum ParameterName{
+		GATE_OUTPUT_FILENAME,
+		GATE_DOWNLOAD_FILENAME,
+		GATE2_OUTPUT_FILENAME,
+		INIMAKE_INIT_BACKUP_FILEPATH, 
+		TENANT_OUTPUT_FILENAME,
+		TENANT_DOWNLOAD_FILENAME
+	}
+
+	/** コードID */
+	private String codeid;
+	
+	/** コード */
+	private int code;
+	
+	/** パラメータ名 */
+	private String parametername;
+	
+	/** 用途 */
+	private String purpose;
+	
+	/** パラメータ値1 */
+	private String parameter1;
+	
+	/** パラメータ値2 */
+	private String parameter2;
+	
+	/** パラメータ値3(数値) */
+	private int parameter3;
+	
+	/** パラメータ値4(数値) */
+	private int parameter4;
+
+	//　以下、ゲッター、セッター　-----------------------
+	public String getCodeid() {
+		return codeid;
+	}
+	public void setCodeid(String codeid) {
+		this.codeid = codeid;
+	}
+	public int getCode() {
+		return code;
+	}
+	public void setCode(int code) {
+		this.code = code;
+	}
+	public String getParametername() {
+		return parametername;
+	}
+	public void setParametername(String parametername) {
+		this.parametername = parametername;
+	}	
+	public String getPurpose() {
+		return purpose;
+	}
+	public void setPurpose(String purpose) {
+		this.purpose = purpose;
+	}
+	public String getParameter1() {
+		return parameter1;
+	}
+	public void setParameter1(String parameter1) {
+		this.parameter1 = parameter1;
+	}
+	public String getParameter2() {
+		return parameter2;
+	}
+	public void setParameter2(String parameter2) {
+		this.parameter2 = parameter2;
+	}
+	public int getParameter3() {
+		return parameter3;
+	}
+	public void setParameter3(int parameter3) {
+		this.parameter3 = parameter3;
+	}
+	public int getParameter4() {
+		return parameter4;
+	}
+	public void setParameter4(int parameter4) {
+		this.parameter4 = parameter4;
+	}
+}

@@ -1,0 +1,672 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml"
+	　　xmlns:th="http://www.thymeleaf.org"
+	  xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+	  layout:decorate="~{layout/layout}">
+<head>
+	<meta charset="UTF-8">
+	<link rel="stylesheet" th:href="@{/css/common.css}" />
+	<title th:text="#{gateEdit.title}">ゲート編集画面</title>
+</head>
+<body>
+	<div layout:fragment="content">
+		<div id="pageTitle" class="fs-3 ms-3 fw-bold" th:text="#{gateEdit.title}">ゲート編集</div>	
+		<main class="p-3">	
+			<!-- タブのコンテナ -->
+			<ul class="nav nav-tabs">
+				<li class="nav-item">
+					<button class="nav-link active" type="button" id="gateInfoTab" data-bs-toggle="tab" data-bs-target="#gateInfo" th:text="#{gateEdit.title}">
+						ゲート編集
+					</button>
+				</li>
+				<li class="nav-item">
+					<button class="nav-link" type="button" id="ctimerRegistTab" data-bs-toggle="tab" data-bs-target="#ctimerRegist" th:text="#{gateEdit.title.ctimerRegist}">
+						連続解錠時間帯登録
+					</button>				
+				</li>
+			</ul>	
+			<!-- コンテンツのコンテナ -->
+			<div class="tab-content">
+				<!--タブ1 ゲート編集-->
+				<div id="gateInfo" class="tab-pane active" style="width:100%;">
+					<div class="mt-3 ms-3">
+						<button type="submit" class="btn btn-success" th:text="#{gateEdit.print}" id="print">印刷</button>
+						<button type="submit" class="btn btn-success" th:text="#{gateEdit.dataoutput}" id="outputData">データ出力</button>
+					</div>
+					<form id="GateEditForm" name="GateEditForm" method="post">	
+						<div class="row">		
+							<div class="col-7">
+								<div class="p-3">
+									<div class="border border-1 border-secondary" style="height:auto;">
+										<p th:text="#{gateEdit.gateList}">
+										◆ゲート一覧
+										</p>
+		
+										<div class="scroll" style="width:1000px;height:690px;">
+											<table class="table ms-4" id="gateDataListTbl">
+												<thead class="sticky-top" >
+												    <tr>
+												        <th th:text="#{gateEdit.gatelist.gateno}">ゲート番号</th>
+												        <th th:text="#{gateEdit.gatelist.hostno}">ホスト番号</th>
+														<th th:text="#{gateEdit.gatelist.addressno}">アドレス番号</th>
+														<th th:text="#{gateEdit.gatelist.name}">ゲート名称</th>
+														<th th:text="#{gateEdit.gatelist.ctimerno}">連解番号</th>
+														<th th:text="#{gateEdit.gatelist.ctimername}">連続解錠時間帯名称</th>
+												    </tr>
+												</thead>			
+												<tbody>
+													<tr th:if="${#lists.size(gateEditForm.mstGateList) > 0}" th:each="gateEdit : ${gateEditForm.mstGateList}">
+														<td class="selectItem" th:text="${gateEdit.gateno}"></td>
+														<td class="selectItem" th:text="${gateEdit.hostno}"></td>
+														<td class="selectItem" th:text="${gateEdit.addressno}"></td>
+														<td class="selectItem" th:text="${gateEdit.gatename}"></td>
+														<td class="selectItem" th:text="${gateEdit.ctimer}"></td>
+														<td class="selectItem" th:text="${gateEdit.ctimername}"></td>
+														
+														<input type="hidden" th:value="${gateEdit.gatetype_4}">
+														<input type="hidden" th:value="${gateEdit.hosttype}">
+													</tr>	
+												</tbody>	
+											</table>	
+										</div>
+									</div>
+							 	 </div>							    
+							</div>
+						    <div class="col-5">
+								<div class="p-3">
+									<div class="border border-1 border-secondary" style="height:270px;">
+										<p th:text="#{gateEdit.selectGate}">
+										◆選択ゲート
+										</p>										
+	
+										<div class="container"> 
+											<div class="row">	
+												<div class="mt-1 ms-4">
+													<button type="submit" class="btn btn-success" th:text="#{gateEdit.regist}" id="regist">登録</button>
+													<button type="submit" class="btn btn-success" th:text="#{gateEdit.ctimerSend}" id="ctimerSend">連続解錠時間帯送信</button>
+												</div>						
+												<div class="mt-3 m-1">
+													<label class="col-2 text-end" for="gateno" th:text="#{gateEdit.selectGateno}">選択ゲート番号：</label>
+													<input class="col-1" type="text" id="gateno" name="gateno" disabled>
+												</div>
+												<div class="m-1">
+													<label class="col-2 text-end" for="hostno" th:text="#{gateEdit.selectHostno}">ホスト番号：</label>
+													<input class="col-1" type="text" id="hostno" name="hostno" disabled>
+													<label class="col-2 text-end" for="addressno" th:text="#{gateEdit.selectAddressno}">アドレス番号：</label>
+													<input class="col-1" type="text" id="addressno" name="addressno" disabled>
+												</div>
+												<div class="m-1">
+													<label class="col-2 text-end" for="gatename" th:text="#{gateEdit.selectName}">選択ゲート名称：</label>
+													<input class="col-6" type="text" id="gatename" name="gatename" maxlength="20" inputmode="numeric" autocomplete="off">
+												</div>
+												<div class="m-1">
+													<label class="col-2 text-end" for="ctimerno" th:text="#{gateEdit.selectCtimerno}">連解番号：</label>
+													<input class="col-1" type="text" id="ctimerno" name="ctimerno" maxlength="3" inputmode="numeric" autocomplete="off">
+													<button type="submit" class="btn btn-success" th:text="#{gateEdit.ctimerRef}" id="ctimerref" data-ctimer-ref="" data-ctimer-refclick="">参照</button>
+													<input class="col-6" type="text" id="ctimername" name="ctimername" disabled>
+												</div>
+											</div>
+										</div>													
+									</div>
+								</div>
+							</div>
+						</div>
+						<!--JSからのPOST時、CSRFトークンを埋め込む-->
+						<input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>		
+					</form>
+				</div>
+				
+				<!--タブ2 連続解錠時間帯登録-->
+				<div id="ctimerRegist" class="tab-pane" style="width:100%;">	
+					<form id="ctimerRegistFrom" name="ctimerRegistFrom" method="post">
+						<div class="row">		
+							<div class="col-3">
+								<div class="p-3">
+									<div class="border border-1 border-secondary" style="height:auto;">
+										<p th:text="#{gateEdit.ctimerList}">
+										◆連続解錠時間帯一覧
+										</p>
+	
+										<div class="scroll" style="width:400px;height:690px;">
+											<table class="table ms-4" id="ctimerDataListTbl">
+												<thead class="sticky-top" >
+												    <tr>
+												        <th th:text="#{gateEdit.ctimerlist.ctimerno}">番号</th>
+														<th th:text="#{gateEdit.ctimerlist.ctimername}">名称</th>
+												    </tr>
+												</thead>			
+												<tbody>
+													<tr th:if="${#lists.size(gateEditForm.mstCTList) > 0}" th:each="ctdata : ${gateEditForm.mstCTList}">
+														<td class="selectItem" th:text="${ctdata.ctimer}"></td>
+														<td class="selectItem" th:text="${ctdata.ctimername}"></td>
+														
+														<input type="hidden" th:value="${ctdata.data1}">
+														<input type="hidden" th:value="${ctdata.data2}">
+														<input type="hidden" th:value="${ctdata.data3}">
+														<input type="hidden" th:value="${ctdata.data4}">
+														<input type="hidden" th:value="${ctdata.data5}">
+														<input type="hidden" th:value="${ctdata.data6}">
+														<input type="hidden" th:value="${ctdata.data7}">
+														<input type="hidden" th:value="${ctdata.data8}">
+														<input type="hidden" th:value="${ctdata.data9}">
+														<input type="hidden" th:value="${ctdata.data10}">
+														<input type="hidden" th:value="${ctdata.data11}">
+														<input type="hidden" th:value="${ctdata.data12}">
+														<input type="hidden" th:value="${ctdata.data13}">
+														<input type="hidden" th:value="${ctdata.data14}">
+														<input type="hidden" th:value="${ctdata.data15}">
+														<input type="hidden" th:value="${ctdata.data16}">
+													</tr>	
+												</tbody>	
+											</table>	
+										</div>
+									</div>
+							 	 </div>							    
+							</div>
+							<div class="col-9">
+								<div class="p-3">
+									<div class="border border-1 border-secondary" style="height:560px;">
+										<p th:text="#{gateEdit.selectCtimer}">
+										◆選択した連続解錠時間帯
+										</p>										
+	
+										<div class="row">	
+											 <div class="m-1 d-flex flex-wrap align-items-center">
+												<label class="col-1 text-end" for="selectCtimerno" th:text="#{gateEdit.selectCtimer.ctimerno}">連解番号：</label>
+												<input class="col-1" type="text" id="selectCtimerno" name="selectCtimerno" maxlength="3" inputmode="numeric" autocomplete="off">
+												<label class="col-1 text-end" for="selectCtimername" th:text="#{gateEdit.selectCtimer.ctimername}">連解名称：</label>
+												<input class="col-3 me-2" type="text" id="selectCtimername" name="selectCtimername" maxlength="20" inputmode="numeric" autocomplete="off">
+												
+												<div class="d-flex justify-content-end align-items-center" style="min-width: 350px;">
+												  <label class="text-white bg-primary p-1 text-center me-2" for="blueLine">青の帯</label>
+												  <label class="text-primary me-4" for="blueColorCtimer">連続解錠時間</label>
+												  <label class="text-white bg-danger p-1 text-center me-2" for="redLine">赤の帯</label>
+												  <label class="text-danger" for="redColorCtimer">常時施錠時間</label>
+												</div>
+											</div>
+										</div>
+										<div class="m-1">
+											<button type="submit" class="btn btn-success" th:text="#{gateEdit.ctimerDataRegist}" id="ctimerDataRegist">連解登録</button>
+											<button type="submit" class="btn btn-success" th:text="#{gateEdit.ctimerDataDelete}" id="ctimerDataDelete">連解削除</button>
+											<button type="submit" class="btn btn-success" th:text="#{gateEdit.ctimerDataSet}" id="ctimerDataSet" hidden>連解設定</button>
+										</div>
+										<div class="d-flex">
+											<div class="timeline-container" style="margin-left:100px;">
+											  	<!-- ラベル -->
+											  	<div class="hour-labels">
+												    <!-- 0〜24のラベル（25個） -->
+												    <span>0</span><span>1</span><span>2</span><span>3</span><span>4</span>
+												    <span>5</span><span>6</span><span>7</span><span>8</span><span>9</span>
+												    <span>10</span><span>11</span><span>12</span><span>13</span><span>14</span>
+												    <span>15</span><span>16</span><span>17</span><span>18</span><span>19</span>
+												    <span>20</span><span>21</span><span>22</span><span>23</span><span>24</span>
+											  	</div>
+		
+										  		<!-- 縦線（CSSだけ） -->
+											  	<div class="line-area">
+												    <!-- 25本の縦線 -->
+													<div class="hour-line" style="left: 0%;"></div>
+													<div class="hour-line" style="left: 4.1667%;"></div>
+													<div class="hour-line" style="left: 8.3333%;"></div>
+													<div class="hour-line" style="left: 12.5%;"></div>
+													<div class="hour-line" style="left: 16.6667%;"></div>
+													<div class="hour-line" style="left: 20.8333%;"></div>
+													<div class="hour-line" style="left: 25%;"></div>
+													<div class="hour-line" style="left: 29.1667%;"></div>
+													<div class="hour-line" style="left: 33.3333%;"></div>
+													<div class="hour-line" style="left: 37.5%;"></div>
+		
+													<div class="hour-line" style="left: 41.6667%;"></div>
+													<div class="hour-line" style="left: 45.8333%;"></div>
+													<div class="hour-line" style="left: 50%;"></div>
+													<div class="hour-line" style="left: 54.1667%;"></div>
+													<div class="hour-line" style="left: 58.3333%;"></div>
+													<div class="hour-line" style="left: 62.5%;"></div>
+													<div class="hour-line" style="left: 66.6667%;"></div>
+													<div class="hour-line" style="left: 70.8333%;"></div>
+													<div class="hour-line" style="left: 75%;"></div>
+													<div class="hour-line" style="left: 79.1667%;"></div>
+		
+													<div class="hour-line" style="left: 83.3333%;"></div>
+													<div class="hour-line" style="left: 87.5%;"></div>
+													<div class="hour-line" style="left: 91.6667%;"></div>
+													<div class="hour-line" style="left: 95.8333%;"></div>
+													<div class="hour-line" style="left: 100%;"></div>
+													
+												</div>
+											</div>
+											<div class="timeline-container"  style="margin-left:112px;">
+											  	<!-- ラベル -->
+											  	<div class="hour-labels">
+												    <!-- 0〜24のラベル（25個） -->
+												    <span>0</span><span>1</span><span>2</span><span>3</span><span>4</span>
+												    <span>5</span><span>6</span><span>7</span><span>8</span><span>9</span>
+												    <span>10</span><span>11</span><span>12</span><span>13</span><span>14</span>
+												    <span>15</span><span>16</span><span>17</span><span>18</span><span>19</span>
+												    <span>20</span><span>21</span><span>22</span><span>23</span><span>24</span>
+											  	</div>
+
+												<!-- 縦線（CSSだけ） -->
+											  	<div class="line-area">
+												    <!-- 25本の縦線 -->
+													<div class="hour-line" style="left: 0%;"></div>
+													<div class="hour-line" style="left: 4.1667%;"></div>
+													<div class="hour-line" style="left: 8.3333%;"></div>
+													<div class="hour-line" style="left: 12.5%;"></div>
+													<div class="hour-line" style="left: 16.6667%;"></div>
+													<div class="hour-line" style="left: 20.8333%;"></div>
+													<div class="hour-line" style="left: 25%;"></div>
+													<div class="hour-line" style="left: 29.1667%;"></div>
+													<div class="hour-line" style="left: 33.3333%;"></div>
+													<div class="hour-line" style="left: 37.5%;"></div>
+
+													<div class="hour-line" style="left: 41.6667%;"></div>
+													<div class="hour-line" style="left: 45.8333%;"></div>
+													<div class="hour-line" style="left: 50%;"></div>
+													<div class="hour-line" style="left: 54.1667%;"></div>
+													<div class="hour-line" style="left: 58.3333%;"></div>
+													<div class="hour-line" style="left: 62.5%;"></div>
+													<div class="hour-line" style="left: 66.6667%;"></div>
+													<div class="hour-line" style="left: 70.8333%;"></div>
+													<div class="hour-line" style="left: 75%;"></div>
+													<div class="hour-line" style="left: 79.1667%;"></div>
+
+													<div class="hour-line" style="left: 83.3333%;"></div>
+													<div class="hour-line" style="left: 87.5%;"></div>
+													<div class="hour-line" style="left: 91.6667%;"></div>
+													<div class="hour-line" style="left: 95.8333%;"></div>
+													<div class="hour-line" style="left: 100%;"></div>
+													
+												</div>
+											</div>
+										</div>
+										<div class="row">	
+										 	<div class="m-1 d-flex align-items-center">
+												<button type="submit" class="btn btn-success me-3" style="width: 80px;" th:text="#{gateEdit.ctimerSunday}" data-day="Sunday">日</button>
+												<div class="red-band" id="ctimerSundayLine" data-hidden-value="999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999"></div>
+												<input type="hidden" name="Sunday" id="hiddenSunday" value="">
+												<button type="submit" class="btn btn-success me-3 ms-3" style="width: 80px;" th:text="#{gateEdit.ctimerSpecialday1}" data-day="Specialday1">特日１</button>
+												<div class="red-band" id="ctimerSpecialday1Line" data-hidden-value="999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999"></div>
+												<input type="hidden" name="Specialday1" id="hiddenSpecialday1" value="">
+											</div>
+										</div>
+										<div class="row">	
+										 	<div class="m-1 d-flex align-items-center">
+												<button type="submit" class="btn btn-success me-3" style="width: 80px;" th:text="#{gateEdit.ctimerMonday}" data-day="Monday">月</button>
+												<div class="red-band" id="ctimerMondayLine" data-hidden-value="999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999"></div>
+												<input type="hidden" name="Monday" id="hiddenMonday" value="">
+												<button type="submit" class="btn btn-success me-3 ms-3" style="width: 80px;" th:text="#{gateEdit.ctimerSpecialday2}" data-day="Specialday2">特日２</button>
+												<div class="red-band" id="ctimerSpecialday2Line" data-hidden-value="999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999"></div>
+												<input type="hidden" name="Specialday2" id="hiddenSpecialday2" value="">
+											</div>
+										</div>
+										<div class="row">	
+										 	<div class="m-1 d-flex align-items-center">
+												<button type="submit" class="btn btn-success me-3" style="width: 80px;" th:text="#{gateEdit.ctimerTuesday}" data-day="Tuesday">火</button>
+												<div class="red-band" id="ctimerTuesdayLine" data-hidden-value="999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999"></div>
+												<input type="hidden" name="Tuesday" id="hiddenTuesday" value="">
+												<button type="submit" class="btn btn-success me-3 ms-3" style="width: 80px;" th:text="#{gateEdit.ctimerSpecialday3}" data-day="Specialday3">特日３</button>
+												<div class="red-band" id="ctimerSpecialday3Line" data-hidden-value="999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999"></div>
+												<input type="hidden" name="Specialday3" id="hiddenSpecialday3" value="">
+											</div>
+										</div>
+										<div class="row">	
+										 	<div class="m-1 d-flex align-items-center">
+												<button type="submit" class="btn btn-success me-3" style="width: 80px;" th:text="#{gateEdit.ctimerWednesday}" data-day="Wednesday">水</button>
+												<div class="red-band" id="ctimerWednesdayLine" data-hidden-value="999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999"></div>
+												<input type="hidden" name="Wednesday" id="hiddenWednesday" value="">
+												<button type="submit" class="btn btn-success me-3 ms-3" style="width: 80px;" th:text="#{gateEdit.ctimerSpecialday4}" data-day="Specialday4">特日４</button>
+												<div class="red-band" id="ctimerSpecialday4Line" data-hidden-value="999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999"></div>
+												<input type="hidden" name="Specialday4" id="hiddenSpecialday4" value="">
+											</div>
+										</div>
+										<div class="row">	
+										 	<div class="m-1 d-flex align-items-center">
+												<button type="submit" class="btn btn-success me-3" style="width: 80px;" th:text="#{gateEdit.ctimerThursday}" data-day="Thursday">木</button>
+												<div class="red-band" id="ctimerThursdayLine" data-hidden-value="999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999"></div>
+												<input type="hidden" name="Thursday" id="hiddenThursday" value="">
+												<button type="submit" class="btn btn-success me-3 ms-3" style="width: 80px;" th:text="#{gateEdit.ctimerSpecialday5}" data-day="Specialday5">特日５</button>
+												<div class="red-band" id="ctimerSpecialday5Line" data-hidden-value="999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999"></div>
+												<input type="hidden" name="Specialday5" id="hiddenSpecialday5" value="">
+											</div>
+										</div>
+										<div class="row">	
+										 	<div class="m-1 d-flex align-items-center">
+												<button type="submit" class="btn btn-success me-3" style="width: 80px;" th:text="#{gateEdit.ctimerFriday}" data-day="Friday">金</button>
+												<div class="red-band" id="ctimerFridayLine" data-hidden-value="999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999"></div>
+												<input type="hidden" name="Friday" id="hiddenFriday" value="">
+												<button type="submit" class="btn btn-success me-3 ms-3" style="width: 80px;" th:text="#{gateEdit.ctimerSpecialday6}" data-day="Specialday6">特日６</button>
+												<div class="red-band" id="ctimerSpecialday6Line" data-hidden-value="999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999"></div>
+												<input type="hidden" name="Specialday6" id="hiddenSpecialday6" value="">
+											</div>
+										</div>
+										<div class="row">	
+										 	<div class="m-1 d-flex align-items-center">
+												<button type="submit" class="btn btn-success me-3" style="width: 80px;" th:text="#{gateEdit.ctimerSaturday}" data-day="Saturday">土</button>
+												<div class="red-band" id="ctimerSaturdayLine" data-hidden-value="999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999"></div>
+												<input type="hidden" name="Saturday" id="hiddenSaturday" value="">
+												<button type="submit" class="btn btn-success me-3 ms-3" style="width: 80px;" th:text="#{gateEdit.ctimerSpecialday7}" data-day="Specialday7">特日７</button>
+												<div class="red-band" id="ctimerSpecialday7Line" data-hidden-value="999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999"></div>
+												<input type="hidden" name="Specialday7" id="hiddenSpecialday7" value="">
+											</div>
+										</div>
+										<div class="row">	
+										 	<div class="m-1 d-flex align-items-center">
+												<button type="submit" class="btn btn-success me-3" style="width: 80px;" th:text="#{gateEdit.ctimerHoliday}" data-day="Holiday">休日</button>
+												<div class="red-band" id="ctimerHolidayLine" data-hidden-value="999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999"></div>
+												<input type="hidden" name="Holiday" id="hiddenHoliday" value="">
+												<button type="submit" class="btn btn-success me-3 ms-3" style="width: 80px;" th:text="#{gateEdit.ctimerSpecialday8}" data-day="Specialday8">特日８</button>
+												<div class="red-band" id="ctimerSpecialday8Line" data-hidden-value="999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999"></div>
+												<input type="hidden" name="Specialday8" id="hiddenSpecialday8" value="">
+											</div>
+										</div>
+										
+										<!--更新か新規登録か判断する項目(0=更新、1=新規登録)-->
+										<input type="hidden" name="ctimerRegistType" id="ctimerRegistType" value="">
+									</div>
+								</div>
+							</div>	
+						</div>	
+						<!--JSからのPOST時、CSRFトークンを埋め込む-->
+						<input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>	
+					</form>
+				</div>			
+			</div>
+		</main>
+		
+		<!--連続解錠時間帯編集モーダル-->
+		<div class="modal fade" id="ctimerDataEditModal" tabindex="-1">
+			<div class="modal-dialog modal-dialog-centered modal-dialog-scrollable" style="max-width: 680px; width: 90%;">
+				<div class="modal-content"  style="height: 97%;">		
+					<div class="modal-header bg-success text-white" style="height:30px;">
+						<div class="modal-title d-flex justify-content-center m-2">
+							<div th:text="#{gateEdit.print.modal.header}">Web版入退室管理システム</div>
+						</div>
+						<button type="button" class="btn-close m-2" data-bs-dismiss="modal" aria-label="Close"></button>						
+					</div>
+					<div class="modal-body">
+						<div class="container-fluid">
+							<div class="row fw-bold">
+								<div class="d-flex ms-3">
+									<div class="fs-5" th:text="#{gateEdit.ctimerEdit.modal.title}">連続解錠時間帯編集</div>
+								</div>
+							</div>
+						</div>	
+						
+						<div class="d-flex">
+							<button type="submit" class="btn btn-success" th:text="#{gateEdit.ctimerDataSet}" id="ctimerEditDataSet">連解設定</button>
+						</div>
+						
+						<div class="p-3">
+							<div class="border border-1 border-secondary" style="height:410px;">
+								<div class="row">	
+								 	<div class="m-1 d-flex align-items-center mt-2 ms-1">
+										<div class="me-2 ms-1" data-label="1">１</div>
+										<input style="width:60px;" type="text" id="select1CtimerFrom" name="select1CtimerFrom" maxlength="5" autocomplete="off" data-ctimer="Ctimer" tabindex="1">
+										<div class="me-1" data-label="1">～</div>
+										<input style="width:60px;" type="text" id="select1CtimerTo" name="select1CtimerTo" maxlength="5" autocomplete="off" data-ctimer="Ctimer" tabindex="2">
+										<button type="submit" class="btn btn-success mx-2" th:text="#{gateEdit.ctimerDelete}" data-del="1" tabindex="-1">削除</button>
+										<div class="col-2 me-3 text-end" data-label="9">９</div>
+										<input style="width:60px;" type="text" id="select9CtimerFrom" name="select9CtimerFrom" maxlength="5" autocomplete="off" data-ctimer="Ctimer" tabindex="17">
+										<div class="me-1" data-label="9">～</div>
+										<input style="width:60px;" type="text" id="select9CtimerTo" name="select9CtimerTo" maxlength="5" autocomplete="off" data-ctimer="Ctimer" tabindex="18">
+										<button type="submit" class="btn btn-success mx-2" th:text="#{gateEdit.ctimerDelete}" data-del="9" tabindex="-1">削除</button>
+									</div>
+								</div>
+								<div class="row">	
+								 	<div class="m-1 d-flex align-items-center mt-2 ms-1">
+										<div class="me-2 ms-1" data-label="2">２</div>
+										<input style="width:60px;" type="text" id="select2CtimerFrom" name="select2CtimerFrom" maxlength="5" autocomplete="off" data-ctimer="Ctimer" tabindex="3">
+										<div class="me-1" data-label="2">～</div>
+										<input style="width:60px;" type="text" id="select2CtimerTo" name="select2CtimerTo" maxlength="5" autocomplete="off" data-ctimer="Ctimer" tabindex="4">
+										<button type="submit" class="btn btn-success mx-2" th:text="#{gateEdit.ctimerDelete}" data-del="2" tabindex="-1">削除</button>
+										<div class="col-2 me-3 text-end" data-label="10">１０</div>
+										<input style="width:60px;" type="text" id="select10CtimerFrom" name="select10CtimerFrom" maxlength="5" autocomplete="off" data-ctimer="Ctimer" tabindex="19">
+										<div class="me-1" data-label="10">～</div>
+										<input style="width:60px;" type="text" id="select10CtimerTo" name="select10CtimerTo" maxlength="5" autocomplete="off" data-ctimer="Ctimer" tabindex="20">
+										<button type="submit" class="btn btn-success mx-2" th:text="#{gateEdit.ctimerDelete}" data-del="10" tabindex="-1">削除</button>
+									</div>
+								</div>
+								<div class="row">	
+								 	<div class="m-1 d-flex align-items-center mt-2 ms-1">
+										<div class="me-2 ms-1" data-label="3">３</div>
+										<input style="width:60px;" type="text" id="select3CtimerFrom" name="select3CtimerFrom" maxlength="5" autocomplete="off" data-ctimer="Ctimer" tabindex="5">
+										<div class="me-1" data-label="3">～</div>
+										<input style="width:60px;" type="text" id="select3CtimerTo" name="select3CtimerTo" maxlength="5" autocomplete="off" data-ctimer="Ctimer" tabindex="6">
+										<button type="submit" class="btn btn-success mx-2" th:text="#{gateEdit.ctimerDelete}" data-del="3" tabindex="-1">削除</button>
+										<div class="col-2 me-3 text-end" data-label="11">１１</div>
+										<input style="width:60px;" type="text" id="select11CtimerFrom" name="select11CtimerFrom" maxlength="5" autocomplete="off" data-ctimer="Ctimer" tabindex="21">
+										<div class="me-1" data-label="11">～</div>
+										<input style="width:60px;" type="text" id="select11CtimerTo" name="select11CtimerTo" maxlength="5" autocomplete="off" data-ctimer="Ctimer" tabindex="22">
+										<button type="submit" class="btn btn-success mx-2" th:text="#{gateEdit.ctimerDelete}" data-del="11" tabindex="-1">削除</button>
+									</div>
+								</div>
+								<div class="row">	
+								 	<div class="m-1 d-flex align-items-center mt-2 ms-1">
+										<div class="me-2 ms-1" data-label="4">４</div>
+										<input style="width:60px;" type="text" id="select4CtimerFrom" name="select4CtimerFrom" maxlength="5" autocomplete="off" data-ctimer="Ctimer" tabindex="7">
+										<div class="me-1" data-label="4">～</div>
+										<input style="width:60px;" type="text" id="select4CtimerTo" name="select4CtimerTo" maxlength="5" autocomplete="off" data-ctimer="Ctimer" tabindex="8">
+										<button type="submit" class="btn btn-success mx-2" th:text="#{gateEdit.ctimerDelete}" data-del="4" tabindex="-1">削除</button>
+										<div class="col-2 me-3 text-end" data-label="12">１２</div>
+										<input style="width:60px;" type="text" id="select12CtimerFrom" name="select12CtimerFrom" maxlength="5" autocomplete="off" data-ctimer="Ctimer" tabindex="23">
+										<div class="me-1" data-label="12">～</div>
+										<input style="width:60px;" type="text" id="select12CtimerTo" name="select12CtimerTo" maxlength="5" autocomplete="off" data-ctimer="Ctimer" tabindex="24">
+										<button type="submit" class="btn btn-success mx-2" th:text="#{gateEdit.ctimerDelete}" data-del="12" tabindex="-1">削除</button>
+									</div>
+								</div>
+								<div class="row">	
+								 	<div class="m-1 d-flex align-items-center mt-2 ms-1">
+										<div class="me-2 ms-1" data-label="5">５</div>
+										<input style="width:60px;" type="text" id="select5CtimerFrom" name="select5CtimerFrom" maxlength="5" autocomplete="off" data-ctimer="Ctimer" tabindex="9">
+										<div class="me-1" data-label="5">～</div>
+										<input style="width:60px;" type="text" id="select5CtimerTo" name="select5CtimerTo" maxlength="5" autocomplete="off" data-ctimer="Ctimer" tabindex="10">
+										<button type="submit" class="btn btn-success mx-2" th:text="#{gateEdit.ctimerDelete}" data-del="5" tabindex="-1">削除</button>
+										<div class="col-2 me-3 text-end" data-label="13">１３</div>
+										<input style="width:60px;" type="text" id="select13CtimerFrom" name="select13CtimerFrom" maxlength="5" autocomplete="off" data-ctimer="Ctimer" tabindex="25">
+										<div class="me-1" data-label="13">～</div>
+										<input style="width:60px;" type="text" id="select13CtimerTo" name="select13CtimerTo" maxlength="5" autocomplete="off" data-ctimer="Ctimer" tabindex="26">
+										<button type="submit" class="btn btn-success mx-2" th:text="#{gateEdit.ctimerDelete}" data-del="13" tabindex="-1">削除</button>
+									</div>
+								</div>
+								<div class="row">	
+								 	<div class="m-1 d-flex align-items-center mt-2 ms-1">
+										<div class="me-2 ms-1" data-label="6">６</div>
+										<input style="width:60px;" type="text" id="select6CtimerFrom" name="select6CtimerFrom" maxlength="5" autocomplete="off" data-ctimer="Ctimer" tabindex="11">
+										<div class="me-1" data-label="6">～</div>
+										<input style="width:60px;" type="text" id="select6CtimerTo" name="select6CtimerTo" maxlength="5" autocomplete="off" data-ctimer="Ctimer" tabindex="12">
+										<button type="submit" class="btn btn-success mx-2" th:text="#{gateEdit.ctimerDelete}" data-del="6" tabindex="-1">削除</button>
+										<div class="col-2 me-3 text-end" data-label="14">１４</div>
+										<input style="width:60px;" type="text" id="select14CtimerFrom" name="select14CtimerFrom" maxlength="5" autocomplete="off" data-ctimer="Ctimer" tabindex="27">
+										<div class="me-1" data-label="14">～</div>
+										<input style="width:60px;" type="text" id="select14CtimerTo" name="select14CtimerTo" maxlength="5" autocomplete="off" data-ctimer="Ctimer" tabindex="28">
+										<button type="submit" class="btn btn-success mx-2" th:text="#{gateEdit.ctimerDelete}" data-del="14" tabindex="-1">削除</button>
+									</div>
+								</div>
+								<div class="row">	
+								 	<div class="m-1 d-flex align-items-center mt-2 ms-1">
+										<div class="me-2 ms-1" data-label="7">７</div>
+										<input style="width:60px;" type="text" id="select7CtimerFrom" name="select7CtimerFrom" maxlength="5" autocomplete="off" data-ctimer="Ctimer" tabindex="13">
+										<div class="me-1" data-label="7">～</div>
+										<input style="width:60px;" type="text" id="select7CtimerTo" name="select7CtimerTo" maxlength="5" autocomplete="off" data-ctimer="Ctimer" tabindex="14">
+										<button type="submit" class="btn btn-success mx-2" th:text="#{gateEdit.ctimerDelete}" data-del="7" tabindex="-1">削除</button>
+										<div class="col-2 me-3 text-end" data-label="15">１５</div>
+										<input style="width:60px;" type="text" id="select15CtimerFrom" name="select15CtimerFrom" maxlength="5" autocomplete="off" data-ctimer="Ctimer" tabindex="29">
+										<div class="me-1" data-label="15">～</div>
+										<input style="width:60px;" type="text" id="select15CtimerTo" name="select15CtimerTo" maxlength="5" autocomplete="off" data-ctimer="Ctimer" tabindex="30">
+										<button type="submit" class="btn btn-success mx-2" th:text="#{gateEdit.ctimerDelete}" data-del="15" tabindex="-1">削除</button>
+									</div>
+								</div>
+								<div class="row">	
+								 	<div class="m-1 d-flex align-items-center mt-2 ms-1">
+										<div class="me-2 ms-1" data-label="8">８</div>
+										<input style="width:60px;" type="text" id="select8CtimerFrom" name="select8CtimerFrom" maxlength="5" autocomplete="off" data-ctimer="Ctimer" tabindex="15">
+										<div class="me-1" data-label="8">～</div>
+										<input style="width:60px;" type="text" id="select8CtimerTo" name="select8CtimerTo" maxlength="5" autocomplete="off" data-ctimer="Ctimer" tabindex="16">
+										<button type="submit" class="btn btn-success mx-2" th:text="#{gateEdit.ctimerDelete}" data-del="8" tabindex="-1">削除</button>
+									</div>
+								</div>
+							</div>
+						</div>
+						
+						<div class="d-flex ms-3">	
+							<button type="submit" class="btn btn-success me-1" th:text="#{gateEdit.ctimerEditAllDayOpen}" id="ctimerEditAllDayOpen">終日連続解錠</button>
+							<button type="submit" class="btn btn-success me-1" th:text="#{gateEdit.ctimerEditAllDayClose}" id="ctimerEditAllDayClose">終日連続施錠</button>
+							<button type="submit" class="btn btn-success me-1" th:text="#{gateEdit.ctimerEditAllDayCalc}" id="ctimerEditCalc">計算</button>
+						</div>
+						
+						<div class="p-3">
+							<p th:text="#{gateEdit.ctimerEdit.image}">
+							◆イメージ表示
+							</p>
+							<div class="border border-1 border-secondary" style="height:170px;">
+								
+								<div class="d-flex justify-content-center align-items-center m-3" style="min-width: 350px;">
+								  <label class="text-white bg-primary p-1 text-center me-2" for="blueLine">青の帯</label>
+								  <label class="text-primary me-4" for="blueColorCtimer">連続解錠時間</label>
+								  <label class="text-white bg-danger p-1 text-center me-2" for="redLine">赤の帯</label>
+								  <label class="text-danger" for="redColorCtimer">常時施錠時間</label>
+								</div>
+								
+								<div class="timeline-container" style="margin-left:50px;">
+								  	<!-- ラベル -->
+								  	<div class="hour-labels">
+									    <!-- 0〜24のラベル（25個） -->
+									    <span>0</span><span>1</span><span>2</span><span>3</span><span>4</span>
+									    <span>5</span><span>6</span><span>7</span><span>8</span><span>9</span>
+									    <span>10</span><span>11</span><span>12</span><span>13</span><span>14</span>
+									    <span>15</span><span>16</span><span>17</span><span>18</span><span>19</span>
+									    <span>20</span><span>21</span><span>22</span><span>23</span><span>24</span>
+								  	</div>
+	
+							  		<!-- 縦線（CSSだけ） -->
+								  	<div class="line-area">
+									    <!-- 25本の縦線 -->
+										<div class="hour-line" style="left: 0%;"></div>
+										<div class="hour-line" style="left: 4.1667%;"></div>
+										<div class="hour-line" style="left: 8.3333%;"></div>
+										<div class="hour-line" style="left: 12.5%;"></div>
+										<div class="hour-line" style="left: 16.6667%;"></div>
+										<div class="hour-line" style="left: 20.8333%;"></div>
+										<div class="hour-line" style="left: 25%;"></div>
+										<div class="hour-line" style="left: 29.1667%;"></div>
+										<div class="hour-line" style="left: 33.3333%;"></div>
+										<div class="hour-line" style="left: 37.5%;"></div>
+	
+										<div class="hour-line" style="left: 41.6667%;"></div>
+										<div class="hour-line" style="left: 45.8333%;"></div>
+										<div class="hour-line" style="left: 50%;"></div>
+										<div class="hour-line" style="left: 54.1667%;"></div>
+										<div class="hour-line" style="left: 58.3333%;"></div>
+										<div class="hour-line" style="left: 62.5%;"></div>
+										<div class="hour-line" style="left: 66.6667%;"></div>
+										<div class="hour-line" style="left: 70.8333%;"></div>
+										<div class="hour-line" style="left: 75%;"></div>
+										<div class="hour-line" style="left: 79.1667%;"></div>
+	
+										<div class="hour-line" style="left: 83.3333%;"></div>
+										<div class="hour-line" style="left: 87.5%;"></div>
+										<div class="hour-line" style="left: 91.6667%;"></div>
+										<div class="hour-line" style="left: 95.8333%;"></div>
+										<div class="hour-line" style="left: 100%;"></div>
+										
+									</div>
+								</div>
+								
+								<div class="row" style="overflow-x: hidden;">
+								 	<div class="mt-3" style="transform: translateX(50px);">
+										<div class="red-band" id="ctimerdayLine" data-hidden-value="999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999"></div>
+										<input type="hidden" id="hiddenType" value="">
+									</div>
+								</div>							
+							</div>
+						</div>
+					</div>
+				</div>
+			</div>			
+		</div>
+		
+		<!--印刷用モーダル-->
+		<div id="printModal" class="modal" style="display:none;">
+			<div class="modal-dialog modal-dialog-centered modal-fullscreen modal-dialog-scrollable">
+				<div class="modal-content">		
+					<div class="modal-header bg-success text-white" style="height:30px;">
+						<div class="modal-title d-flex justify-content-center m-2">
+							<div th:text="#{gateEdit.print.modal.header}">Web版入退室管理システム</div>
+						</div>
+						<button type="button" class="btn-close m-2" data-bs-dismiss="modal" aria-label="Close"></button>						
+					</div>
+					<div class="modal-body">
+						<div class="container-fluid">
+							<div class="row fw-bold">
+								<div class="col flex m-0 d-flex align-items-end justify-content-start">
+									<div></div>
+								</div>
+								<div class="col d-flex justify-content-center m-2">
+									<div class="fs-3" th:text="#{gateEdit.print.modal.title}">ゲート一覧</div>
+								</div>
+								<div class="col flex m-0 d-flex align-items-end justify-content-end">
+									<div th:text="#{gateEdit.print.modal.printDate}">印刷日：</div><div class="printDate"></div>
+								</div>		
+							</div>
+						</div>	
+						
+						<div class="flex fw-bold m-4">
+							<div th:text="#{gateEdit.print.modal.uploadCount}">データ件数:</div><div class="listCnt">0</div><div th:text="#{gateEdit.print.modal.count}">件</div>
+						</div>
+						
+						<table class="table m-2">
+							<thead class="sticky-top">
+							    <tr>
+									<th th:text="#{gateEdit.gatelist.gateno}">ゲート番号</th>
+									<th th:text="#{gateEdit.gatelist.hostno}">ホスト番号</th>
+									<th th:text="#{gateEdit.gatelist.addressno}">アドレス番号</th>
+									<th th:text="#{gateEdit.gatelist.name}">ゲート名称</th>
+									<th th:text="#{gateEdit.gatelist.ctimerno}">連解番号</th>
+									<th th:text="#{gateEdit.gatelist.ctimername}">連続解錠時間帯名称</th>
+							    </tr>
+							</thead>
+							<tbody id="printDataTbl">
+								<!--create Data-->
+							</tbody>
+						</table>
+					</div>
+				</div>
+			</div>			
+		</div>
+					
+		
+		<!--Javascriptで表示するためのメッセージ-->
+		<input type="hidden" name="message" id="message" th:value="${gateEditForm.message}">
+		<input type="hidden" name="isInitError" id="isInitError" th:value="${isInitError}">
+		<input type="hidden" name="antipassTabMessage" id="antipassTabMessage" th:value="#{gateRegistration.error.antipassTab}">
+		<input type="hidden" name="gateDataErrMessage" id="gateDataErrMessage" th:value="#{gateEdit.error.gateData}">
+		<input type="hidden" name="ctDataErrMessage" id="ctDataErrMessage" th:value="#{gateEdit.error.ctData}">
+		<input type="hidden" name="gateDataErrEmptyGateNo" id="gateDataErrEmptyGateNo" th:value="#{gateEdit.error.empty.gateno}">
+		<input type="hidden" name="gateDataErrEmptyGateName" id="gateDataErrEmptyGateName" th:value="#{gateEdit.error.empty.gateName}">
+		<input type="hidden" name="gateDataErrInputGateName" id="gateDataErrInputGateName" th:value="#{gateEdit.error.input.gateName}">
+		<input type="hidden" name="gateDataErrEmptyCtimerno" id="gateDataErrEmptyCtimerno" th:value="#{gateEdit.error.empty.ctimerno}">
+		<input type="hidden" name="gateDataErrInputCtimerno" id="gateDataErrInputCtimerno" th:value="#{gateEdit.error.input.ctimerno}">
+		<input type="hidden" name="gateDataErrNoCtimerData" id="gateDataErrNoCtimerData" th:value="#{gateEdit.error.noCtimerData}">
+		<input type="hidden" name="gateDataErrNothingCtimerData" id="gateDataErrNothingCtimerData" th:value="#{gateEdit.error.nothingCtimerData}">
+		<input type="hidden" name="gateDataRegistConfirm" id="gateDataRegistConfirm" th:value="#{gateEdit.regist.confirm}">
+		<input type="hidden" name="ctimerRegistConfirm" id="ctimerRegistConfirm" th:value="#{gateEdit.ctimerRegist.confirm}">
+		<input type="hidden" name="ctimerDeleteCaution" id="ctimerDeleteCaution" th:value="#{gateEdit.ctimerDelete.caution}">
+		<input type="hidden" name="ctimerDeleteConfirm" id="ctimerDeleteConfirm" th:value="#{gateEdit.ctimerDelete.confirm}">
+		<input type="hidden" name="ctimerErrEmptyCtimername" id="ctimerErrEmptyCtimername" th:value="#{gateEdit.error.empty.ctimername}">
+		<input type="hidden" name="ctimerErrInputCtimername" id="ctimerErrInputCtimername" th:value="#{gateEdit.error.input.ctimername}">
+		<input type="hidden" name="ctimerErrNoSelectCtimer" id="ctimerErrNoSelectCtimer" th:value="#{gateEdit.error.noSelectCtimer}">
+		<input type="hidden" name="gateDataPrintConfirm" id="gateDataPrintConfirm" th:value="#{gateEdit.print.confirm}">
+		<input type="hidden" name="gateDataUploadCaution" id="gateDataUploadCaution" th:value="#{gateRegistration.upload.caution}">
+		<input type="hidden" name="userErrLevel" id="userErrLevel" th:value="#{user.error.level}">
+		
+		<!--Javascriptで参照する権限-->
+		<input type="hidden" name="userGateEditRegistLevel" id="userGateEditRegistLevel" th:value="${userGateEditRegistLevel}">
+		<input type="hidden" name="userGateEditPrintLevel" id="userGateEditPrintLevel" th:value="${userGateEditPrintLevel}">
+		<input type="hidden" name="userGateEditDataoutLevel" id="userGateEditDataoutLevel" th:value="${userGateEditDataoutLevel}">
+		<input type="hidden" name="userCtimerRegistLevel" id="userCtimerRegistLevel" th:value="${userCtimerRegistLevel}">
+		
+		<script type="text/javascript" th:src="@{/js/gateEdit/gateEdit.js}"></script>
+	</div>
+</body>
+</html>

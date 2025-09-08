@@ -1,0 +1,37 @@
+package jp.co.art.trident.service.common;
+
+import org.springframework.stereotype.Service;
+
+/**
+ * <b>送信指示データのサービスクラス.</b> <br/>
+ * 
+ * <pre>
+ * </pre>
+ */
+@Service
+public class MSendOrderService {
+	
+	/**
+	 * コンストラクタ
+	 * 
+	 */	
+	public MSendOrderService() {
+	}
+	
+	/**
+	 * パラメータ名列挙型
+	 */
+	public enum SendOrderNum{
+		GATEEDIT_SEND_NUM(10);
+		
+	    private final int num;
+
+	    SendOrderNum(int num) {
+	        this.num = num;
+	    }
+	    
+	    public int getNum() {
+	        return num;
+	    }
+	}
+}

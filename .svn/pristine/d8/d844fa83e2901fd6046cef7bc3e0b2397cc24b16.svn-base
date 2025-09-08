@@ -1,0 +1,249 @@
+$(document).ready(function () {
+	var message = $("#message").val();
+	if (message != null && message !== "") {
+		alert(message);
+	}
+});
+
+//入力文字を半角数字に変換するイベント処理（呼びだし）
+$(function () {
+	["ipaddress1", "ipaddress2", "ipaddress3", "ipaddress4"].forEach((id, index, array) => {
+	    $(`#${id}`).on("input", function () {
+			//入力文字を3桁に制限
+	        this.value = this.value.replace(/[^0-9]/g, '').slice(0, 3);
+
+	        // 半角数字のみ3桁入力で次欄にフォーカス移動（最後は移動しない）
+	        if (this.value.length === 3 && index < array.length - 1) {
+	            $(`#${array[index + 1]}`).focus();
+	        }
+			//入力後にipaddressに結合
+	        updateFullIpAddress();
+	    });
+	});
+	
+	//送信前にIPアドレスがきちんとまとまっているか再チェックし、#ipaddress に反映
+	$("#deviceForm").on("submit", updateFullIpAddress);
+	//selectItem クラスが付いた要素がクリックされたら、deviceData.setDevicedata 関数を実行
+	$("#deviceDataListTbl .selectItem").on("click", deviceData.setDevicedata);
+	$("#hostno, #addressno").on("focusout", searchDeviceIfReady);
+	$("#regist").on("click", deviceData.regist);
+	$("#clear").on("click", deviceData.clear);
+	$("#delete").on("click", deviceData.delete);
+	//入力文字を半角数字（0〜9）だけに制限するための関数
+	$("#hostno").on("input", common.allowOnlyHalfWidthDigits);
+	$("#addressno").on("input", common.allowOnlyHalfWidthDigits);
+	$("#ipaddress").on("input", common.allowOnlyHalfWidthDigits);
+	$("#portno").on("input", common.allowOnlyHalfWidthDigits);
+	
+	//正規表現でIPアドレスの形式（例: 192.168.1.1）を定義
+	$("#ipaddress").on("focusout", function () {
+		const ip = $(this).val().trim();
+		//(\d{1,3}\.){3} は「数字.」が3回続く
+		const regex = /^(\d{1,3}\.){3}\d{1,3}$/;
+		//正規表現にマッチしなければ終了
+		if (!regex.test(ip)) return;
+		const parts = ip.split(".");
+		for (const part of parts) {
+		//各パートが「0〜255の数字」であるかを確認
+			const num = parseInt(part, 10);
+			if (isNaN(num) || num < 0 || num > 255) return;
+		}
+	});
+
+	$("#devicename").on("focusout", function () {
+	    const devicename = $(this).val();
+	    const pattern = /[\/:*?<>|]/;
+	    if (devicename.match(pattern)) {
+			//Message
+	      	alert($("#deviceDataErrInputDeviceName").val());
+	        // 1ミリ秒後にフォーカスを戻す
+	        setTimeout(() => {
+	            $(this).focus();
+	        }, 1);
+	    }
+	});
+
+});
+
+// ４つの項目に分かれたIPアドレスを結合する関数
+function updateFullIpAddress() {
+	const ip1 = $("#ipaddress1").val().trim();
+	const ip2 = $("#ipaddress2").val().trim();
+	const ip3 = $("#ipaddress3").val().trim();
+	const ip4 = $("#ipaddress4").val().trim();
+	const fullIp = `${ip1}.${ip2}.${ip3}.${ip4}`;
+	$("#ipaddress").val(fullIp);
+}
+
+// ホスト番号・アドレス番号が揃ったときに自動検索する関数(ロストフォーカス処理)
+function searchDeviceIfReady() {
+		let hostno = $("#hostno").val().trim();
+		let addressno = $("#addressno").val().trim();
+		
+		//	ゼロパディング（桁数調整）
+		if(hostno != ""){
+			//ホスト番号が3桁未満 → 左に「0」を補って3桁にします。
+			hostno = hostno.padStart(3,"0");
+			$("#hostno").val(hostno);
+			}
+			
+		if(addressno != ""){
+			//アドレス番号が2桁未満 → 左に「0」を補って2桁にします。
+			addressno = addressno.padStart(2,"0");
+			$("#addressno").val(addressno);
+			}
+			
+		//空欄チェックと数字チェック
+		if (hostno === "" || addressno === "") return;
+		if (!/^[0-9]+$/.test(hostno) || !/^[0-9]+$/.test(addressno)) return;
+		
+		//Ajax通信のためのデータ作成
+		//フォームから取得し、サーバー送信用のオブジェクトを作成。
+		var data = {
+		  hostno: $("#hostno").val(),
+		  addressno: $("#addressno").val(),
+		  };
+
+		var deferred = common.ajax("/device/api/get", data, { "type" : "POST" });
+		
+		deferred.done(function(result) {
+	    if (result.success) {
+					// データが存在する
+			if (result.content.portno != null) {
+				    // 	サーバーからの応答が success: true かつ portno が存在する場合：
+					//デバイス情報（IPアドレス、ポート番号、デバイス名）を画面に反映。
+					const data = result.content;
+
+			      if (data) {
+			        $("#ipaddress").val(data.ipaddress || "");
+			        $("#portno").val(data.portno || "");
+			        $("#devicename").val(data.devicename || "");
+			        const ipParts = (data.ipaddress || "").split(".");
+					//IPアドレスは "192.168.1.10" のような形式なので、ドットで分割して4つの入力欄に分けて表示。
+			        $("#ipaddress1").val(ipParts[0] || "");
+			        $("#ipaddress2").val(ipParts[1] || "");
+			        $("#ipaddress3").val(ipParts[2] || "");
+			        $("#ipaddress4").val(ipParts[3] || "");
+				}							
+			} 
+	  	} else {
+	  			// successがfalseの場合
+				//ここで入力されたホスト番号がデータベースと不一致な場合、「ホスト番号もしくはアドレス番号が一致しません。」メッセージを表示
+				alert($("#deviceMismatch").val());
+	  		}
+			
+	  }).fail(function(jqXHR, textStatus, errorThrown) {
+				//失敗の処理時、「通信エラーが発生したため、正常に処理ができませんでした。」というメッセージを表示
+	  		alert($("#serverFailMessage").val());
+	  		return false;
+	});
+}
+
+var deviceData = {
+
+//機器情報の登録処理を行う関数
+	regist: function (e) {
+		e.preventDefault();
+		var hostno = $("#hostno").val();
+
+		if (hostno === "") {
+			//「ホスト番号を入力してください。」メッセージを表示
+			alert($("#deviceDataErrEmptyHostno").val());
+			return;
+		}
+
+		var data = {
+		  hostno: $("#hostno").val(),
+		  addressno: $("#addressno").val(),
+		  };
+			//device/existでアクセスし、ホスト番号＋アドレス番号の存在チェック
+		var deferred = common.ajax("/device/exist", data, { "type" : "POST" });
+					
+		deferred.done(function(result) {
+	    	if (result.success) {
+					// データが存在する
+				if (result.content == true){
+					//trueの場合、メッセージを表示↓
+					//var res = confirm("指定したホスト番号のデータはすでに存在します。" + "\n" +  "更新しますか？");
+					var res = confirm($("#deviceConfirmMsg").val());
+					if( res == true ) {
+						// 登録処理
+						$("#deviceForm").attr("action", "/TRIDENT/device/regist");
+						$("#deviceForm").submit();								
+					} else {
+						return false;
+					}
+				} else {
+				//ここで入力されたホスト番号がデータベースと不一致な場合、
+				// 「ホスト番号もしくはアドレス番号が一致しません。」メッセージを表示
+				//不一致のため、#deviceForm 内のテキスト入力欄（<input type="text">と隠しフィールドの値をすべてクリア
+			            alert($("#deviceMismatch").val());
+						$("#deviceForm input[type='text'], #deviceForm input[type='hidden']").val("");
+			        }
+		    } else {
+			//「入力内容をご確認の上、再度お試しください。」というメッセージを表示
+		        alert($("#processFailMassage").val());
+		    }
+				
+		}).fail(function(jqXHR, textStatus, errorThrown) {
+				//「通信エラーが発生したため、正常に処理ができませんでした。」というメッセージを表示
+			alert($("#serverFailMessage").val());
+			return false;
+		});			
+			
+	},	
+	
+//機器情報入力画面の内容をすべてクリアし、選択状態も解除するための関数
+	clear: function (e) {
+		e.preventDefault();
+		//入力欄を空欄に
+		$("#hostno, #addressno, #portno, #devicename").val("");
+		$("#ipaddress1, #ipaddress2, #ipaddress3, #ipaddress4, #fullIpAddress, #ipaddress").val("");
+		//選択されていた行のハイライトをすべて解除する
+		$("#deviceDataListTbl").find("tr td").removeClass("selectline");
+	},
+
+//装置情報を削除する処理を記載した関数
+	delete: function (e) {
+		var hostno = $("#hostno").val();
+		if (hostno === "") {
+		//「削除するホスト番号をゲート一覧から選択してください。」というメッセージを表示
+			alert($("#deviceDataDeleteCaution").val());
+			return;
+		}
+		//「指定したホスト番号のデータを削除しますか?」メッセージを表示
+		var res = confirm($("#deviceDataDeleteConfirm").val());
+		
+		if (res) {
+			$("#deviceForm").attr("action", "/TRIDENT/device/delete")
+			$("#deviceForm").submit();				
+		}
+	},
+
+//HTMLのテーブルの1行を選択し、その行の装置データをフォームの各入力欄にセットする関数
+	setDevicedata: function (e) {
+		//テーブルの行を取得後、selectedRowに代入
+		var selectedRow = $(this).closest("tr");
+		//以下の子要素も追加
+		var hostno = selectedRow.children("td").eq(0).text();
+		var addressno = selectedRow.children("td").eq(1).text();
+		var ipaddress = selectedRow.children("td").eq(2).text();
+		var portno = selectedRow.children("td").eq(3).text();
+		var devicename = selectedRow.children("td").eq(4).text();
+		
+		//選択をリセット後、次の行にハイライト
+		$("#deviceDataListTbl").find("tr td").removeClass("selectline");
+		selectedRow.children("td").addClass("selectline");
+		
+		//フォームの入力欄にセット
+		$("#hostno").val(hostno);
+		$("#addressno").val(addressno);
+		const ipParts = ipaddress.split(".");
+		$("#ipaddress1").val(ipParts[0] || "");
+		$("#ipaddress2").val(ipParts[1] || "");
+		$("#ipaddress3").val(ipParts[2] || "");
+		$("#ipaddress4").val(ipParts[3] || "");
+		$("#portno").val(portno);
+		$("#devicename").val(devicename);
+	}
+};

@@ -1,0 +1,54 @@
+package jp.co.art.trident.model.entity;
+
+import java.io.Serializable;
+
+/**操作ログコードマスタを保持するクラス**/
+
+public class MOperationlog implements Serializable {
+
+	private static final long serialVersionUID = -7189331121683138741L;
+
+	/**
+     * デフォルトコンストラクタ
+     */
+	public MOperationlog() {};	
+	
+	/**
+     * デフォルトコンストラクタ
+     */
+	public MOperationlog(String opecode, String dispmsg, int logflag) {
+		this.opecode = opecode;
+		this.dispmsg = dispmsg;
+		this.logflag = logflag;
+	}
+	
+	/** 操作日 */
+	private String opecode;
+	
+	/** ユーザー名 */
+	private String dispmsg;
+	
+	/** 操作ログコード */
+	private int logflag;
+	
+	//　以下、ゲッター、セッター　-----------------------
+	public String getOpecode() {
+		return opecode;
+	}
+	public void setOpecode(String opecode) {
+		this.opecode = opecode;
+	}
+	public String getDispmsg() {
+		return dispmsg;
+	}
+	public void setDispmsg(String dispmsg) {
+		this.dispmsg = dispmsg;
+	}
+	public int getLogflag() {
+		return logflag;
+	}
+	public void setLogflag(int logflag) {
+		this.logflag = logflag;
+	}
+
+}

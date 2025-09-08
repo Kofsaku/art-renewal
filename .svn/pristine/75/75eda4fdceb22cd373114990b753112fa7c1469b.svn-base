@@ -1,0 +1,203 @@
+package jp.co.art.trident.repository;
+
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.util.HashMap;
+import java.util.List;
+
+import org.springframework.jdbc.core.RowMapper;
+import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
+import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
+import org.springframework.stereotype.Repository;
+
+import jp.co.art.trident.model.entity.MTenant;
+
+/**テナント登録・編集画面のリポジトリクラス**/
+@Repository
+public class MTenantRepository {
+
+	private final NamedParameterJdbcTemplate namedParameterJdbcTemplate;
+	
+    public MTenantRepository(NamedParameterJdbcTemplate namedParameterJdbcTemplate) {
+        this.namedParameterJdbcTemplate = namedParameterJdbcTemplate;   
+    }
+    
+    private RowMapper<MTenant> resultSetMapper() {
+        return new RowMapper<MTenant>() {
+        	 public MTenant mapRow(ResultSet rs, int rowNum) throws SQLException {
+        		 
+                 MTenant tenant = new MTenant();
+                 tenant.setTenantno(rs.getString("tenantno"));
+                 tenant.setName(rs.getString("name")); 
+                 tenant.setKana(rs.getString("kana"));
+                 tenant.setGate(rs.getString("gate"));
+                 return tenant;
+             }
+        };
+    }
+    
+    /**
+     * DBからテナント情報を全件取得し、リストとして返す関数
+     *@return 全テナントの情報を保持するMTenantオブジェクトのリスト
+     */
+    public List<MTenant> getTenantList() {
+
+        StringBuilder sb = new StringBuilder();
+        sb.append("SELECT ");
+        sb.append(" TO_CHAR(tenantno,'FM000') as tenantno , ");
+        sb.append(" name, ");
+        sb.append(" kana, ");
+        sb.append(" gate ");
+        sb.append("FROM ");
+        sb.append(" \"TRIDENT\".m_tenant ");
+
+        sb.append("ORDER BY ");
+        sb.append(" tenantno ");
+
+        return namedParameterJdbcTemplate.query(sb.toString(), resultSetMapper());
+    }
+    
+    /**
+     * 指定したテナント番号から、テナント情報を取得する関数
+     *  @param tenantno 取得対象のテナント番号
+     * @return 指定したテナント番号に一致するMTenantオブジェクトのリスト（通常は1件）
+     */
+    public List<MTenant> getTenantListByTenantno(int tenantno){
+
+        StringBuilder sb = new StringBuilder();
+        sb.append("SELECT ");
+        sb.append(" TO_CHAR(tenantno,'FM000') as tenantno, ");
+        sb.append(" name, ");
+        sb.append(" kana, ");
+        sb.append(" gate ");
+        sb.append("FROM ");
+        sb.append(" \"TRIDENT\".m_tenant ");
+        sb.append("WHERE ");
+        sb.append(" tenantno = :tenantno ");
+
+        MapSqlParameterSource param = new MapSqlParameterSource();
+        param.addValue("tenantno", tenantno );
+
+        return namedParameterJdbcTemplate.query(sb.toString(), param, resultSetMapper());
+    }
+    
+    /**
+     * テナント情報を新規登録する関数
+     * @param mTenant 登録するテナント情報を保持するMTenantオブジェクト
+     */
+    public void regist(MTenant mTenant){
+        
+        StringBuilder sb = new StringBuilder();
+        sb.append("INSERT INTO ");
+        sb.append(" \"TRIDENT\".m_tenant ");
+        sb.append(" ( ");
+        sb.append(" tenantno ");
+        sb.append(" ,name ");
+        sb.append(" ,kana ");
+        sb.append(" ,gate ");
+        sb.append(" ) values ( ");
+        sb.append(" :tenantno ");
+        sb.append(" ,:name ");
+        sb.append(" ,:kana ");
+        sb.append(" ,:gate ");
+        sb.append(" ) ");
+        
+        // パラメータを設定
+        MapSqlParameterSource param = new MapSqlParameterSource();
+        param.addValue("tenantno", Integer.parseInt(mTenant.getTenantno()));
+        param.addValue("name", mTenant.getName());
+        param.addValue("kana", mTenant.getKana());
+        param.addValue("gate", mTenant.getGate());
+       
+        namedParameterJdbcTemplate.update(sb.toString(), param);
+    }
+
+    /**
+     * テナント情報を更新する関数
+     *@param mTenant 更新対象のテナント情報を保持するMTenantオブジェクト
+     */
+   public void update(MTenant mTenant){
+    	
+    	StringBuilder sb = new StringBuilder();
+    	sb.append("UPDATE ");
+    	sb.append(" \"TRIDENT\".m_tenant ");
+    	sb.append("SET ");
+    	sb.append(" name = :name, ");
+    	sb.append(" kana = :kana ");
+    	
+    	// テナント登録から登録する際、送信ゲートのデータは設定されていない。空に更新してしまわないように空の場合は処理しない。
+    	// ※アップロード時のみ処理
+    	if (null != mTenant.getGate() && "".equals(mTenant.getGate()) == false) {
+    		sb.append(" ,gate = :gate ");
+    	}
+    	
+    	sb.append("WHERE ");
+    	sb.append(" tenantno = :tenantno ");
+    	
+		//パラメータを設定
+		MapSqlParameterSource  param = new MapSqlParameterSource();
+		param.addValue("tenantno", Integer.parseInt(mTenant.getTenantno()));
+		param.addValue("name", mTenant.getName());
+		param.addValue("kana", mTenant.getKana());
+    	
+		if (null != mTenant.getGate() && "".equals(mTenant.getGate()) == false) {
+			param.addValue("gate", mTenant.getGate());
+		}
+		
+		namedParameterJdbcTemplate.update(sb.toString(), param);
+    }
+   
+   public void updategate(MTenant mTenant){
+   	
+	   	StringBuilder sb = new StringBuilder();
+	   	sb.append("UPDATE ");
+	   	sb.append(" \"TRIDENT\".m_tenant ");
+	   	sb.append("SET ");
+	   	sb.append(" gate = :gate ");
+	   	
+	   	sb.append("WHERE ");
+	   	sb.append(" tenantno = :tenantno ");
+   	
+		//パラメータを設定
+		MapSqlParameterSource  param = new MapSqlParameterSource();
+   		
+		param.addValue("tenantno", Integer.parseInt(mTenant.getTenantno()));
+		param.addValue("gate", mTenant.getGate());
+   	
+		namedParameterJdbcTemplate.update(sb.toString(), param);
+   }
+   
+   /**
+    * テナント情報を削除するための関数
+    * @param tenantno 削除対象のテナント番号
+    */
+   public void delete(int tenantno){
+	   	
+	   	StringBuilder sb = new StringBuilder();
+	   	sb.append("DELETE ");
+	   	sb.append("FROM ");
+	   	sb.append(" \"TRIDENT\".m_tenant ");
+	   	sb.append("WHERE ");
+	   	sb.append(" tenantno = :tenantno ");
+	   	
+     // パラメータを設定（型を明示）
+        MapSqlParameterSource param = new MapSqlParameterSource();
+        param.addValue("tenantno", tenantno);
+   	
+		namedParameterJdbcTemplate.update(sb.toString(), param);
+   }
+
+   /**
+    * 全件削除
+    */
+    public void deleteAll(){
+    	
+    	StringBuilder sb = new StringBuilder();
+    	sb.append("DELETE ");
+    	sb.append("FROM ");
+    	sb.append(" \"TRIDENT\".m_tenant ");   	
+
+		namedParameterJdbcTemplate.update(sb.toString(), new HashMap<>());
+    }    
+  
+}

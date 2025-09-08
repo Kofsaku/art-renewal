@@ -1,0 +1,82 @@
+package jp.co.art.trident.config;
+
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.security.authentication.AuthenticationProvider;
+import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.servlet.util.matcher.MvcRequestMatcher;
+import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
+import org.springframework.web.servlet.handler.HandlerMappingIntrospector;
+
+import jp.co.art.trident.component.UserDetailsAuthenticationProvider;
+import jp.co.art.trident.model.UserRole;
+
+@Configuration
+@EnableWebSecurity
+public class SecurityConfig {
+
+	@Bean
+	MvcRequestMatcher.Builder mvc(HandlerMappingIntrospector introspector) {
+		return new MvcRequestMatcher.Builder(introspector);
+	}
+
+
+	@Bean
+	SecurityFilterChain securityFilterChain(HttpSecurity http, MvcRequestMatcher.Builder mvc) throws Exception {
+		http
+		.formLogin(login -> login
+			.loginPage("/login")
+			// 認証URL
+			.loginProcessingUrl("/login/auth")
+			// 認証成功時の遷移先
+			.defaultSuccessUrl("/home")
+			// ログイン認証失敗時遷移先
+			.failureForwardUrl("/login-fail")
+			// usernameのパラメータ名
+			.usernameParameter("username")
+			// passwordのパラメータ名
+			.passwordParameter("password")
+		).logout(logout -> logout
+			//ログアウトURL
+			.logoutRequestMatcher(new AntPathRequestMatcher("/logout"))
+			// ログアウト成功時の遷移先
+			.logoutSuccessUrl("/login?logout=true")
+			//ログアウト時のセッション破棄を有効化
+			.invalidateHttpSession(true)
+		)
+		.sessionManagement(sessionManagement -> sessionManagement
+			// セッションタイムアウトの場合はログイン画面に遷移
+			.invalidSessionUrl("/login")
+		)
+		.authorizeHttpRequests(authz -> authz
+				// cssなどのリソースはセキュリティ対象外
+				.requestMatchers(mvc.pattern("/webjars/**"), mvc.pattern("/css/**"), mvc.pattern("/js/**")).permitAll()
+				//ログイン画面はアクセス制限なし
+				.requestMatchers(mvc.pattern("/login**"), mvc.pattern("/logout")).permitAll()
+				// 初期設定(レベル2,3,4＋レベル9)
+				.requestMatchers(mvc.pattern("/initial/**")).hasAnyAuthority(UserRole.ROLE_USER_LV2.name(),UserRole.ROLE_USER_LV3.name(),UserRole.ROLE_USER_LV4.name(),UserRole.ROLE_USER_LV9.name())
+				// ゲート登録(レベル4＋レベル9)
+				.requestMatchers(mvc.pattern("/gateRegistration/**")).hasAnyAuthority(UserRole.ROLE_USER_LV4.name(),UserRole.ROLE_USER_LV9.name())	
+				// TODO 各画面を追加した際に追加して下さい。
+
+
+				
+				//　その他は認証済みであること
+				.anyRequest().authenticated()
+		);
+
+		
+		return http.build();
+	}
+	
+	@Bean
+	public AuthenticationProvider getAuthenticationProvider() {
+		// 独自認証クラスで認証を行う
+		UserDetailsAuthenticationProvider userDetailsAuthenticationProvider = new UserDetailsAuthenticationProvider();
+		userDetailsAuthenticationProvider.setHideUserNotFoundExceptions(false);	//trueの場合UsernameNotFoundExceptionはBadCredentialsExceptionに秘匿される
+		return userDetailsAuthenticationProvider;
+	}
+
+}

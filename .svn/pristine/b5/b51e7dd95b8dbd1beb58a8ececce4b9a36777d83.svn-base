@@ -1,0 +1,28 @@
+package jp.co.art.trident;
+
+import org.springframework.boot.builder.SpringApplicationBuilder;
+import org.springframework.boot.web.servlet.support.SpringBootServletInitializer;
+
+/**
+ * <b>spring boot サーブレットイニシャライザクラス.</b>
+ * <br/>
+ * <pre>
+ * </pre>
+ */
+public class ServletInitializer extends SpringBootServletInitializer {
+
+	/**
+	 * Configure the application. Normally all you would need to do is to add sources
+	 * (e.g. config classes) because other settings have sensible defaults. You might
+	 * choose (for instance) to add default command line arguments, or set an active
+	 * Spring profile.
+	 * @param builder a builder for the application context
+	 * @return the application builder
+	 * @see SpringApplicationBuilder
+	 */
+	@Override
+	protected SpringApplicationBuilder configure(SpringApplicationBuilder application) {
+		return application.sources(TridentApplication.class);
+	}
+	
+}

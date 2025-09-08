@@ -1,0 +1,22 @@
+package jp.co.art.trident;
+
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
+
+/**
+ * <b>アプリケーションメインクラス.</b>
+ * <br/>
+ * <pre>
+ * </pre>
+ */
+@SpringBootApplication
+public class TridentApplication {
+
+	/**
+	 * メイン
+	 * @param args 実行時引数
+	 */
+	public static void main(String[] args) {
+		SpringApplication.run(TridentApplication.class, args);
+	}
+}

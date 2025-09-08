@@ -1,0 +1,248 @@
+package jp.co.art.trident.repository;
+
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.util.HashMap;
+import java.util.List;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.jdbc.core.RowMapper;
+import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
+import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
+import org.springframework.stereotype.Repository;
+
+import jp.co.art.trident.model.entity.MCT;
+
+/**連続解錠時間帯マスタのリポジトリクラス**/
+
+@Repository
+public class MCtRepository {
+
+	@Autowired
+	private final NamedParameterJdbcTemplate namedParameterJdbcTemplate;
+	
+    public MCtRepository(NamedParameterJdbcTemplate namedParameterJdbcTemplate) {
+        this.namedParameterJdbcTemplate = namedParameterJdbcTemplate;
+    }
+    
+    private RowMapper<MCT> resultSetMapper() {
+    	
+    	
+    	return new RowMapper<MCT>() {
+
+			@Override
+			public MCT mapRow(ResultSet rs, int rowNum) throws SQLException {
+			
+				MCT mct = new MCT();
+				mct.setCtimer(rs.getString("ctimer"));
+				mct.setCtimername(rs.getString("ctimername"));
+				mct.setData1(rs.getString("data1"));
+				mct.setData2(rs.getString("data2"));
+				mct.setData3(rs.getString("data3"));
+				mct.setData4(rs.getString("data4"));
+				mct.setData5(rs.getString("data5"));
+				mct.setData6(rs.getString("data6"));
+				mct.setData7(rs.getString("data7"));
+				mct.setData8(rs.getString("data8"));
+				mct.setData9(rs.getString("data9"));
+				mct.setData10(rs.getString("data10"));
+				mct.setData11(rs.getString("data11"));
+				mct.setData12(rs.getString("data12"));
+				mct.setData13(rs.getString("data13"));
+				mct.setData14(rs.getString("data14"));
+				mct.setData15(rs.getString("data15"));
+				mct.setData16(rs.getString("data16"));
+				return mct;
+			}
+		};
+    }
+
+    /**
+     * 全てのレコードを削除する関数
+     */
+    public void deleteAll(){
+    	
+    	StringBuilder sb = new StringBuilder();
+    	sb.append("DELETE ");
+    	sb.append("FROM ");
+    	sb.append(" \"TRIDENT\".m_ct ");   	
+
+		namedParameterJdbcTemplate.update(sb.toString(), new HashMap<>());
+    }    
+    
+    public List<MCT> getMCTList(Integer ctimerno){
+    	
+    	StringBuilder sb = new StringBuilder();
+    	sb.append("SELECT ");
+    	sb.append(" TO_CHAR(ctno,'FM000') as ctimer ");
+    	sb.append(" ,name as ctimername ");
+    	sb.append(" ,data1 ");
+    	sb.append(" ,data2 ");
+    	sb.append(" ,data3 ");
+    	sb.append(" ,data4 ");
+    	sb.append(" ,data5 ");
+    	sb.append(" ,data6 ");
+    	sb.append(" ,data7 ");
+    	sb.append(" ,data8 ");
+    	sb.append(" ,data9 ");
+    	sb.append(" ,data10 ");
+    	sb.append(" ,data11 ");
+    	sb.append(" ,data12 ");
+    	sb.append(" ,data13 ");
+    	sb.append(" ,data14 ");
+    	sb.append(" ,data15 ");
+    	sb.append(" ,data16 ");
+    	sb.append("FROM ");
+    	sb.append(" \"TRIDENT\".m_ct ");
+    	
+    	// 連解番号の指定がある場合、連解番号も条件に追加する
+    	// ※初期表示、参照ボタン押下時以外は指定あり
+    	if (ctimerno != null) {
+    		sb.append("WHERE");
+    	    sb.append("    ctno = " + ctimerno + " ");
+    	}
+    	
+    	sb.append("ORDER BY ");
+    	sb.append(" ctimer  ");
+		
+    	return namedParameterJdbcTemplate.query(sb.toString(), resultSetMapper());
+    }
+    
+    public void regist(MCT ctData){
+    	
+    	StringBuilder sb = new StringBuilder();
+    	sb.append("INSERT INTO ");
+    	sb.append(" \"TRIDENT\".m_ct ");
+    	sb.append(" ( ");
+    	sb.append(" ctno ");
+    	sb.append(" ,name ");
+    	sb.append(" ,data1 ");
+    	sb.append(" ,data2 ");
+    	sb.append(" ,data3 ");
+    	sb.append(" ,data4 ");
+    	sb.append(" ,data5 ");
+    	sb.append(" ,data6 ");
+    	sb.append(" ,data7 ");
+    	sb.append(" ,data8 ");
+    	sb.append(" ,data9 ");
+    	sb.append(" ,data10 ");
+    	sb.append(" ,data11 ");
+    	sb.append(" ,data12 ");
+    	sb.append(" ,data13 ");
+    	sb.append(" ,data14 ");
+    	sb.append(" ,data15 ");
+    	sb.append(" ,data16 ");
+    	sb.append(" ) values ( ");
+    	sb.append(" :ctimer ");
+    	sb.append(" ,:name ");
+    	sb.append(" ,:data1 ");
+    	sb.append(" ,:data2 ");
+    	sb.append(" ,:data3 ");
+    	sb.append(" ,:data4 ");
+    	sb.append(" ,:data5 ");
+    	sb.append(" ,:data6 ");
+    	sb.append(" ,:data7 ");
+    	sb.append(" ,:data8 ");
+    	sb.append(" ,:data9 ");
+    	sb.append(" ,:data10 ");
+    	sb.append(" ,:data11 ");
+    	sb.append(" ,:data12 ");
+    	sb.append(" ,:data13 ");
+    	sb.append(" ,:data14 ");
+    	sb.append(" ,:data15 ");
+    	sb.append(" ,:data16 ");
+    	sb.append(" ) ");
+    	
+		//パラメータを設定
+		MapSqlParameterSource  param = new MapSqlParameterSource();
+    		
+		param.addValue("ctimer", Integer.parseInt(ctData.getCtimer()));
+		param.addValue("name", ctData.getCtimername());
+		param.addValue("data1", ctData.getData1());
+		param.addValue("data2", ctData.getData2());
+		param.addValue("data3", ctData.getData3());
+		param.addValue("data4", ctData.getData4());
+		param.addValue("data5", ctData.getData5());
+		param.addValue("data6", ctData.getData6());
+		param.addValue("data7", ctData.getData7());
+		param.addValue("data8", ctData.getData8());
+		param.addValue("data9", ctData.getData9());
+		param.addValue("data10", ctData.getData10());
+		param.addValue("data11", ctData.getData11());
+		param.addValue("data12", ctData.getData12());
+		param.addValue("data13", ctData.getData13());
+		param.addValue("data14", ctData.getData14());
+		param.addValue("data15", ctData.getData15());
+		param.addValue("data16", ctData.getData16());
+    	
+		namedParameterJdbcTemplate.update(sb.toString(), param);
+    }
+    
+    public void update(MCT ctData){
+    	
+    	StringBuilder sb = new StringBuilder();
+    	sb.append("UPDATE ");
+    	sb.append(" \"TRIDENT\".m_ct ");
+    	sb.append("SET ");
+    	sb.append(" name = :name ");
+		sb.append(" ,data1 = :data1 ");
+		sb.append(" ,data2 = :data2 ");
+		sb.append(" ,data3 = :data3 ");
+		sb.append(" ,data4 = :data4 ");
+		sb.append(" ,data5 = :data5 ");
+		sb.append(" ,data6 = :data6 ");
+		sb.append(" ,data7 = :data7 ");
+		sb.append(" ,data8 = :data8 ");
+		sb.append(" ,data9 = :data9 ");
+		sb.append(" ,data10 = :data10 ");
+		sb.append(" ,data11 = :data11 ");
+		sb.append(" ,data12 = :data12 ");
+		sb.append(" ,data13 = :data13 ");
+		sb.append(" ,data14 = :data14 ");
+		sb.append(" ,data15 = :data15 ");
+		sb.append(" ,data16 = :data16 ");
+		
+    	sb.append("WHERE ");
+    	sb.append(" ctno = :ctimer ");
+    	
+		//パラメータを設定
+		MapSqlParameterSource  param = new MapSqlParameterSource();
+    	
+		param.addValue("ctimer", Integer.parseInt(ctData.getCtimer()));
+		param.addValue("name", ctData.getCtimername());
+		param.addValue("data1", ctData.getData1());
+		param.addValue("data2", ctData.getData2());
+		param.addValue("data3", ctData.getData3());
+		param.addValue("data4", ctData.getData4());
+		param.addValue("data5", ctData.getData5());
+		param.addValue("data6", ctData.getData6());
+		param.addValue("data7", ctData.getData7());
+		param.addValue("data8", ctData.getData8());
+		param.addValue("data9", ctData.getData9());
+		param.addValue("data10", ctData.getData10());
+		param.addValue("data11", ctData.getData11());
+		param.addValue("data12", ctData.getData12());
+		param.addValue("data13", ctData.getData13());
+		param.addValue("data14", ctData.getData14());
+		param.addValue("data15", ctData.getData15());
+		param.addValue("data16", ctData.getData16());
+    	
+		namedParameterJdbcTemplate.update(sb.toString(), param);
+    }
+    
+    public void delete(int ctimerno){
+    	
+    	StringBuilder sb = new StringBuilder();
+    	sb.append("DELETE ");
+    	sb.append("FROM ");
+    	sb.append(" \"TRIDENT\".m_ct ");
+    	sb.append("WHERE ");
+    	sb.append(" ctno = :ctimer ");
+    	
+		//パラメータを設定
+		MapSqlParameterSource  param = new MapSqlParameterSource();
+    		
+		param.addValue("ctimer", ctimerno);
+    	
+		namedParameterJdbcTemplate.update(sb.toString(), param);
+    }
+}

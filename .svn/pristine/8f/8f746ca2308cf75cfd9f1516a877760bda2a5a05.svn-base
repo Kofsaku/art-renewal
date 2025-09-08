@@ -1,0 +1,105 @@
+package jp.co.art.trident.component;
+
+import java.util.Arrays;
+
+import org.aspectj.lang.JoinPoint;
+import org.aspectj.lang.annotation.AfterReturning;
+import org.aspectj.lang.annotation.AfterThrowing;
+import org.aspectj.lang.annotation.Aspect;
+import org.aspectj.lang.annotation.Before;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.slf4j.MDC;
+import org.springframework.stereotype.Component;
+
+/**
+ * <b>ログ出力アスペクトアドバイスクラス.</b>
+ * <br/>
+ * <pre>
+ * </pre>
+ */
+@Aspect
+@Component
+public class LoggingAspectAdvice {
+
+	/** ロガークラス */
+	private final Logger logger;
+	
+	/**
+	 * コンストラクタ
+	 */
+	public LoggingAspectAdvice() {
+		logger = LoggerFactory.getLogger(getClass());
+		MDC.put("logType", "I");
+	}
+	
+	/**
+	 * コントローラ開始ログ
+	 * @param joinPoint Join Point
+	 */
+    @Before("execution(* jp.co.art.trident.controller..*(..))")
+    public void controllerStartLog(JoinPoint joinPoint) {
+    	// Join Point／パラメータ取得
+        String string = joinPoint.toString();
+        String args = Arrays.toString(joinPoint.getArgs());
+        // インフォメーションログ出力
+        MDC.put("logType", "I");
+        logger.info("開始 {}, args: {}", string, args);
+    }
+    
+	/**
+	 * コントローラ終了ログ
+	 * @param joinPoint Join Point
+	 */
+    @AfterReturning("execution(* jp.co.art.trident.controller..*(..))")
+    public void controllerEndLog(JoinPoint joinPoint) {
+    	// Join Point／パラメータ取得
+        String string = joinPoint.toString();
+        String args = Arrays.toString(joinPoint.getArgs());
+        // インフォメーションログ出力
+        MDC.put("logType", "I");
+        logger.info("終了 {}, args: {}", string, args);
+    }
+    
+	/**
+	 * サービス開始ログ
+	 * @param joinPoint Join Point
+	 */
+    @Before("execution(* jp.co.art.trident.service..*(..))")
+    public void serviceStartLog(JoinPoint joinPoint) {
+    	// Join Point／パラメータ取得
+        String string = joinPoint.toString();
+        String args = Arrays.toString(joinPoint.getArgs());
+        // デバッグログ出力
+        MDC.put("logType", "I");
+        logger.debug("  開始 {}, args: {}", string, args);
+    }
+    
+	/**
+	 * サービス終了ログ
+	 * @param joinPoint Join Point
+	 */
+    @AfterReturning("execution(* jp.co.art.trident.service..*(..))")
+    public void serviceEndLog(JoinPoint joinPoint) {
+    	// Join Point／パラメータ取得
+        String string = joinPoint.toString();
+        String args = Arrays.toString(joinPoint.getArgs());
+        // デバッグログ出力
+        MDC.put("logType", "I");
+        logger.debug("  終了 {}, args: {}", string, args);
+    }
+    
+	/**
+	 * 例外発生時ログ
+	 * @param joinPoint Join Point
+	 * @param e エラー情報
+	 */
+    @AfterThrowing(value = "execution(* jp.co.art.trident.*.*.*(..))", throwing = "e")
+    public void afterThrowingLog(JoinPoint joinPoint, Throwable e) {
+    	// Join Point取得
+    	String string = joinPoint.toString();
+    	// エラーログ出力
+    	MDC.put("logType", "E");
+        logger.error("{}, Exception: {}", string, e.getMessage());
+    }
+}

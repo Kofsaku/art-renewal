@@ -1,0 +1,85 @@
+package jp.co.art.trident.repository;
+
+import java.sql.Timestamp;
+import java.sql.Types;
+import java.util.HashMap;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
+import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
+import org.springframework.stereotype.Repository;
+
+/**送信データマスタのリポジトリクラス**/
+
+@Repository
+public class MSendRepository {
+
+	@Autowired
+	private final NamedParameterJdbcTemplate namedParameterJdbcTemplate;
+	
+    public MSendRepository(NamedParameterJdbcTemplate namedParameterJdbcTemplate) {
+        this.namedParameterJdbcTemplate = namedParameterJdbcTemplate;
+    }
+ 
+    /**
+     * 送信データマスタを登録する関数
+     * @param hostno ホスト番号
+     * @param addressno アドレス番号
+     * @param processFlag 処理状態フラグ(0 = 未処理, 1 = 処理中, 2 = 処理済み(OK), 3 = 処理済み(NG))
+     * @param orderno 送信指示番号
+     * @param username ログインユーザー名
+     * @param startTimestamp 現在日時
+     * @param sendData 送信データ
+     */
+    public void regist(Integer hostno, Integer addressno, Integer processFlag, Integer orderno, String username, Timestamp startTimestamp, String sendData){
+    	
+    	StringBuilder sb = new StringBuilder();
+    	sb.append("INSERT INTO ");
+    	sb.append(" \"TRIDENT\".m_send ");
+    	sb.append(" ( ");
+    	sb.append(" hostno ");
+    	sb.append(" ,addressno ");
+    	sb.append(" ,processflag ");
+    	sb.append(" ,orderno ");
+    	sb.append(" ,username ");
+    	sb.append(" ,starttime ");
+    	sb.append(" ,endtime ");
+    	sb.append(" ,senddata ");
+    	sb.append(" ) values ( ");
+    	sb.append(" :hostno ");
+    	sb.append(" ,:addressno ");
+    	sb.append(" ,:processflag ");
+    	sb.append(" ,:orderno ");
+    	sb.append(" ,:username ");
+    	sb.append(" ,:starttime ");
+    	sb.append(" ,:endtime ");
+    	sb.append(" ,:senddata ");
+    	sb.append(" ) ");
+    	
+		//パラメータを設定
+		MapSqlParameterSource  param = new MapSqlParameterSource();
+    	
+		param.addValue("hostno", hostno);
+		param.addValue("addressno", addressno);
+		param.addValue("processflag", processFlag);
+		param.addValue("orderno", orderno);
+		param.addValue("username", username);
+		param.addValue("starttime", startTimestamp);
+		param.addValue("endtime", null, Types.TIMESTAMP);
+		param.addValue("senddata", sendData);
+    	
+		namedParameterJdbcTemplate.update(sb.toString(), param);
+    }
+    
+    /**
+     * 全てのレコードを削除する関数
+     */
+    public void deleteAll(){
+    	
+    	StringBuilder sb = new StringBuilder();
+    	sb.append("DELETE ");
+    	sb.append("FROM ");
+    	sb.append(" \"TRIDENT\".m_send ");   	
+
+		namedParameterJdbcTemplate.update(sb.toString(), new HashMap<>());
+    }    
+}

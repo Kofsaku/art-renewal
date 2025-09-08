@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE configuration>
+
+<Configuration status="off">
+
+	<!-- AppenderやLoggerで使用するプロパティを定義する -->
+	<Properties>
+		<Property name="log-path">C:/TRIDENT/Web/logs</Property>
+		<Property name="loglayout">%X{logType}&#x9;%d{yyyy/MM/dd HH:mm:ss.sss}&#x9;%C#%M:%L&#x9;%X{userId}&#x9;%m%n</Property>
+		<Property name="loglayout_db">%-5p&#x9;%d{yyyy/MM/dd HH:mm:ss.sss}&#x9;%C#%M:%L&#x9;%X{userId}&#x9;%m%n</Property>
+	</Properties>
+
+	<!-- ログの出力先と出力フォーマットを設定する -->
+	<Appenders>
+		<!-- ログ出力先指定（標準出力に出力） -->
+		<Console name="Console" target="SYSTEM_OUT">
+			<PatternLayout pattern="${loglayout}"/>
+		</Console>
+		<Console name="System" target="SYSTEM_OUT">
+			<PatternLayout pattern="${loglayout}"/>
+		</Console>
+		<RollingFile name="webService" append="true" fileName="${log-path}/trident.log"
+					filePattern="${log-path}/trident-%d{yyyy-MM-dd}-%i.zip">
+			<PatternLayout>
+				<Pattern>${loglayout}</Pattern>
+			</PatternLayout>
+			<Policies>
+				<OnStartupTriggeringPolicy />
+				<SizeBasedTriggeringPolicy size="200 MB"/>
+				<TimeBasedTriggeringPolicy />
+			</Policies>
+			
+			<DefaultRolloverStrategy fileIndex="nomax" compressionLevel="5">
+				<Delete basePath="${log-path}" maxDepth="1">
+					<IfFileName glob="trident-*.zip" />
+					<!-- 40日以上古いファイルを削除 -->
+					<IfLastModified age="40d" />
+				</Delete>
+			</DefaultRolloverStrategy>
+			
+		</RollingFile>
+		<RollingFile name="db" append="true" fileName="${log-path}/trident_db.log"
+					filePattern="${log-path}/trident_db-%d{yyyy-MM-dd}-%i.zip">
+			<PatternLayout>
+				<Pattern>${loglayout_db}</Pattern>
+			</PatternLayout>
+			<Policies>
+				<OnStartupTriggeringPolicy />
+				<SizeBasedTriggeringPolicy size="200 MB"/>
+				<TimeBasedTriggeringPolicy />
+			</Policies>
+			
+			<DefaultRolloverStrategy fileIndex="nomax" compressionLevel="5">
+				<Delete basePath="${log-path}" maxDepth="1">
+					<IfFileName glob="trident_db*.zip" />
+					<!-- 40日以上古いファイルを削除 -->
+					<IfLastModified age="40d" />
+				</Delete>
+			</DefaultRolloverStrategy>
+			
+		</RollingFile>
+	</Appenders>
+
+	<Loggers>
+		<!-- DBのSQL出力用 -->
+		<Logger name="org.springframework.jdbc" level="TRACE" additivity="false">
+			<AppenderRef ref="db" />
+		</Logger>
+		<!-- APPのログ出力用 -->
+		<Logger name="jp.co.art.trident" additivity="false">
+			<AppenderRef ref="webService"/>
+		</Logger>
+		<!-- Spring Frameworkのログ出力用 -->
+		<Root>
+		    <AppenderRef ref="Console" />
+			<AppenderRef ref="System" />
+		</Root>
+	</Loggers>
+
+</Configuration>

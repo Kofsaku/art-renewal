@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/layout}">
+<head>
+    <meta charset="UTF-8">
+    <link rel="stylesheet" th:href="@{/css/common.css}" />
+    <title th:text="#{device.title}">装置登録・編集画面</title>
+</head>
+<body>
+    <div layout:fragment="content">
+        <div class="fs-3 ms-3 fw-bold" th:text="#{device.title}">装置登録・編集画面</div>
+        <main class="p-3">
+            <!--装置登録・編集画面-->
+            <div class="device-content">
+                <div id="deviceInfo" class="tab-pane active" style="width:1000px;">
+                    <form id="deviceForm" name="deviceForm" method="post" th:object="${deviceForm}">
+                        <div class="container">
+                            <div class="row">
+                                <div class="col-6">
+                                    <div class="p-3">
+                                        <!--高さ指定なし-->
+                                        <div class="border border-1 border-secondary p-2">
+											<div class="mb-2">
+												<label for="hostno" class="col-3">ホスト番号：</label>
+												<input type="text" id="hostno" name="hostno" maxlength="3" inputmode="numeric" class="col-3">
+											</div>
+											<div class="mb-2">
+												<label for="addressno" class="col-3">アドレス番号：</label>
+												<input type="text" id="addressno" name="addressno" maxlength="2" inputmode="numeric" class="col-3">
+											</div>
+											<div class="row mb-2">
+												<label for="ipaddress1" class="col-3 me-2">IPアドレス１：</label>
+												<input type="text" id="ipaddress1" maxlength="3" class="col-2">
+												<input type="text" id="ipaddress2" maxlength="3" class="col-2">
+												<input type="text" id="ipaddress3" maxlength="3" class="col-2">
+												<input type="text" id="ipaddress4" maxlength="3" class="col-2">
+												<input type="hidden" id="ipaddress" name="ipaddress" value>
+											</div>
+											<div class="mb-2">
+												<label for="portno" class="col-3">ポートNO1：</label>
+												<input type="text" id="portno" name="portno" maxlength="5" inputmode="numeric" class="col-3">
+											</div>
+											<div class="mb-2">
+												<label for="devicename" class="col-3">装置名称：</label>
+												<input type="text" id="devicename" name="devicename" maxlength="20" inputmode="numeric" class="col-8">
+											</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <!-- CSRFトークン -->
+                        <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
+                        <!-- ボタンエリア -->
+                        <div class="ms-4 mb-4">
+                            <button type="button" class="btn btn-success" id="regist" th:text="#{device.regist}">登録</button>
+                            <button type="button" class="btn btn-success ms-1" id="clear" th:text="#{device.clear}">クリア</button>
+                            <button type="button" class="btn btn-success ms-2" id="delete" th:text="#{device.delete}">削除</button>
+                        </div>
+                    </form>
+                </div>
+
+                <div class="scroll" style="width:1260px;height:260px;">
+                    <table class="table ms-4" id="deviceDataListTbl">
+                        <thead class="sticky-top">
+                            <tr>
+                                <th th:text="#{device.devicelist.hostno}">ホスト番号</th>
+                                <th th:text="#{device.devicelist.addressno}">アドレス番号</th>
+                                <th th:text="#{device.devicelist.ipaddress}">IPアドレス１：</th>
+                                <th th:text="#{device.devicelist.portno}">ポートNO１:</th>
+                                <th th:text="#{device.devicelist.devicename}">装置名称:</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+							<tr th:each="device : ${deviceForm.mstDeviceList}" class="selectItem">
+							<td th:text="${#numbers.formatInteger(device.hostno,3)}"></td>
+							<td th:text="${#numbers.formatInteger(device.addressno,2)}"></td>
+							<td th:text="${device.ipaddress}"></td>
+							<td th:text="${device.portno}"></td>
+							<td th:text="${device.devicename}"></td>
+							</tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </main>
+
+        <!--Javascriptで表示するためのメッセージ-->
+        <input type="hidden" name="message" id="message" th:value="${deviceForm.message}">
+		<input type="hidden" name="processFailMassage" id="processFailMassage" th:value="#{device.process.fail}">
+        <input type="hidden" name="serverFailMessage" id="serverFailMessage" th:value="#{device.server.fail}">
+        <input type="hidden" name="deviceDataErrEmptyHostno" id="deviceDataErrEmptyHostno" th:value="#{device.error.empty.hostno}">
+        <input type="hidden" name="deviceDataErrInputHostno" id="deviceDataErrInputHostno" th:value="#{device.error.input.hostno}">
+        <input type="hidden" name="deviceDataErrInputAddressno" id="deviceDataErrInputAddressno" th:value="#{device.error.input.addressno}">
+        <input type="hidden" name="deviceDataErrInputIpaddress" id="deviceDataErrInputIpaddress" th:value="#{device.error.input.ipaddress}">
+        <input type="hidden" name="deviceDataErrInputPortno" id="deviceDataErrInputPortno" th:value="#{device.error.input.portno}">
+        <input type="hidden" name="deviceDataErrInputDeviceName" id="deviceDataErrInputDeviceName" th:value="#{device.error.input.Devicename}">
+        <input type="hidden" name="deviceMismatch" id="deviceMismatch" th:value="#{device.regist.mismatch}" />
+        <input type="hidden" name="deviceConfirmMsg" id="deviceConfirmMsg" th:value="#{device.regist.confirm}" />
+        <input type="hidden" name="deviceDataDeleteCaution" id="deviceDataDeleteCaution" th:value="#{device.delete.caution}">
+        <input type="hidden" name="deviceDataDeleteConfirm" id="deviceDataDeleteConfirm" th:value="#{device.delete.confirm}">
+	
+		<script type="text/javascript" th:src="@{/js/common.js}"></script>
+        <script type="text/javascript" th:src="@{/js/device/device.js}"></script>
+    </div>
+</body>
+</html>

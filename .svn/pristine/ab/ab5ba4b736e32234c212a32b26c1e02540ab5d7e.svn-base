@@ -1,0 +1,375 @@
+package jp.co.art.trident.model;
+
+import java.io.Serializable;
+import java.util.Collection;
+
+import org.springframework.data.annotation.Id;
+import org.springframework.security.core.GrantedAuthority;
+
+/**ユーザ情報を保持するクラス**/
+public class User implements Serializable{
+
+	private static final long serialVersionUID = 6925392563431973569L;
+
+	/**
+	 * デフォルトコンストラクタ
+	 */
+	public User() {};
+	
+	/**
+	 * コンストラクタ
+	 * @param userName
+	 * @param password
+	 * @param level
+	 * @param entrytime
+	 * @param uptime
+	 * @param authority
+	 * @param tenantno
+	 */	
+	public User(String userName, String password, int level, String entrytime, String uptime, String authority,String tenantno
+			,Collection<? extends GrantedAuthority> authorities
+			,String initialMenuDispFlg, String initialDispFlg, String gateRegistrationDispFlg
+			,String deviceRegistrationDispFlg, String tenantRegistrationDispFlg, String floorRegistrationDispFlg
+			,String groupControlRegistrationDispFlg, String errorPopupSettingsDispFlg
+			,int filterflag) {
+		this.userName = userName;
+		this.password = password;	
+		this.level = level;	
+		this.entrytime = entrytime;	
+		this.uptime = uptime;	
+		this.authority = authority;	
+		this.tenantno = tenantno;		
+		this.authorities = authorities;
+		this.initialMenuDispFlg = initialMenuDispFlg;
+		this.initialDispFlg = initialDispFlg;
+		this.gateRegistrationDispFlg = gateRegistrationDispFlg;
+		this.deviceRegistrationDispFlg = deviceRegistrationDispFlg;
+		this.tenantRegistrationDispFlg = tenantRegistrationDispFlg;
+		this.floorRegistrationDispFlg = floorRegistrationDispFlg;
+		this.groupControlRegistrationDispFlg = groupControlRegistrationDispFlg;
+		this.errorPopupSettingsDispFlg = errorPopupSettingsDispFlg;
+		this.filterflag = filterflag;
+		
+	}
+	
+	/*****************************
+	 * DB情報
+	 ****************************/
+	/** ユーザ名. */
+	@Id
+	private String userName;
+	/** パスワード */
+	private String password;
+	/** レベル */
+	private int level;
+	/** 登録日時 */
+	private String entrytime;
+	/** 変更日時 */
+	private String uptime;
+	/** 権限 */
+	private String authority;
+	/** テナント番号 */
+	private String tenantno;
+
+	/*****************************
+	 * 独自情報
+	 ****************************/
+	/** ロール権限 */
+	private Collection<? extends GrantedAuthority> authorities;	
+	
+	/** レベル9の場合　権限の値によって、メニュー画面の表示・非表示を切り替える */
+	/** 初期設定メニュー */
+	private String initialMenuDispFlg;
+	
+	/** 初期設定 */
+	private String initialDispFlg;	
+	
+	/** ゲート登録 */
+	private String gateRegistrationDispFlg;	
+
+	/** 装置登録 */
+	private String deviceRegistrationDispFlg;	
+	
+	/** テナント登録 */
+	private String tenantRegistrationDispFlg;	
+	
+	/** フロア登録 */
+	private String floorRegistrationDispFlg;	
+	
+	/** 一斉制御グループ登録 */
+	private String groupControlRegistrationDispFlg;	
+	
+	/** エラーポップアップ設定 */
+	private String errorPopupSettingsDispFlg;	
+	
+	/** 個人登録 */
+	private String individualRegistrationDispFlg;	
+	
+	/** ゲート編集 */
+	private String gateEditDispFlg;	
+	
+	/** 報告書 */
+	private String reportDispFlg;	
+	
+	/** 在室一覧 */
+	private String listInTheRoomDispFlg;	
+	
+	/** データモニター */
+	private String dataMonitorDispFlg;	
+	
+	/** ステータスモニター */
+	private String statusMonitorDispFlg;	
+	
+	/** マップステータス */
+	private String mapStatusDispFlg;		
+	
+	/** システム */
+	private String systemDispFlg;	
+	
+	/** 操作ログ報告書 */
+	private String operationLogReportDispFlg;
+	
+	/** 休日設定 */
+	private String holidaySettingsDispFlg;
+	
+	/** 時刻送信 */
+	private String timeTransmissionDispFlg;
+	
+	/** バックアップ */
+	private String backupDispFlg;
+	
+	/** 一斉送信 */
+	private String massSendingDispFlg;
+	
+	/** アンチパスフリー */
+	private String antipassFreeDispFlg;
+	
+	/** ユーザー登録 */
+	private String userRegistrationDispFlg;
+	
+	/** フィルター機能フラグ(初期設定) */
+	private int filterflag;
+	
+	// 以下、ゲッター、セッター　-----------------------
+	public String getUserName() {
+		return userName;
+	}
+	public void setUserName(String userName) {
+		this.userName = userName;
+	}
+	public String getPassword() {
+		return password;
+	}
+	public void setPassword(String password) {
+		this.password = password;
+	}
+	public int getLevel() {
+		return level;
+	}
+	public void setLevel(int level) {
+		this.level = level;
+	}
+	public String getEntrytime() {
+		return entrytime;
+	}
+	public void setEntrytime(String entrytime) {
+		this.entrytime = entrytime;
+	}	
+	public String getAuthority() {
+		return authority;
+	}
+	public void setAuthority(String authority) {
+		this.authority = authority;
+	}	
+	public String getUptime() {
+		return uptime;
+	}
+	public void setUptime(String uptime) {
+		this.uptime = uptime;
+	}
+	public String getTenantno() {
+		return tenantno;
+	}
+	public void setTenantno(String tenantno) {
+		this.tenantno = tenantno;
+	}
+	
+	/*****************************
+	 * 独自情報
+	 ****************************/
+	
+	public Collection<? extends GrantedAuthority> getAuthorities() {
+		return authorities;
+	}
+	public void setAuthorities(Collection<? extends GrantedAuthority> authorities) {
+		this.authorities = authorities;
+	}
+	
+	public String getInitialMenuDispFlg() {
+		return initialMenuDispFlg;
+	}
+	public void setInitialMenuDispFlg(String initialMenuDispFlg) {
+		this.initialMenuDispFlg = initialMenuDispFlg;
+	}	
+	
+	public String getInitialDispFlg() {
+		return initialDispFlg;
+	}
+	public void setInitialDispFlg(String initialDispFlg) {
+		this.initialDispFlg = initialDispFlg;
+	}	
+	
+	public String getGateRegistrationDispFlg() {
+		return gateRegistrationDispFlg;
+	}
+	public void setGateRegistrationDispFlg(String gateRegistrationDispFlg) {
+		this.gateRegistrationDispFlg = gateRegistrationDispFlg;
+	}	
+	
+	public String getDeviceRegistrationDispFlg() {
+		return deviceRegistrationDispFlg;
+	}
+	public void setDeviceRegistrationDispFlg(String deviceRegistrationDispFlg) {
+		this.deviceRegistrationDispFlg = deviceRegistrationDispFlg;
+	}	
+	
+	public String getTenantRegistrationDispFlg() {
+		return tenantRegistrationDispFlg;
+	}
+	public void setTenantRegistrationDispFlg(String tenantRegistrationDispFlg) {
+		this.tenantRegistrationDispFlg = tenantRegistrationDispFlg;
+	}	
+	
+	public String getFloorRegistrationDispFlg() {
+		return floorRegistrationDispFlg;
+	}
+	public void setFloorRegistrationDispFlg(String floorRegistrationDispFlg) {
+		this.floorRegistrationDispFlg = floorRegistrationDispFlg;
+	}	
+	
+	public String getGroupControlRegistrationDispFlg() {
+		return groupControlRegistrationDispFlg;
+	}
+	public void setGroupControlRegistrationDispFlg(String groupControlRegistrationDispFlg) {
+		this.groupControlRegistrationDispFlg = groupControlRegistrationDispFlg;
+	}	
+	
+	public String getErrorPopupSettingsDispFlg() {
+		return errorPopupSettingsDispFlg;
+	}
+	public void setErrorPopupSettingsDispFlg(String errorPopupSettingsDispFlg) {
+		this.errorPopupSettingsDispFlg = errorPopupSettingsDispFlg;
+	}
+	
+	public String getIndividualRegistrationDispFlg() {
+		return individualRegistrationDispFlg;
+	}
+	public void setIndividualRegistrationDispFlg(String individualRegistrationDispFlg) {
+		this.individualRegistrationDispFlg = individualRegistrationDispFlg;
+	}
+	
+	public String getGateEditDispFlg() {
+		return gateEditDispFlg;
+	}
+	public void setGateEditDispFlg(String gateEditDispFlg) {
+		this.gateEditDispFlg = gateEditDispFlg;
+	}
+	
+	public String getReportDispFlg() {
+		return reportDispFlg;
+	}
+	public void setReportDispFlg(String reportDispFlg) {
+		this.reportDispFlg = reportDispFlg;
+	}
+	
+	public String getListInTheRoomDispFlg() {
+		return listInTheRoomDispFlg;
+	}
+	public void setListInTheRoomDispFlg(String listInTheRoomDispFlg) {
+		this.listInTheRoomDispFlg = listInTheRoomDispFlg;
+	}
+	
+	public String getDataMonitorDispFlg() {
+		return dataMonitorDispFlg;
+	}
+	public void setSataMonitorDispFlg(String dataMonitorDispFlg) {
+		this.dataMonitorDispFlg = dataMonitorDispFlg;
+	}
+	
+	public String getStatusMonitorDispFlg() {
+		return statusMonitorDispFlg;
+	}
+	public void setStatusMonitorDispFlg(String statusMonitorDispFlg) {
+		this.statusMonitorDispFlg = statusMonitorDispFlg;
+	}
+	
+	public String getMapStatusDispFlg() {
+		return mapStatusDispFlg;
+	}
+	public void setMapStatusDispFlg(String mapStatusDispFlg) {
+		this.mapStatusDispFlg = mapStatusDispFlg;
+	}
+	
+	public String getSystemDispFlg() {
+		return systemDispFlg;
+	}
+	public void setSystemDispFlg(String systemDispFlg) {
+		this.systemDispFlg = systemDispFlg;
+	}
+	
+	public String getOperationLogReportDispFlg() {
+		return operationLogReportDispFlg;
+	}
+	public void setOperationLogReportDispFlg(String operationLogReportDispFlg) {
+		this.operationLogReportDispFlg = operationLogReportDispFlg;
+	}
+	
+	public String getHolidaySettingsDispFlg() {
+		return holidaySettingsDispFlg;
+	}
+	public void setHolidaySettingsDispFlg(String holidaySettingsDispFlg) {
+		this.holidaySettingsDispFlg = holidaySettingsDispFlg;
+	}
+	
+	public String getTimeTransmissionDispFlg() {
+		return timeTransmissionDispFlg;
+	}
+	public void setTimeTransmissionDispFlg(String timeTransmissionDispFlg) {
+		this.timeTransmissionDispFlg = timeTransmissionDispFlg;
+	}
+	
+	public String getBackupDispFlg() {
+		return backupDispFlg;
+	}
+	public void setBackupDispFlg(String backupDispFlg) {
+		this.backupDispFlg = backupDispFlg;
+	}
+	
+	public String getMassSendingDispFlg() {
+		return massSendingDispFlg;
+	}
+	public void setMassSendingDispFlg(String massSendingDispFlg) {
+		this.massSendingDispFlg = massSendingDispFlg;
+	}
+	
+	public String getAntipassFreeDispFlg() {
+		return antipassFreeDispFlg;
+	}
+	public void setAntipassFreeDispFlg(String antipassFreeDispFlg) {
+		this.antipassFreeDispFlg = antipassFreeDispFlg;
+	}
+	
+	public String getUserRegistrationDispFlg() {
+		return userRegistrationDispFlg;
+	}
+	public void setUserRegistrationDispFlg(String userRegistrationDispFlg) {
+		this.userRegistrationDispFlg = userRegistrationDispFlg;
+	}
+
+	public int getFilterflag() {
+		return filterflag;
+	}
+	public void setFilterflag(int filterflag) {
+		this.filterflag = filterflag;
+	}
+}

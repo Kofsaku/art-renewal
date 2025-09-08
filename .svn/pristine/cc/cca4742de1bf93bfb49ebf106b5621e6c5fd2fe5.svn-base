@@ -1,0 +1,441 @@
+package jp.co.art.trident.repository;
+
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.util.HashMap;
+import java.util.List;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.jdbc.core.RowMapper;
+import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
+import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
+import org.springframework.stereotype.Repository;
+
+import jp.co.art.trident.model.entity.Gate;
+
+/**ゲートマスタのリポジトリクラス**/
+
+@Repository
+public class MGateRepository {
+
+	@Autowired
+	private final NamedParameterJdbcTemplate namedParameterJdbcTemplate;
+	
+    public MGateRepository(NamedParameterJdbcTemplate namedParameterJdbcTemplate) {
+        this.namedParameterJdbcTemplate = namedParameterJdbcTemplate;
+    }
+    
+    private RowMapper<Gate> resultSetMapper() {
+    	
+    	
+    	return new RowMapper<Gate>() {
+
+			@Override
+			public Gate mapRow(ResultSet rs, int rowNum) throws SQLException {
+			
+				Gate mgate = new Gate();
+				mgate.setGateno(rs.getString("gateno"));
+				mgate.setHostno(rs.getString("hostno"));
+				mgate.setHosttype(rs.getInt("hosttype"));
+				mgate.setDevicetype_name(rs.getString("devicetype_name"));
+				mgate.setAddressno(rs.getString("addressno"));
+				mgate.setRgateno(rs.getString("rgateno"));
+				mgate.setName(rs.getString("name"));
+				mgate.setZaino(rs.getString("zaino"));
+				mgate.setGatetype_0(rs.getInt("gatetype_0"));
+				mgate.setGatetype_1(rs.getInt("gatetype_1"));
+				mgate.setGatetype_2(rs.getInt("gatetype_2"));
+				mgate.setGatetype_3(rs.getInt("gatetype_3"));
+				mgate.setGatetype_4(rs.getInt("gatetype_4"));
+				mgate.setGatetype_5(rs.getInt("gatetype_5"));
+				mgate.setGatetype_6(rs.getInt("gatetype_6"));
+				mgate.setGatetype_7(rs.getInt("gatetype_7"));
+				mgate.setGatetype_8(rs.getInt("gatetype_8"));
+				mgate.setGatetype_9(rs.getInt("gatetype_9"));
+				mgate.setGatetype_A(rs.getInt("gatetype_A"));
+				mgate.setGatetype_B(rs.getInt("gatetype_B"));
+				mgate.setGatetype_C(rs.getInt("gatetype_C"));
+				mgate.setGatetype_D(rs.getInt("gatetype_D"));
+				mgate.setGatetype_E(rs.getInt("gatetype_E"));
+				mgate.setGatetype_F(rs.getInt("gatetype_F"));
+				mgate.setSetcnt(rs.getInt("setcnt"));
+				mgate.setCtimer(rs.getInt("ctimer"));
+				mgate.setInsendgate(rs.getString("insendgate"));
+				mgate.setOutsendgate(rs.getString("outsendgate"));
+				return mgate;
+			}
+		};
+    }
+ 
+    /**
+     * ホスト番号とアドレス番号を条件にゲートマスタの件数を取得する関数
+     * @param hostno ホスト番号
+     * @param addressno　アドレス番号
+     * @return 件数
+     */
+    public int getGateByHostnoAndAddressno(int hostno, int addressno){
+    	
+    	StringBuilder sb = new StringBuilder();
+    	sb.append("SELECT ");
+    	sb.append(" COUNT(gateno) ");
+    	sb.append("FROM ");
+    	sb.append(" \"TRIDENT\".m_gate ");
+    	sb.append("WHERE ");
+    	sb.append(" hostno = :hostno ");
+    	sb.append("AND ");
+    	sb.append(" addressno = :addressno ");   	
+    	
+		//パラメータを設定
+		MapSqlParameterSource  param = new MapSqlParameterSource();
+		
+		param.addValue("hostno", hostno);
+		param.addValue("addressno", addressno);
+		
+		return namedParameterJdbcTemplate.queryForObject(sb.toString(), param, Integer.class);
+    }
+    
+    /**
+     * ゲート番号を条件にゲートマスタを取得する関数
+     * @param gateno ゲート番号
+     * @return　ゲート情報
+     */
+    public List<Gate> getGateListByGateno(int gateno){
+    	
+    	StringBuilder sb = new StringBuilder();
+    	sb.append("SELECT ");
+    	sb.append(" TO_CHAR(gateno,'FM0000') as gateno ");
+    	sb.append(" ,TO_CHAR(hostno,'FM000') as hostno ");
+    	sb.append(" ,hosttype ");
+    	sb.append(" ,devicetype_name ");
+    	sb.append(" ,TO_CHAR(addressno,'FM00') as addressno ");
+    	sb.append(" ,TO_CHAR(rgateno,'FM00') as rgateno ");
+    	sb.append(" ,name ");
+    	sb.append(" ,TO_CHAR(zaino,'FM0000') as zaino ");
+    	sb.append(" ,gatetype_0 ");
+    	sb.append(" ,gatetype_1 ");
+    	sb.append(" ,gatetype_2 ");
+    	sb.append(" ,gatetype_3 ");
+    	sb.append(" ,gatetype_4 ");
+    	sb.append(" ,gatetype_5 ");
+    	sb.append(" ,gatetype_6 ");
+    	sb.append(" ,gatetype_7 ");
+    	sb.append(" ,gatetype_8 ");
+    	sb.append(" ,gatetype_9 ");
+    	sb.append(" ,gatetype_A ");
+    	sb.append(" ,gatetype_B ");
+    	sb.append(" ,gatetype_C ");
+    	sb.append(" ,gatetype_D ");
+    	sb.append(" ,gatetype_E ");
+    	sb.append(" ,gatetype_F ");
+    	sb.append(" ,setcnt ");
+    	sb.append(" ,ctimer ");
+    	sb.append(" ,insendgate ");
+    	sb.append(" ,outsendgate ");
+    	sb.append("FROM ");
+    	sb.append(" \"TRIDENT\".m_gate ");
+    	sb.append("LEFT OUTER JOIN ");
+    	sb.append(" \"TRIDENT\".m_devicetype ");
+    	sb.append("ON m_gate.hosttype = m_devicetype.devicetype_no ");
+    	sb.append("WHERE ");
+    	sb.append(" gateno = :gateno ");
+
+		//パラメータを設定
+		MapSqlParameterSource  param = new MapSqlParameterSource();
+		
+		param.addValue("gateno", gateno);
+
+    	return namedParameterJdbcTemplate.query(sb.toString(), param,resultSetMapper());
+    }
+    
+    /**
+     * ゲートマスタ一覧を取得する関数
+     * @return　ゲート情報
+     */
+    public List<Gate> getGateList(){
+    	
+    	StringBuilder sb = new StringBuilder();
+    	sb.append("SELECT ");
+    	sb.append(" TO_CHAR(gateno,'FM0000') as gateno ");
+    	sb.append(" ,TO_CHAR(hostno,'FM000') as hostno ");
+    	sb.append(" ,hosttype ");
+    	sb.append(" ,devicetype_name ");
+    	sb.append(" ,TO_CHAR(addressno,'FM00') as addressno ");
+    	sb.append(" ,TO_CHAR(rgateno,'FM00') as rgateno ");
+    	sb.append(" ,name ");
+    	sb.append(" ,TO_CHAR(zaino,'FM0000') as zaino ");
+    	sb.append(" ,gatetype_0 ");
+    	sb.append(" ,gatetype_1 ");
+    	sb.append(" ,gatetype_2 ");
+    	sb.append(" ,gatetype_3 ");
+    	sb.append(" ,gatetype_4 ");
+    	sb.append(" ,gatetype_5 ");
+    	sb.append(" ,gatetype_6 ");
+    	sb.append(" ,gatetype_7 ");
+    	sb.append(" ,gatetype_8 ");
+    	sb.append(" ,gatetype_9 ");
+    	sb.append(" ,gatetype_A ");
+    	sb.append(" ,gatetype_B ");
+    	sb.append(" ,gatetype_C ");
+    	sb.append(" ,gatetype_D ");
+    	sb.append(" ,gatetype_E ");
+    	sb.append(" ,gatetype_F ");
+    	sb.append(" ,setcnt ");
+    	sb.append(" ,ctimer ");
+    	sb.append(" ,insendgate ");
+    	sb.append(" ,outsendgate ");
+    	sb.append("FROM ");
+    	sb.append(" \"TRIDENT\".m_gate ");
+    	sb.append("LEFT OUTER JOIN ");
+    	sb.append(" \"TRIDENT\".m_devicetype ");
+    	sb.append("ON m_gate.hosttype = m_devicetype.devicetype_no ");
+    	sb.append("ORDER BY ");
+    	sb.append(" gateno  ");
+		
+    	return namedParameterJdbcTemplate.query(sb.toString(), resultSetMapper());
+    }
+    
+    /**
+     * ゲートマスタを登録する関数
+     * @param gate ゲート情報
+     */
+    public void regist(Gate gate){
+    	
+    	StringBuilder sb = new StringBuilder();
+    	sb.append("INSERT INTO ");
+    	sb.append(" \"TRIDENT\".m_gate ");
+    	sb.append(" ( ");
+    	sb.append(" gateno ");
+    	sb.append(" ,hostno ");
+    	sb.append(" ,hosttype ");
+    	sb.append(" ,addressno ");
+    	sb.append(" ,rgateno ");
+    	sb.append(" ,name ");
+    	sb.append(" ,zaino ");
+    	sb.append(" ,gatetype_0 ");
+    	sb.append(" ,gatetype_1 ");
+    	sb.append(" ,gatetype_2 ");
+    	sb.append(" ,gatetype_3 ");
+    	sb.append(" ,gatetype_4 ");
+    	sb.append(" ,gatetype_5 ");
+    	sb.append(" ,gatetype_6 ");
+    	sb.append(" ,gatetype_7 ");
+    	sb.append(" ,gatetype_8 ");
+    	sb.append(" ,gatetype_9 ");
+    	sb.append(" ,gatetype_A ");
+    	sb.append(" ,gatetype_B ");
+    	sb.append(" ,gatetype_C ");
+    	sb.append(" ,gatetype_D ");
+    	sb.append(" ,gatetype_E ");
+    	sb.append(" ,gatetype_F ");
+    	sb.append(" ,setcnt ");
+    	sb.append(" ,ctimer ");
+    	sb.append(" ,insendgate ");
+    	sb.append(" ,outsendgate ");
+    	sb.append(" ) values ( ");
+    	sb.append(" :gateno ");
+    	sb.append(" ,:hostno ");
+    	sb.append(" ,:hosttype ");
+    	sb.append(" ,:addressno ");
+    	sb.append(" ,:rgateno ");
+    	sb.append(" ,:name ");
+    	sb.append(" ,:zaino ");
+    	sb.append(" ,:gatetype_0 ");
+    	sb.append(" ,:gatetype_1 ");
+    	sb.append(" ,:gatetype_2 ");
+    	sb.append(" ,:gatetype_3 ");
+    	sb.append(" ,:gatetype_4 ");
+    	sb.append(" ,:gatetype_5 ");
+    	sb.append(" ,:gatetype_6 ");
+    	sb.append(" ,:gatetype_7 ");
+    	sb.append(" ,:gatetype_8 ");
+    	sb.append(" ,:gatetype_9 ");
+    	sb.append(" ,:gatetype_A ");
+    	sb.append(" ,:gatetype_B ");
+    	sb.append(" ,:gatetype_C ");
+    	sb.append(" ,:gatetype_D ");
+    	sb.append(" ,:gatetype_E ");
+    	sb.append(" ,:gatetype_F ");
+    	sb.append(" ,:setcnt ");
+    	sb.append(" ,:ctimer ");
+    	sb.append(" ,:insendgate ");
+    	sb.append(" ,:outsendgate ");
+    	sb.append(" ) ");
+    	
+		//パラメータを設定
+		MapSqlParameterSource  param = new MapSqlParameterSource();
+    		
+		param.addValue("gateno", Integer.parseInt(gate.getGateno()));
+		param.addValue("hostno", Integer.parseInt(gate.getHostno()));
+		param.addValue("hosttype", gate.getHosttype());
+		param.addValue("addressno", Integer.parseInt(gate.getAddressno()));
+		param.addValue("rgateno", Integer.parseInt(gate.getRgateno()));
+		param.addValue("name", gate.getName());
+		param.addValue("zaino", Integer.parseInt(gate.getZaino()));
+		param.addValue("gatetype_0", gate.getGatetype_0());
+		param.addValue("gatetype_1", gate.getGatetype_1());
+		param.addValue("gatetype_2", gate.getGatetype_2());
+		param.addValue("gatetype_3", gate.getGatetype_3());
+		param.addValue("gatetype_4", gate.getGatetype_4());
+		param.addValue("gatetype_5", gate.getGatetype_5());
+		param.addValue("gatetype_6", gate.getGatetype_6());
+		param.addValue("gatetype_7", gate.getGatetype_7());
+		param.addValue("gatetype_8", gate.getGatetype_8());
+		param.addValue("gatetype_9", gate.getGatetype_9());
+		param.addValue("gatetype_A", gate.getGatetype_A());
+		param.addValue("gatetype_B", gate.getGatetype_B());
+		param.addValue("gatetype_C", gate.getGatetype_C());
+		param.addValue("gatetype_D", gate.getGatetype_D());
+		param.addValue("gatetype_E", gate.getGatetype_E());
+		param.addValue("gatetype_F", gate.getGatetype_F());
+		param.addValue("setcnt", gate.getSetcnt());
+		param.addValue("ctimer", gate.getCtimer());
+		param.addValue("insendgate", gate.getInsendgate());
+		param.addValue("outsendgate", gate.getOutsendgate());
+    	
+		namedParameterJdbcTemplate.update(sb.toString(), param);
+    }
+   
+    /**
+     * ゲートマスタを更新する関数
+     * @param gate ゲート情報
+     */
+    public void update(Gate gate){
+    	
+    	StringBuilder sb = new StringBuilder();
+    	sb.append("UPDATE ");
+    	sb.append(" \"TRIDENT\".m_gate ");
+    	sb.append("SET ");
+    	sb.append(" hostno = :hostno ");
+    	sb.append(" ,hosttype = :hosttype ");
+    	sb.append(" ,addressno = :addressno ");
+    	sb.append(" ,rgateno = :rgateno ");
+    	sb.append(" ,name = :name ");
+    	sb.append(" ,zaino = :zaino ");
+    	sb.append(" ,gatetype_0 = :gatetype_0 ");
+    	sb.append(" ,gatetype_1 = :gatetype_1 ");
+    	sb.append(" ,gatetype_2 = :gatetype_2 ");
+    	sb.append(" ,gatetype_3 = :gatetype_3 ");
+    	sb.append(" ,gatetype_4 = :gatetype_4 ");
+    	sb.append(" ,gatetype_5 = :gatetype_5 ");
+    	sb.append(" ,gatetype_6 = :gatetype_6 ");
+    	sb.append(" ,gatetype_7 = :gatetype_7 ");
+    	sb.append(" ,gatetype_8 = :gatetype_8 ");
+    	sb.append(" ,gatetype_9 = :gatetype_9 ");
+    	sb.append(" ,gatetype_A = :gatetype_A ");
+    	sb.append(" ,gatetype_B = :gatetype_B ");
+    	sb.append(" ,gatetype_C = :gatetype_C ");
+    	sb.append(" ,gatetype_D = :gatetype_D ");
+    	sb.append(" ,gatetype_E = :gatetype_E ");
+    	sb.append(" ,gatetype_F = :gatetype_F ");
+    	sb.append(" ,setcnt = :setcnt ");
+ //   	sb.append(" ,ctimer = :ctimer ");	// ゲートマスタ登録・編集画面からは登録しない項目
+    	
+    	// ゲート登録から登録する際、送信ゲートのデータは設定されていない。空に更新してしまわないように空の場合は処理しない。
+    	if (null != gate.getInsendgate() && "".equals(gate.getInsendgate()) == false) {
+    		sb.append(" ,insendgate = :insendgate ");
+    	}
+    	if (null != gate.getOutsendgate() && "".equals(gate.getOutsendgate()) == false) {
+    		sb.append(" ,outsendgate = :outsendgate ");
+    	}
+    	sb.append("WHERE ");
+    	sb.append(" gateno = :gateno ");
+    	
+		//パラメータを設定
+		MapSqlParameterSource  param = new MapSqlParameterSource();
+    		
+		param.addValue("gateno", Integer.parseInt(gate.getGateno()));
+		param.addValue("hostno", Integer.parseInt(gate.getHostno()));
+		param.addValue("hosttype", gate.getHosttype());
+		param.addValue("addressno", Integer.parseInt(gate.getAddressno()));
+		param.addValue("rgateno", Integer.parseInt(gate.getRgateno()));
+		param.addValue("name", gate.getName());
+		param.addValue("zaino", Integer.parseInt(gate.getZaino()));
+		param.addValue("gatetype_0", gate.getGatetype_0());
+		param.addValue("gatetype_1", gate.getGatetype_1());
+		param.addValue("gatetype_2", gate.getGatetype_2());
+		param.addValue("gatetype_3", gate.getGatetype_3());
+		param.addValue("gatetype_4", gate.getGatetype_4());
+		param.addValue("gatetype_5", gate.getGatetype_5());
+		param.addValue("gatetype_6", gate.getGatetype_6());
+		param.addValue("gatetype_7", gate.getGatetype_7());
+		param.addValue("gatetype_8", gate.getGatetype_8());
+		param.addValue("gatetype_9", gate.getGatetype_9());
+		param.addValue("gatetype_A", gate.getGatetype_A());
+		param.addValue("gatetype_B", gate.getGatetype_B());
+		param.addValue("gatetype_C", gate.getGatetype_C());
+		param.addValue("gatetype_D", gate.getGatetype_D());
+		param.addValue("gatetype_E", gate.getGatetype_E());
+		param.addValue("gatetype_F", gate.getGatetype_F());
+		param.addValue("setcnt", gate.getSetcnt());
+//		param.addValue("ctimer", gate.getCtimer());	// ゲートマスタ登録・編集画面からは登録しない項目
+		
+		
+		if (null != gate.getInsendgate() && "".equals(gate.getInsendgate()) == false) {
+			param.addValue("insendgate", gate.getInsendgate());
+		}
+		if (null != gate.getOutsendgate() && "".equals(gate.getOutsendgate()) == false) {
+			param.addValue("outsendgate", gate.getOutsendgate());
+		}
+    	
+		namedParameterJdbcTemplate.update(sb.toString(), param);
+    }
+ 
+    /**
+     * ゲートマスタを更新する関数(アンチパス送信タブ)
+     * @param gate ゲート情報
+     */
+    public void updateSendgate(Gate gate){
+    	
+    	StringBuilder sb = new StringBuilder();
+    	sb.append("UPDATE ");
+    	sb.append(" \"TRIDENT\".m_gate ");
+    	sb.append("SET ");
+    	sb.append(" insendgate = :insendgate ");
+    	sb.append(" ,outsendgate = :outsendgate ");
+    	sb.append("WHERE ");
+    	sb.append(" gateno = :gateno ");
+    	
+		//パラメータを設定
+		MapSqlParameterSource  param = new MapSqlParameterSource();
+    		
+		param.addValue("gateno", Integer.parseInt(gate.getGateno()));
+		param.addValue("insendgate", gate.getInsendgate());
+		param.addValue("outsendgate", gate.getOutsendgate());
+    	
+		namedParameterJdbcTemplate.update(sb.toString(), param);
+    }
+    
+    /**
+     * 指定したゲート番号のゲート情報を削除するかんずう
+     * @param gateno ゲート番号
+     */
+    public void delete(int gateno){
+    	
+    	StringBuilder sb = new StringBuilder();
+    	sb.append("DELETE ");
+    	sb.append("FROM ");
+    	sb.append(" \"TRIDENT\".m_gate ");
+    	sb.append("WHERE ");
+    	sb.append(" gateno = :gateno ");
+    	
+		//パラメータを設定
+		MapSqlParameterSource  param = new MapSqlParameterSource();
+    		
+		param.addValue("gateno", gateno);
+    	
+		namedParameterJdbcTemplate.update(sb.toString(), param);
+    }
+
+    /**
+     * 全てのレコードを削除する関数
+     */
+    public void deleteAll(){
+    	
+    	StringBuilder sb = new StringBuilder();
+    	sb.append("DELETE ");
+    	sb.append("FROM ");
+    	sb.append(" \"TRIDENT\".m_gate ");   	
+
+		namedParameterJdbcTemplate.update(sb.toString(), new HashMap<>());
+    }    
+}

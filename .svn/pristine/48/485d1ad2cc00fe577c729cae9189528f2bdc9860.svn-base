@@ -1,0 +1,737 @@
+package jp.co.art.trident.service;
+
+
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.io.PrintWriter;
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
+import java.util.Random;
+
+import org.springframework.context.MessageSource;
+import org.springframework.context.i18n.LocaleContextHolder;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.StringUtils;
+import org.springframework.web.multipart.MultipartFile;
+
+import jakarta.servlet.http.HttpServletRequest;
+import jp.co.art.trident.component.CsvUtility;
+import jp.co.art.trident.component.StringCheckUtility;
+import jp.co.art.trident.exception.TridentException;
+import jp.co.art.trident.model.ServiceResult;
+import jp.co.art.trident.model.entity.Gate;
+import jp.co.art.trident.model.entity.MTenant;
+import jp.co.art.trident.model.form.TenantForm;
+import jp.co.art.trident.repository.MGateRepository;
+import jp.co.art.trident.repository.MTenantRepository;
+import jp.co.art.trident.service.common.MOperationlogService;
+import jp.co.art.trident.service.common.MOperationlogService.OperationCode;
+
+/**テナント登録・編集画面のサービスクラス**/
+@Service
+public class TenantService {
+	/**テナントマスタのリポジトリ**/
+	private MTenantRepository mTenantRepository;
+	
+	/**ゲートマスタのリポジトリ */
+	private final MGateRepository mGateRepository;
+	
+	/** 操作ログサービスクラス */
+	private final MOperationlogService mOperationlogService;	
+	
+	/** 文字列関連のチェックユーティリティクラス */
+	private final StringCheckUtility stringCheckUtility;
+	
+	/** CSVファイル操作ユーティリティクラス */
+	private final CsvUtility csvUtility;
+	
+	/** メッセージソースクラス */
+	private final MessageSource messageSource;
+
+	// ------------------------------------------------------------------------------------------------------
+	// 定数
+	// ------------------------------------------------------------------------------------------------------
+	private final String FILE_TMP_PATH = "C:\\TRIDENT\\Data\\Tenant\\Temp\\";
+	
+	/*コンストラクタ*/
+	public TenantService(MTenantRepository mTenantRepository
+			,MGateRepository mGateRepository
+			,MOperationlogService mOperationlogService
+			,StringCheckUtility stringCheckUtility
+			,CsvUtility csvUtility
+			,MessageSource messageSource) {
+		this.mTenantRepository = mTenantRepository;
+		this.mGateRepository = mGateRepository;
+		this.mOperationlogService = mOperationlogService;
+		this.stringCheckUtility = stringCheckUtility;
+		this.csvUtility=csvUtility;
+		this.messageSource = messageSource;
+	}
+	
+	/**
+	 * テナント登録初期表示する関数
+	 * @return TenantForm 初期化済みのフォーム
+	 * @throws TridentException トラブル発生時
+	 */
+	public TenantForm initScreen() throws TridentException {
+
+	    // フォームオブジェクト生成
+	    TenantForm tenantForm = new TenantForm();
+
+	    //mTenantRepositoryから登録済みのテナント一覧を取得
+	    List<MTenant> tenant = mTenantRepository.getTenantList();
+	    //mGateRepositoryから登録済みのゲート一覧を取得
+	    List<Gate> gate = mGateRepository.getGateList();
+        
+	    // テナント一覧をフォームにセット
+	    tenantForm.setMstTenantList(tenant);
+	    // ゲート一覧をフォームにセット
+	    tenantForm.setMstGateList(gate);
+	    
+	    // 入力欄を空欄に初期化
+	    tenantForm.setTenantno("");
+	    tenantForm.setName("");
+	    tenantForm.setKana("");
+	    tenantForm.setGate("");
+
+	    return tenantForm;
+	}
+	
+	/**
+	 * テナントデータ取得する関数
+	 * @param TenantForm
+	 * @return index.html
+	 *　@throws　TridentException
+	 */
+	public ServiceResult<TenantForm> getTenantData(TenantForm tenantForm) throws TridentException  {
+		// 戻り値		
+		ServiceResult<TenantForm> result = new ServiceResult<TenantForm>();
+		
+		// 入力チェック
+		String tenantno = tenantForm.getTenantno();
+		List<String> errorList = new ArrayList<String>();
+		Boolean bRet = this.checkTenantNo(errorList,tenantno,-1);
+		
+		if (bRet == false) {
+			//テナント番号が無効ならば、データは存在しない扱いとして null をセットし、成功扱いで終了。
+			result.setContent(null);
+			result.setSuccess(true);
+			return result;
+		}
+		
+		//テナント番号を整数に変換し、リポジトリの getTenantListByTenantno メソッドを呼び出して該当テナント情報のリストを取得
+		List<MTenant>  tenant = mTenantRepository.getTenantListByTenantno(Integer.parseInt(tenantno));
+		
+		if(tenant.size() > 0) {
+			//取得結果が1件以上あれば先頭の MTenant オブジェクトの値を tenantForm にセット。
+			tenantForm.setTenantno(String.valueOf(tenant.get(0).getTenantno()));
+			tenantForm.setName(tenant.get(0).getName());
+			tenantForm.setKana(tenant.get(0).getKana());
+			tenantForm.setGate(tenant.get(0).getGate());
+	
+			result.setContent(tenantForm);
+
+		} else {
+			// データが存在しない場合null をセット（データなし）。
+			result.setContent(null);
+		}
+		//テナントの情報を持った tenantForm,成功したことを示す trueをリターン
+		result.setSuccess(true);
+		return result;
+	}
+
+	/** テナント情報の存在チェックを行う関数です。
+	 * @param tenantForm クライアントから送信されたテナント情報（テナント番号を含む）
+	 * @return result （true:存在する、false:存在しない）
+	 * @throws TridentException 
+	 */
+	public ServiceResult<Boolean> checkExistenceTenantData(TenantForm tenantForm) throws TridentException  {
+
+	    ServiceResult<Boolean> result = new ServiceResult<Boolean>();
+
+	    // 入力されたテナント番号を取得
+	    String tenantno = tenantForm.getTenantno();
+
+	    // 入力チェックのためのエラー格納リストを初期化
+	    List<String> errorList = new ArrayList<String>();
+
+	    // テナント番号の妥当性チェックを実行
+	    Boolean bRet = this.checkTenantNo(errorList, tenantno, -1);
+		
+		if (!bRet) {
+			// 入力エラーなどで有効なテナント番号でない場合、処理終了（存在チェック不可）
+			result.setSuccess(false);
+			return result;
+		}
+		
+		//テナント番号を整数に変換し、リポジトリの getTenantListByTenantno メソッドを呼び出して該当テナント情報のリストを取得
+		List<MTenant>  tenant = mTenantRepository.getTenantListByTenantno(Integer.parseInt(tenantno));
+		
+		if(tenant.size() > 0) {
+			// データが存在する場合
+			result.setContent(true);
+		} else {
+			// データが存在しない場合、新規登録
+			result.setContent(false);	
+		}
+		
+		result.setSuccess(true);
+		return result;
+	}
+
+	/**
+	 * テナント情報の登録および更新処理を行う関数
+	 * @param request HTTPリクエスト（フォームの入力データを取得するため）
+	 * @return TenantForm　登録結果やメッセージ、最新のテナント・ゲート一覧を保持
+	 * @throws TridentException 
+	 */
+	@Transactional
+	public TenantForm tenantRegist(HttpServletRequest request) throws TridentException  {
+		
+		TenantForm tenantForm = new TenantForm();
+		
+		MTenant mTenant = new MTenant();
+		List<String> errorList = new ArrayList<>();
+		
+		// リクエストパラメータからフォーム入力値を取得
+		String tenantno = request.getParameter("tenantno");
+		String name = request.getParameter("name");
+		String kana = request.getParameter("kana");
+		String tenantGate = "";   
+		
+		// 入力チェックを実行し、mTenant に値をセット
+		//errorList にメッセージが追加されたら、入力エラー
+		mTenant = this.checkInputData(tenantno, name, kana, tenantGate, errorList, -1);
+
+		// 入力が正しい場合、登録処理を継続
+		if (errorList.size() == 0) {
+			
+			// 操作ログを登録
+			mOperationlogService.RegistOperation(OperationCode.TENANT_TENANTINFO_REGISTRATION.getCode());
+
+			// データが存在するか確認
+			List<MTenant> tenant = mTenantRepository.getTenantListByTenantno(Integer.parseInt(tenantno));
+		
+			if (tenant.size() > 0) {
+				// データが存在する場合、更新
+				mTenantRepository.update(mTenant);
+			} else {
+				// データが存在しない場合、新規登録
+				
+				// テナントマスタのゲートに1920桁数分0埋めした値を設定
+				mTenant.setGate("0".repeat(1920));
+				
+				// テナントマスタ更新
+				mTenantRepository.regist(mTenant);
+			}
+			
+			// 登録完了メッセージ「テナント情報を登録しました」
+			tenantForm.setMessage(messageSource.getMessage("tenant.regist.completed", null, LocaleContextHolder.getLocale()));
+			
+		} else {
+			// 入力エラーありの場合の処理
+			// エラーメッセージ 「テナント情報を登録できませんでした。」
+			String errorMsg = messageSource.getMessage("tenant.regist.error", null, LocaleContextHolder.getLocale());		
+
+			// 具体的なエラーメッセージを連結
+			for (String msg : errorList) {
+				errorMsg = errorMsg + "\n" + msg;
+			}
+			// フォームにエラーメッセージをセット
+			tenantForm.setMessage(errorMsg);
+			
+			tenantForm.setTenantno(String.valueOf(mTenant.getTenantno()));
+			tenantForm.setName(mTenant.getName());
+			tenantForm.setKana(mTenant.getKana());
+		}
+
+	    //mTenantRepositoryから登録済みのテナント一覧を取得
+	    List<MTenant> tenant = mTenantRepository.getTenantList();
+	    //mGateRepositoryから登録済みのゲート一覧を取得
+	    List<Gate> gate = mGateRepository.getGateList();
+	    
+		// 最新のテナント一覧とゲート一覧を取得してフォームにセット
+		tenantForm.setMstTenantList(tenant);
+		tenantForm.setMstGateList(gate);
+		
+		return tenantForm;
+	}
+	
+	/**
+	 * ゲート設定登録
+	 * @param 
+	 * @param 
+	 *　@return　
+	 */
+	@Transactional
+	public TenantForm gatesetRegist(HttpServletRequest request) throws TridentException  {
+		
+		TenantForm tenantForm = new TenantForm();
+		
+		MTenant mTenant = new MTenant();
+		
+		String tenantno = request.getParameter("gatesetTenantno");
+		String tenantGate = request.getParameter("tenantgate");
+
+		mTenant.setTenantno(tenantno);
+		mTenant.setGate(tenantGate);
+		
+		// データが存在するか確認
+		List<MTenant> tenant = mTenantRepository.getTenantListByTenantno(Integer.parseInt(tenantno));
+		
+		if(tenant.size() > 0) {
+		// データが存在する場合、更新
+			
+			// 操作ログを登録
+			mOperationlogService.RegistOperation(OperationCode.TENANT_GATESET_REGISTRATION.getCode());
+			
+			// テナントマスタ更新
+			mTenantRepository.updategate(mTenant);
+			
+			// エラーメッセージ 「テナントのゲート設定を登録しました。」
+			tenantForm.setMessage(messageSource.getMessage("tenant.regist.gateset.completed", null, LocaleContextHolder.getLocale()));
+		} else {
+			// データが存在しない場合、エラー？
+			// 他社に削除された可能性あり
+			tenantForm.setMessage(messageSource.getMessage("tenant.regist.gateset.error", null, LocaleContextHolder.getLocale()));	
+		}
+
+	    //mTenantRepositoryから登録済みのテナント一覧を取得
+	    List<MTenant> initTenant = mTenantRepository.getTenantList();
+	    //mGateRepositoryから登録済みのゲート一覧を取得
+	    List<Gate> gate = mGateRepository.getGateList();
+	    
+		// 最新のテナント一覧とゲート一覧を取得してフォームにセット
+		tenantForm.setMstTenantList(initTenant);
+		tenantForm.setMstGateList(gate);
+		
+		return tenantForm;
+	}
+	
+	/**
+	 * 指定されたテナント番号のテナント情報を削除する関数
+	 * @param request HTTPリクエスト（削除対象のテナント番号を含む）
+	 * @return 削除結果メッセージと最新データを含む TenantForm オブジェクト
+	 * @throws TridentException 
+	 */
+	@Transactional
+	public TenantForm tenantDelete(HttpServletRequest request) throws TridentException  {
+		
+	    TenantForm tenantForm = new TenantForm();
+	    MTenant mTenant = new MTenant();
+	    List<String> errorList = new ArrayList<>();
+	    // 入力チェック
+	    String tenantno = request.getParameter("tenantno");
+	    this.checkTenantNo(errorList, tenantno, -1);
+
+	    if (errorList.size() == 0) {
+	    	// データが存在するか確認
+	    	List<MTenant> tenant= mTenantRepository.getTenantListByTenantno(Integer.parseInt(tenantno));
+
+	        if (tenant.size() > 0) {
+	        	// データが存在する場合
+	        	
+	        	// 操作ログを登録
+	            mOperationlogService.RegistOperation(OperationCode.TENANT_TENANTINFO_DELETE.getCode());
+
+	            // データが存在する場合、削除
+	            mTenantRepository.delete(Integer.parseInt(tenantno));
+
+	            // 削除成功メッセージをセット「指定したテナント番号のデータを削除しました。」
+	            tenantForm.setMessage(messageSource.getMessage("tenant.delete.completed", null, LocaleContextHolder.getLocale()));
+
+	        } else {
+				// データが存在しない場合
+	        	// 削除対象のデータなし
+	        	tenantForm.setMessage(messageSource.getMessage("tenant.delete.noData", null, LocaleContextHolder.getLocale()));
+	        }
+		} else {
+			// 入力エラーありの場合の処理
+			// エラーメッセージ 「テナント情報を登録できませんでした。」
+			String errorMsg = messageSource.getMessage("tenant.delete.error", null, LocaleContextHolder.getLocale());		
+
+			// 具体的なエラーメッセージを連結
+			for (String msg : errorList) {
+				errorMsg = errorMsg + "\n" + msg;
+			}
+			// フォームにエラーメッセージをセット
+			tenantForm.setMessage(errorMsg);
+			
+			tenantForm.setTenantno(String.valueOf(mTenant.getTenantno()));
+			tenantForm.setName(mTenant.getName());
+			tenantForm.setKana(mTenant.getKana());
+		}
+	    
+	    //mTenantRepositoryから登録済みのテナント一覧を取得
+	    List<MTenant> tenant = mTenantRepository.getTenantList();
+	    //mGateRepositoryから登録済みのゲート一覧を取得
+	    List<Gate> gate = mGateRepository.getGateList();
+	    
+	    // 最新のテナント一覧・ゲート一覧を取得しフォームにセット
+		tenantForm.setMstTenantList(tenant);
+		tenantForm.setMstGateList(gate);
+		
+	    // 処理結果を返す
+	    return tenantForm;
+	}
+
+	/////////////////////////////////////////////
+	// 入力チェック 
+	/////////////////////////////////////////////
+	
+	/**
+	 * 入力チェック
+	 * @param 
+	 * @param 
+	 *　@return　
+	 */	
+	private MTenant checkInputData(String tenantno, String name, String kana, String gate,
+            List<String> errorList, int ilineNum)
+  {
+		
+		/////////////////////////////////////////////
+		// 入力チェック 
+		/////////////////////////////////////////////
+		
+		Boolean bRet = true;
+		// テナントマスタを取得
+		// テナントチェック（例：入力されたtenantnoがマスタに存在するか）
+		if (this.checkTenantNo(errorList, tenantno, ilineNum) == false) {
+		    bRet = false;
+		}
+
+		if(this.checkName(errorList,name, ilineNum) == false) {
+			bRet = false;
+		}		
+
+		if(this.checkKana(errorList, kana, ilineNum) == false) {
+			bRet = false;
+		}		
+
+		if(this.checkGate(errorList, gate, ilineNum) == false) {
+			bRet = false;
+		}	
+
+		/////////////////////////////////////////////
+		// エラーがない場合入力値をセット　前0は削除して設定しておく
+		/////////////////////////////////////////////
+		MTenant tenant = new MTenant();
+		if (bRet == true) {
+			tenant.setTenantno(String.valueOf(Integer.parseInt(tenantno)));
+
+			if(name != null && "".equals(name) == false) {
+				tenant.setName(String.valueOf(name));
+			}
+			
+			if(kana != null && "".equals(kana) == false) {
+				tenant.setKana(String.valueOf(kana));
+			}
+			
+			if(gate != null && "".equals(gate) == false) {
+				tenant.setGate(String.valueOf(gate));
+			}
+		}
+
+		return tenant;
+	}	
+
+	/**
+	 * CSVファイルをアップロードし、チェックする関数
+	 * @param uploadFile アップロードされたCSVファイル
+	 * @return 処理結果を含むServiceResultオブジェクト（TenantFormを内容として持つ）
+	 * @throws IOException ファイル入出力時の例外
+	 * @throws TridentException 
+	 */
+	@Transactional
+	public ServiceResult<TenantForm> checkAndUpload(MultipartFile uploadFile) throws IOException, TridentException{
+	
+		ServiceResult<TenantForm> result = new ServiceResult<TenantForm>();
+		TenantForm tenantform = new TenantForm();
+		
+		// ファイル名の日時
+		SimpleDateFormat sdfDbYmd = new SimpleDateFormat("yyyyMMddHHmmss");
+		Date now = new Date();
+		String dbDate = sdfDbYmd.format(now);
+		
+		Random random = new Random();
+		int number = random.nextInt(10000);
+		String fileNo = String.format("%04d", number);
+		
+		// アップロードファイル一時保管パス
+		String uploadTmpFile = FILE_TMP_PATH;
+		uploadTmpFile = uploadTmpFile + dbDate + "_" + fileNo + "_" + uploadFile.getOriginalFilename();
+		
+		try {	
+			// ファイルの一時保存
+			File saveFile = new File(uploadTmpFile);
+			uploadFile.transferTo(saveFile); // ファイルを保存
+			
+			// エラー内容保持
+			List<String> errorList = new ArrayList<String>();	// エラー内容
+			List<MTenant> mTenantList = new ArrayList<MTenant>();  // 新規登録・更新データ
+			int errorCount = 0;
+			
+			// CSVファイルの内容を読み込む
+			List<String> readList = new ArrayList<String>();
+			csvUtility.readCsv(uploadTmpFile,readList);
+			
+			// ファイルの内容チェック
+            for (int i = 0; i < readList.size(); i++) {
+                String[] data = readList.get(i).split(",",-1);
+
+                // 項目数チェック
+                if (data.length != 4) {
+                	// 項目数が違う場合
+                	//Message=「csvファイルの項目数が正しくありません。」
+                	errorList.add(String.valueOf(i + 1) + "," + messageSource.getMessage("tenant.upload.item.count", null, LocaleContextHolder.getLocale()));
+                	errorCount = errorCount + 1;
+                	continue;
+                }
+                //項目
+                String tenantno = data[0];
+                String name = data[1];
+        		String kana = data[2];
+        		String gate = data[3];
+        	
+        		// 入力チェック
+        		MTenant mTenant = new MTenant();
+        		mTenant = this.checkInputData(tenantno,name,kana,gate,errorList, i + 1);
+        		
+        		if (mTenant.getTenantno() !=null){
+        			mTenantList.add(mTenant);
+        		} else {
+        			errorCount = errorCount + 1;
+        		}
+            }
+			
+            if(mTenantList.size() > 0 ) { 
+    			// 操作ログを登録
+            	mOperationlogService.RegistOperation(OperationCode.TENANT_TENANTINFO_UPLOAD.getCode());
+            }
+            
+			// 登録処理 入力チェックでOKの分だけ登録
+			for(MTenant mTenant : mTenantList) {
+				// データが存在するか確認
+				List<MTenant> tenant = mTenantRepository.getTenantListByTenantno(Integer.parseInt(mTenant.getTenantno()));
+
+				if(tenant.size() > 0) {
+				// データが存在する場合、更新
+					mTenantRepository.update(mTenant);
+				} else {
+					// データが存在しない場合、新規登録
+					// ゲートマスタ登録
+					mTenantRepository.regist(mTenant);				
+				}	
+			}
+
+			//ユーザーがアップロードしたCSVファイルやデータの「総件数」や「総行数」を表します。
+			tenantform.setUploadCount(readList.size());
+			//実際に「正常に処理（登録・更新）された件数」
+			tenantform.setUpdateCount(mTenantList.size());
+			//処理の中で「エラーとなった件数」をカウント
+			tenantform.setErrorCount(errorCount);
+			//どの行がどんな理由でエラーになったか」の詳細なメッセージをリスト形式で保持
+			tenantform.setErrorList(errorList);
+			result.setContent(tenantform);
+			result.setSuccess(true);
+			
+			return result;
+		} finally {
+			this.deleteFile(uploadTmpFile);
+		}		
+	}
+	
+	/**
+	 * 指定されたパスのファイルを削除する関数
+	 * @param uploadTmpPath 削除対象のファイルパス（一時ファイルなど）
+	 */
+	private void deleteFile(String uploadTmpPath) {
+		//パス文字列が null または空でないかをチェック（Springのユーティリティ)
+	    if(StringUtils.hasLength(uploadTmpPath) == true) {
+	    //指定パスのファイルオブジェクトを生成
+	      File delFile = new File(uploadTmpPath);
+	      //ファイルが存在しない場合は終了
+	      if (delFile.exists() == false ){
+	        return;
+	      }
+	      //ファイル削除
+	      delFile.delete();
+	    }
+	    return;
+	}
+	
+	/**
+	 * テナント情報のダウンロード用ファイルを作成します。
+	 *@param filePath 
+	 * @param fileName 
+	 * @param downloadType 
+	 * @return ファイル作成が成功した場合は true、失敗した場合は false
+	 * @throws TridentException 
+	 */
+	public Boolean createDownloadData(String filePath, String fileName, String downloadType) throws TridentException  {
+
+		// ファイルに出力する内容を取得する
+		//テナントリストを取得
+		List<MTenant> tenantList= mTenantRepository.getTenantList();
+		
+        // 作成するファイルのファイルパスを格納
+        filePath = filePath + fileName;
+
+		//downloadType が "O" の場合とそれ以外で、操作ログのIDを分けて記録
+        if (downloadType.equals("O")) {
+        	mOperationlogService.RegistOperation(OperationCode.TENANT_TENANTINFO_DATAOUTPUT.getCode());
+        } else {
+        	mOperationlogService.RegistOperation(OperationCode.TENANT_TENANTINFO_DOWNLOAD.getCode());
+        }
+       //指定ファイルを開き、BufferedWriter と PrintWriter を使って効率良く文字列を書き込みます。
+       //try-with-resources で自動的にファイルを閉じる仕組み
+        try (FileWriter writer = new FileWriter(filePath)) {
+       
+              	PrintWriter pw = new PrintWriter(new BufferedWriter(writer));
+              	for(MTenant mTenant : tenantList){
+              		
+              	    StringBuilder sb = new StringBuilder();
+                    if (downloadType.equals("O")) {
+                        // データ出力形式：3項目を"で囲み20桁に揃える
+                    	sb.append("\"" + stringCheckUtility.addCharByByte(mTenant.getTenantno(),20, " ", -1) + "\"");
+                    	sb.append(",");
+                    	sb.append("\"" + stringCheckUtility.addCharByByte(String.valueOf(mTenant.getName()),20, " ", -1) + "\"");
+                    	sb.append(",");
+                    	sb.append("\"" + stringCheckUtility.addCharByByte(String.valueOf(mTenant.getKana()),20, " ", -1) + "\"");
+                    } else {
+                        // ダウンロード形式：4項目 通常出力
+                        sb.append(mTenant.getTenantno());
+                        sb.append(",");
+                        sb.append(mTenant.getName());
+                        sb.append(",");
+                        sb.append(mTenant.getKana());
+                        sb.append(",");
+                        sb.append(mTenant.getGate());
+                    }
+                    pw.println(sb.toString());
+                }
+              	pw.close();
+              }
+        catch(IOException e)
+        {
+        	// ファイルの作成に失敗
+        	return false;
+        }
+		return true;
+	}
+		
+////////////////////////以下、各項目の入力内容のチェック処理////////////////////////		
+	/**
+	 * テナント番号がマスタに存在するかチェック
+	 * */
+	private Boolean checkTenantNo (List<String> errorList, String tenantNo, int ilineNum) {
+		Boolean bRet = true;
+		if (null == tenantNo || "".equals(tenantNo) == true) {
+			//　未入力チェック
+			String errorMsg = messageSource.getMessage("tenant.error.empty.tenantno", null, LocaleContextHolder.getLocale());	
+			// エラーリストにエラーを追加
+			stringCheckUtility.addError(errorList, errorMsg, ilineNum);
+			
+			bRet = false;
+			
+		} else if (stringCheckUtility.isDecimalCheck(tenantNo,3,0,false) == false) {
+			// 桁数チェック
+			String errorMsg = messageSource.getMessage("tenant.error.input.tenantno", null, LocaleContextHolder.getLocale());	
+			// エラーリストにエラーを追加
+			stringCheckUtility.addError(errorList, errorMsg, ilineNum);
+			
+			bRet = false;
+		}	
+		return bRet;
+	}
+	
+	/**
+	 *テナント名がマスタに存在するかチェック
+	 * */
+	private Boolean checkName (List<String> errorList, String name, int ilineNum) {
+		Boolean bRet = true;
+		if(name.length() > 20) {
+		// 桁数チェック
+			String errorMsg = messageSource.getMessage("tenant.error.maxlength.name", null, LocaleContextHolder.getLocale());
+			// エラーリストにエラーを追加
+			stringCheckUtility.addError(errorList, errorMsg, ilineNum);
+			
+			bRet = false;
+		}
+		
+		// 禁止文字「\ / : * ? " <> |」が含まれていないかチェック
+		if (stringCheckUtility.isForbiddenCharsCheck(name) == false) {
+			String errorMsg = messageSource.getMessage("tenant.error.input.name", null, LocaleContextHolder.getLocale());
+			// エラーリストにエラーを追加
+			stringCheckUtility.addError(errorList, errorMsg, ilineNum);
+			
+			bRet = false;
+		}	
+		return bRet;
+	}
+
+	/**
+	 *テナント名称カナがマスタに存在するかチェック
+	 * */
+	private Boolean checkKana (List<String> errorList, String kana, int ilineNum) {
+		Boolean bRet = true;
+		if(kana.length() > 20) {
+			// 桁数チェック
+			String errorMsg = messageSource.getMessage("tenant.error.maxlength.kana", null, LocaleContextHolder.getLocale());
+			// エラーリストにエラーを追加
+			stringCheckUtility.addError(errorList, errorMsg, ilineNum);
+			
+			bRet = false;
+		}
+		
+		// 禁止文字「\ / : * ? " <> |」が含まれていないかチェック
+		if (stringCheckUtility.isForbiddenCharsCheck(kana) == false) {
+			String errorMsg = messageSource.getMessage("tenant.error.input.kana", null, LocaleContextHolder.getLocale());
+			// エラーリストにエラーを追加
+			stringCheckUtility.addError(errorList, errorMsg, ilineNum);
+			
+			bRet = false;
+		}	
+		return bRet;
+	}
+	
+	/**
+	 * ゲートがテナントマスタに存在するかチェック
+	 * */
+	private Boolean checkGate (List<String> errorList, String gate, int ilineNum) {
+		
+		Boolean bRet = true;
+		if (null == gate || "".equals(gate) == true) {
+			// 未入力OK
+			return bRet;
+		}
+		
+		if (stringCheckUtility.isDecimalCheck(gate,1920,0,false) == false) {
+			// 桁数チェック
+			String errorMsg = messageSource.getMessage("tenant.error.maxlength.gate", null, LocaleContextHolder.getLocale());
+			// エラーリストにエラーを追加
+			stringCheckUtility.addError(errorList, errorMsg, ilineNum);
+			
+			bRet = false;
+		}
+
+		// 0～1の値で設定されているかチェック
+		String pattern = "[0-1]*";
+		//Pattern p = Pattern.compile(pattern);
+		if(!gate.matches(pattern)){
+			String errorMsg = messageSource.getMessage("tenant.error.input.gate", null, LocaleContextHolder.getLocale());
+			// エラーリストにエラーを追加
+			stringCheckUtility.addError(errorList, errorMsg, ilineNum);
+			
+			bRet = false;
+		}
+		return bRet;
+	}
+}
+
+

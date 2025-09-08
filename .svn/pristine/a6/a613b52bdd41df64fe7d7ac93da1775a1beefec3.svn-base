@@ -1,0 +1,10 @@
+package jp.co.art.trident.model;
+
+/**ユーザー権限enum**/
+public enum UserRole {
+	ROLE_USER_LV1
+	,ROLE_USER_LV2
+	,ROLE_USER_LV3
+	,ROLE_USER_LV4
+	,ROLE_USER_LV9
+}
