@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="/static/css/common.css" />
+    <title>データモニター - TRIDENT</title>
+    <style>
+        .data-monitor-container {
+            padding: 20px;
+        }
+        .filter-section {
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+        }
+        .data-table th,
+        .data-table td {
+            border: 1px solid #ccc;
+            padding: 8px;
+            text-align: left;
+        }
+        .data-table th {
+            background-color: #6c757d;
+            color: white;
+            font-weight: bold;
+        }
+        .data-table tbody tr:nth-child(even) {
+            background-color: #f8f9fa;
+        }
+        .status-indicator {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            margin-right: 5px;
+        }
+        .status-normal { background-color: #28a745; }
+        .status-warning { background-color: #ffc107; }
+        .status-error { background-color: #dc3545; }
+        .point-annotation {
+            position: absolute;
+            background-color: #e3f2fd;
+            border: 2px solid #1976d2;
+            padding: 10px;
+            border-radius: 5px;
+            font-size: 14px;
+            max-width: 200px;
+            z-index: 1000;
+        }
+        .point1 { top: 180px; right: 50px; }
+        .point3 { bottom: 200px; left: 550px; }
+        .content-wrapper {
+            padding-top: 100px; /* ヘッダー分のスペース */
+        }
+        .row-normal {
+            background-color: #ffffff !important;
+        }
+        .row-warning {
+            background-color: #fff3cd !important;
+        }
+        .row-error {
+            background-color: #f8d7da !important;
+        }
+        .row-info {
+            background-color: #d1ecf1 !important;
+        }
+        .status-info { background-color: #17a2b8; }
+        
+        .filter-panel {
+            background-color: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 5px;
+            padding: 15px;
+            margin-bottom: 20px;
+        }
+        .filter-section {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+            align-items: flex-start;
+        }
+        .filter-group {
+            min-width: 200px;
+        }
+        .filter-group h6 {
+            margin-bottom: 10px;
+            color: #495057;
+        }
+        .checkbox-group {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+        .auto-scroll-controls {
+            position: fixed;
+            top: 150px;
+            right: 20px;
+            z-index: 1000;
+        }
+    </style>
+</head>
+<body>
+    <!-- ヘッダー -->
+    <div class="bs-component" id="global-header">
+        <div class="fixed-top">
+            <nav class="sticky-top navbar navbar-expand-lg navbar-dark bg-success p-0">
+                <ul class="d-flex list-unstyled col-12 p-0" style="height:30px;">
+                    <li class="p-0 col-11">
+                        <div class="navbar-brand ms-3">
+                            Web版入退室管理システム
+                        </div>
+                    </li>
+                    <li class="p-0 col-1">
+                        <div class="border border-1 border-white m-1 g-center">
+                            <a class="text-white fs-5 text-decoration-none ms-2" href="/logout">
+                                ログアウト
+                            </a>
+                        </div>
+                    </li>
+                </ul>
+            </nav>
+        </div>
+    </div>
+
+    <!-- メニューバー -->
+    <nav class="navbar navbar-expand-lg" style="margin-top: 50px; padding: 15px 0;">
+        <div class="container-fluid">
+            <ul class="navbar-nav ms-auto flex-wrap">
+                <li class="nav-item d-flex ms-4">
+                    <a href="/gate" class="text-decoration-none">個人登録</a>
+                </li>
+                <li class="nav-item d-flex ms-4">
+                    <a href="/gateEdit" class="text-decoration-none">ゲート編集</a>
+                </li>
+                <li class="nav-item d-flex ms-4">
+                    <a href="/gate" class="text-decoration-none">報告書</a>
+                </li>
+                <li class="nav-item d-flex ms-4">
+                    <a href="/gate" class="text-decoration-none">在室一覧</a>
+                </li>
+                <li class="nav-item d-flex ms-4 fw-bold">
+                    <a href="/dataMonitor" class="text-decoration-none text-primary">データモニター</a>
+                </li>
+                <li class="nav-item d-flex ms-4">
+                    <a href="/gate" class="text-decoration-none">ステータスモニター</a>
+                </li>
+                <li class="nav-item d-flex ms-4">
+                    <a href="/gate" class="text-decoration-none">マップステータス</a>
+                </li>
+                <li class="nav-item dropdown ms-4 me-5">
+                    <a href="#" class="nav-link dropdown-toggle p-0 text-primary" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                        <u>システム</u>
+                    </a>
+                    <ul class="dropdown-menu dropdown-menu-end">
+                        <li><a class="dropdown-item text-primary" href="#">操作ログ報告書</a></li>
+                        <li><a class="dropdown-item text-primary" href="#">休日設定</a></li>
+                        <li><a class="dropdown-item text-primary" href="#">時刻送信</a></li>
+                        <li><a class="dropdown-item text-primary" href="#">バックアップ</a></li>
+                        <li><a class="dropdown-item text-primary" href="#">一斉送信</a></li>
+                        <li><a class="dropdown-item text-primary" href="#">アンチパスフリー</a></li>
+                        <li><a class="dropdown-item text-primary" href="#">ユーザー登録</a></li>
+                    </ul>
+                </li>
+            </ul>
+        </div>
+    </nav>
+
+    <!-- メインコンテンツ -->
+    <div class="content-wrapper">
+        <div class="data-monitor-container position-relative">
+            <h2>データモニター</h2>
+            
+            <!-- 自動スクロール制御 -->
+            <div class="auto-scroll-controls">
+                <button id="toggleAutoScroll" class="btn btn-warning">停止</button>
+            </div>
+
+            <!-- フィルターパネル -->
+            <div class="filter-panel">
+                <h5>◆ 履歴データ</h5>
+                <div class="filter-section">
+                    <!-- データ種別フィルタ -->
+                    <div class="filter-group">
+                        <h6>データ種別</h6>
+                        <select id="dataTypeFilter" class="form-select">
+                            <option value="all">全データ表示</option>
+                            <option value="normal">正常データ</option>
+                            <option value="warning">警告データ</option>
+                            <option value="error">エラーデータ</option>
+                            <option value="info">復旧データ</option>
+                        </select>
+                    </div>
+
+                    <!-- ゲート指定フィルタ -->
+                    <div class="filter-group">
+                        <h6>ゲート指定</h6>
+                        <div class="checkbox-group">
+                            <label><input type="checkbox" class="gate-filter-checkbox" value="0001" checked> エントランス (0001)</label>
+                            <label><input type="checkbox" class="gate-filter-checkbox" value="0002" checked> サーバールーム (0002)</label>
+                            <label><input type="checkbox" class="gate-filter-checkbox" value="0003" checked> 会議室 (0003)</label>
+                            <label><input type="checkbox" class="gate-filter-checkbox" value="0004" checked> 役員室 (0004)</label>
+                        </div>
+                    </div>
+
+                    <!-- 表示項目フィルタ -->
+                    <div class="filter-group">
+                        <h6>表示項目</h6>
+                        <div class="checkbox-group">
+                            <label><input type="checkbox" class="column-filter-checkbox" value="occurredDate" checked> 発生日時</label>
+                            <label><input type="checkbox" class="column-filter-checkbox" value="personalCode" checked> 個人コード</label>
+                            <label><input type="checkbox" class="column-filter-checkbox" value="name" checked> 名称</label>
+                            <label><input type="checkbox" class="column-filter-checkbox" value="departmentName" checked> 所属名称</label>
+                            <label><input type="checkbox" class="column-filter-checkbox" value="gateNumber" checked> ゲート番号</label>
+                            <label><input type="checkbox" class="column-filter-checkbox" value="gateName" checked> ゲート名称</label>
+                            <label><input type="checkbox" class="column-filter-checkbox" value="remarks" checked> 備考</label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- データテーブル -->
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>発生日時</th>
+                        <th>個人コード</th>
+                        <th>名称</th>
+                        <th>所属名称</th>
+                        <th>ゲート番号</th>
+                        <th>ゲート名称</th>
+                        <th>備考</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <!-- JavaScriptで動的に生成されます -->
+                </tbody>
+            </table>
+
+        </div>
+    </div>
+
+    <!-- フッター -->
+    <div id="global-footer" class="mt-5">
+        <footer>
+            <p class="text-right"><small>© ART JAPAN CO., LTD. All Rights Reserved.</small></p>
+        </footer>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script type="text/javascript" src="/static/js/jquery/3.7.1/jquery.min.js"></script>
+    <script type="text/javascript" src="/static/js/common.js"></script>
+    <script type="text/javascript" src="/static/js/dataMonitor.js"></script>
+</body>
+</html>

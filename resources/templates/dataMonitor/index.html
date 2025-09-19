@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/layout}">
+
+<head>
+    <meta charset="UTF-8">
+    <title>データモニター</title>
+    <style>
+        .data-monitor-container {
+            padding: 20px;
+        }
+        .filter-section {
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+        }
+        .data-table th,
+        .data-table td {
+            border: 1px solid #ccc;
+            padding: 8px;
+            text-align: left;
+        }
+        .data-table th {
+            background-color: #6c757d;
+            color: white;
+            font-weight: bold;
+        }
+        .data-table tbody tr:nth-child(even) {
+            background-color: #f8f9fa;
+        }
+        .status-indicator {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            margin-right: 5px;
+        }
+        .status-normal { background-color: #28a745; }
+        .status-warning { background-color: #ffc107; }
+        .status-error { background-color: #dc3545; }
+        .row-normal {
+            background-color: #ffffff !important;
+        }
+        .row-warning {
+            background-color: #fff3cd !important;
+        }
+        .row-error {
+            background-color: #f8d7da !important;
+        }
+        .row-info {
+            background-color: #d1ecf1 !important;
+        }
+        .status-info { background-color: #17a2b8; }
+        
+        .filter-panel {
+            background-color: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 5px;
+            padding: 15px;
+            margin-bottom: 20px;
+        }
+        .filter-section {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+            align-items: flex-start;
+        }
+        .filter-group {
+            min-width: 200px;
+        }
+        .filter-group h6 {
+            margin-bottom: 10px;
+            color: #495057;
+        }
+        .checkbox-group {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+        .auto-scroll-controls {
+            position: fixed;
+            top: 150px;
+            right: 20px;
+            z-index: 1000;
+        }
+    </style>
+</head>
+
+<body>
+    <div layout:fragment="content">
+        <div class="data-monitor-container position-relative">
+            <h2>データモニター</h2>
+            
+            <!-- 自動スクロール制御 -->
+            <div class="auto-scroll-controls">
+                <button id="toggleAutoScroll" class="btn btn-warning">停止</button>
+            </div>
+
+            <!-- フィルターパネル -->
+            <div class="filter-panel">
+                <h5>◆ 履歴データ</h5>
+                <div class="filter-section">
+                    <!-- データ種別フィルタ -->
+                    <div class="filter-group">
+                        <h6>データ種別</h6>
+                        <select id="dataTypeFilter" class="form-select">
+                            <option value="all">全データ表示</option>
+                            <option value="normal">正常データ</option>
+                            <option value="warning">警告データ</option>
+                            <option value="error">エラーデータ</option>
+                            <option value="info">復旧データ</option>
+                        </select>
+                    </div>
+
+                    <!-- ゲート指定フィルタ -->
+                    <div class="filter-group">
+                        <h6>ゲート指定</h6>
+                        <div class="checkbox-group">
+                            <label><input type="checkbox" class="gate-filter-checkbox" value="0001" checked> エントランス (0001)</label>
+                            <label><input type="checkbox" class="gate-filter-checkbox" value="0002" checked> サーバールーム (0002)</label>
+                            <label><input type="checkbox" class="gate-filter-checkbox" value="0003" checked> 会議室 (0003)</label>
+                            <label><input type="checkbox" class="gate-filter-checkbox" value="0004" checked> 役員室 (0004)</label>
+                        </div>
+                    </div>
+
+                    <!-- 表示項目フィルタ -->
+                    <div class="filter-group">
+                        <h6>表示項目</h6>
+                        <div class="checkbox-group">
+                            <label><input type="checkbox" class="column-filter-checkbox" value="occurredDate" checked> 発生日時</label>
+                            <label><input type="checkbox" class="column-filter-checkbox" value="personalCode" checked> 個人コード</label>
+                            <label><input type="checkbox" class="column-filter-checkbox" value="name" checked> 名称</label>
+                            <label><input type="checkbox" class="column-filter-checkbox" value="departmentName" checked> 所属名称</label>
+                            <label><input type="checkbox" class="column-filter-checkbox" value="gateNumber" checked> ゲート番号</label>
+                            <label><input type="checkbox" class="column-filter-checkbox" value="gateName" checked> ゲート名称</label>
+                            <label><input type="checkbox" class="column-filter-checkbox" value="remarks" checked> 備考</label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- データテーブル -->
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>発生日時</th>
+                        <th>個人コード</th>
+                        <th>名称</th>
+                        <th>所属名称</th>
+                        <th>ゲート番号</th>
+                        <th>ゲート名称</th>
+                        <th>備考</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <!-- Thymeleafテンプレート（サーバー側データ用） -->
+                    <tr th:each="data, iterStat : ${historyDataList}" th:classappend="'row-' + ${data.statusClass}">
+                        <td>
+                            <span class="status-indicator" th:classappend="'status-' + ${data.statusClass}"></span>
+                            <span th:text="${data.occurredDate}">2025/6/27 12:23:45</span>
+                        </td>
+                        <td th:text="${data.personalCode}">000001</td>
+                        <td th:text="${data.name}">個人001</td>
+                        <td th:text="${data.departmentName}">所属001</td>
+                        <td th:text="${data.gateNumber}">0001</td>
+                        <td th:text="${data.gateName}">XA0001</td>
+                        <td th:text="${data.remarks}">入室</td>
+                    </tr>
+                    <!-- JavaScriptで動的に生成される部分（リアルタイム更新用） -->
+                </tbody>
+            </table>
+
+        </div>
+    </div>
+    <script type="text/javascript" th:src="@{/js/dataMonitor.js}"></script>
+</body>
+</html>
