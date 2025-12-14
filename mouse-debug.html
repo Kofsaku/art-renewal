@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>🔍 マウスイベント徹底診断</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .test-area { 
+            background: #f0f0f0; 
+            border: 2px solid #333; 
+            padding: 30px; 
+            margin: 20px 0; 
+            text-align: center; 
+            cursor: pointer;
+            user-select: none;
+        }
+        .log-area { 
+            background: #000; 
+            color: #0f0; 
+            padding: 20px; 
+            margin: 20px 0; 
+            height: 300px; 
+            overflow-y: scroll; 
+            font-family: monospace;
+        }
+        .red { background: #ff4444 !important; color: white; }
+        .blue { background: #4444ff !important; color: white; }
+        .green { background: #44ff44 !important; color: black; }
+    </style>
+</head>
+<body>
+    <h1>🔍 マウスイベント徹底診断システム</h1>
+    
+    <div style="background: #fff3cd; padding: 15px; border: 1px solid #ffc107; border-radius: 5px;">
+        <h4>📋 診断の目的</h4>
+        <p><strong>ダブルクリックが全く動作しない問題</strong>の原因を特定します。</p>
+        <ul>
+            <li>マウス設定の問題</li>
+            <li>ブラウザ設定の問題</li>
+            <li>イベント処理の問題</li>
+            <li>HTML属性の問題</li>
+        </ul>
+    </div>
+    
+    <h2>テスト1: 基本ボタン</h2>
+    <button onclick="log('✅ ボタンクリック成功！'); alert('ボタンクリック成功！');">ボタンをクリック</button>
+    
+    <h2>テスト2: シンプルDIV（クリックのみ）</h2>
+    <div class="test-area red" onclick="log('✅ DIVクリック成功！'); alert('DIVクリック成功！');">
+        このDIVをクリック（シングルクリック）
+    </div>
+    
+    <h2>テスト3: シンプルDIV（ダブルクリックのみ）</h2>
+    <div class="test-area blue" ondblclick="log('🔥 DIVダブルクリック成功！'); alert('DIVダブルクリック成功！');">
+        このDIVをダブルクリック（ダブルクリックのみ）
+    </div>
+    
+    <h2>テスト4: 詳細監視DIV</h2>
+    <div class="test-area green" id="detailedTest">
+        この緑DIVをダブルクリック（全イベント監視中）
+    </div>
+    
+    <h2>テスト5: テーブル行</h2>
+    <table style="width: 100%; border-collapse: collapse;">
+        <tr onclick="log('✅ テーブル行クリック成功！'); alert('テーブル行クリック成功！');"
+            ondblclick="log('🔥 テーブル行ダブルクリック成功！'); alert('テーブル行ダブルクリック成功！');"
+            style="background: #ffaa00; cursor: pointer; user-select: none;">
+            <td style="padding: 20px; border: 1px solid #333; text-align: center;">
+                このテーブル行をダブルクリック
+            </td>
+        </tr>
+    </table>
+    
+    <h2>📊 リアルタイムログ</h2>
+    <div class="log-area" id="logArea">
+        診断開始...\n
+    </div>
+    
+    <button onclick="clearLog()">ログクリア</button>
+    <button onclick="logBrowserInfo()">ブラウザ情報表示</button>
+    
+    <script>
+        let logCount = 0;
+        
+        function log(message) {
+            logCount++;
+            const logArea = document.getElementById('logArea');
+            const timestamp = new Date().toLocaleTimeString();
+            logArea.innerHTML += `[${timestamp}] #${logCount}: ${message}\n`;
+            logArea.scrollTop = logArea.scrollHeight;
+            console.log(message);
+        }
+        
+        function clearLog() {
+            document.getElementById('logArea').innerHTML = '診断ログクリア...\n';
+            logCount = 0;
+        }
+        
+        function logBrowserInfo() {
+            log('🔍 ブラウザ情報:');
+            log(`User Agent: ${navigator.userAgent}`);
+            log(`Platform: ${navigator.platform}`);
+            log(`Language: ${navigator.language}`);
+            log(`Cookies Enabled: ${navigator.cookieEnabled}`);
+            log(`JavaScript Enabled: true`);
+        }
+        
+        // 詳細監視DIVにすべてのマウスイベントを設定
+        document.addEventListener('DOMContentLoaded', () => {
+            log('🔥 DOM読み込み完了');
+            
+            const detailedTest = document.getElementById('detailedTest');
+            
+            // 全マウスイベントを監視
+            const events = [
+                'click', 'dblclick', 'contextmenu', 
+                'mousedown', 'mouseup', 'mousemove', 
+                'mouseenter', 'mouseleave', 'mouseover', 'mouseout'
+            ];
+            
+            events.forEach(eventType => {
+                detailedTest.addEventListener(eventType, (e) => {
+                    log(`🖱️ ${eventType.toUpperCase()} イベント検出`);
+                    
+                    if (eventType === 'dblclick') {
+                        log('🔥🔥 ダブルクリック成功！');
+                        alert('🔥🔥 詳細監視DIVダブルクリック成功！');
+                    }
+                    
+                    if (eventType === 'contextmenu') {
+                        e.preventDefault();
+                        log('🔥🔥 右クリック成功！');
+                        alert('🔥🔥 詳細監視DIV右クリック成功！');
+                        return false;
+                    }
+                });
+            });
+            
+            log('✅ 詳細監視DIVに全イベントリスナー設定完了');
+            
+            // ダブルクリック検出の特別なロジック
+            let clickCount = 0;
+            let clickTimer = null;
+            
+            detailedTest.addEventListener('mousedown', () => {
+                clickCount++;
+                log(`🖱️ マウスダウン #${clickCount}`);
+                
+                if (clickTimer) {
+                    clearTimeout(clickTimer);
+                }
+                
+                clickTimer = setTimeout(() => {
+                    if (clickCount >= 2) {
+                        log('🔥 手動ダブルクリック検出！');
+                        alert('🔥 手動ダブルクリック検出成功！');
+                    }
+                    clickCount = 0;
+                }, 500);
+            });
+            
+            log('✅ 手動ダブルクリック検出システム設定完了');
+        });
+        
+        log('🔍 マウス診断スクリプト読み込み完了');
+    </script>
+</body>
+</html>

@@ -60,36 +60,191 @@
         }
         .status-info { background-color: #17a2b8; }
         
-        .filter-panel {
-            background-color: #f8f9fa;
-            border: 1px solid #dee2e6;
-            border-radius: 5px;
-            padding: 15px;
-            margin-bottom: 20px;
-        }
-        .filter-section {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 20px;
-            align-items: flex-start;
-        }
-        .filter-group {
-            min-width: 200px;
-        }
-        .filter-group h6 {
-            margin-bottom: 10px;
-            color: #495057;
-        }
-        .checkbox-group {
-            display: flex;
-            flex-direction: column;
-            gap: 5px;
-        }
         .auto-scroll-controls {
             position: fixed;
             top: 150px;
             right: 20px;
             z-index: 1000;
+        }
+        
+        /* Excel-like filter styling */
+        .data-table th {
+            position: relative;
+            padding-right: 25px;
+        }
+        
+        .excel-filter-trigger {
+            position: absolute;
+            top: 50%;
+            right: 8px;
+            transform: translateY(-50%);
+            width: 12px;
+            height: 12px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(255,255,255,0.1);
+            border-radius: 2px;
+            transition: all 0.2s ease;
+        }
+        
+        .excel-filter-trigger:hover {
+            background: rgba(255,255,255,0.3);
+            transform: translateY(-50%) scale(1.1);
+        }
+        
+        .excel-filter-trigger::after {
+            content: '▼';
+            font-size: 10px;
+            color: white;
+            font-weight: bold;
+        }
+        
+        .excel-filter-trigger.active::after {
+            content: '▲';
+            color: #1976d2;
+        }
+        
+        .excel-filter-menu {
+            display: none;
+            position: absolute;
+            top: 100%;
+            right: 0;
+            background: white;
+            border: 2px solid #e7e7e7;
+            border-radius: 0;
+            padding: 0;
+            z-index: 1000;
+            min-width: 280px;
+            max-width: 350px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        .excel-filter-menu.show {
+            display: block;
+        }
+        
+        .excel-filter-header {
+            background: linear-gradient(180deg, #f7f7f7 0%, #e7e7e7 100%);
+            border-bottom: 1px solid #d0d0d0;
+            padding: 8px 12px;
+            font-size: 0.85em;
+            font-weight: 600;
+            color: #333;
+        }
+        
+        .excel-search-section {
+            padding: 10px 12px;
+            border-bottom: 1px solid #e7e7e7;
+            background: #fafafa;
+        }
+        
+        .excel-search-box {
+            width: 100%;
+            padding: 6px 10px;
+            border: 1px solid #b7b7b7;
+            border-radius: 0;
+            font-size: 0.85em;
+            background: white;
+        }
+        
+        .excel-search-box:focus {
+            outline: none;
+            border-color: #4472c4;
+            box-shadow: 0 0 3px rgba(68, 114, 196, 0.3);
+        }
+        
+        .excel-filter-actions {
+            padding: 8px 12px;
+            background: #f7f7f7;
+            border-bottom: 1px solid #e7e7e7;
+            display: flex;
+            gap: 8px;
+        }
+        
+        .excel-action-btn {
+            padding: 4px 12px;
+            border: 1px solid #b7b7b7;
+            background: white;
+            font-size: 0.8em;
+            cursor: pointer;
+            border-radius: 0;
+            transition: all 0.1s ease;
+        }
+        
+        .excel-action-btn:hover {
+            background: #e7e7e7;
+        }
+        
+        .excel-action-btn.primary {
+            background: #4472c4;
+            color: white;
+            border-color: #4472c4;
+        }
+        
+        .excel-action-btn.primary:hover {
+            background: #365a9b;
+        }
+        
+        .excel-filter-list {
+            max-height: 200px;
+            overflow-y: auto;
+            background: white;
+        }
+        
+        .excel-filter-item {
+            display: flex;
+            align-items: center;
+            padding: 4px 12px;
+            border-bottom: 1px solid #f0f0f0;
+            cursor: pointer;
+            font-size: 0.85em;
+            transition: background-color 0.1s ease;
+        }
+        
+        .excel-filter-item:hover {
+            background: #e7f3ff;
+        }
+        
+        .excel-filter-item input[type="checkbox"] {
+            margin-right: 8px;
+            cursor: pointer;
+        }
+        
+        .excel-filter-item.select-all {
+            background: #f7f7f7;
+            font-weight: 600;
+            border-bottom: 2px solid #d0d0d0;
+        }
+        
+        .data-table th.filtered {
+            background: linear-gradient(135deg, #1976d2, #1565c0);
+            color: white;
+        }
+        
+        .filter-status-display {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 8px 15px;
+            background: #fff3cd;
+            border: 2px solid #856404;
+            border-radius: 5px;
+            margin-bottom: 10px;
+            font-size: 0.9em;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        .filter-active-badge {
+            font-weight: 600;
+            color: #856404;
+        }
+        
+        .filter-details {
+            font-size: 0.8em;
+            color: #666;
         }
     </style>
 </head>
@@ -104,63 +259,48 @@
                 <button id="toggleAutoScroll" class="btn btn-warning">停止</button>
             </div>
 
-            <!-- フィルターパネル -->
-            <div class="filter-panel">
-                <h5>◆ 履歴データ</h5>
-                <div class="filter-section">
-                    <!-- データ種別フィルタ -->
-                    <div class="filter-group">
-                        <h6>データ種別</h6>
-                        <select id="dataTypeFilter" class="form-select">
-                            <option value="all">全データ表示</option>
-                            <option value="normal">正常データ</option>
-                            <option value="warning">警告データ</option>
-                            <option value="error">エラーデータ</option>
-                            <option value="info">復旧データ</option>
-                        </select>
-                    </div>
-
-                    <!-- ゲート指定フィルタ -->
-                    <div class="filter-group">
-                        <h6>ゲート指定</h6>
-                        <div class="checkbox-group">
-                            <label><input type="checkbox" class="gate-filter-checkbox" value="0001" checked> エントランス (0001)</label>
-                            <label><input type="checkbox" class="gate-filter-checkbox" value="0002" checked> サーバールーム (0002)</label>
-                            <label><input type="checkbox" class="gate-filter-checkbox" value="0003" checked> 会議室 (0003)</label>
-                            <label><input type="checkbox" class="gate-filter-checkbox" value="0004" checked> 役員室 (0004)</label>
-                        </div>
-                    </div>
-
-                    <!-- 表示項目フィルタ -->
-                    <div class="filter-group">
-                        <h6>表示項目</h6>
-                        <div class="checkbox-group">
-                            <label><input type="checkbox" class="column-filter-checkbox" value="occurredDate" checked> 発生日時</label>
-                            <label><input type="checkbox" class="column-filter-checkbox" value="personalCode" checked> 個人コード</label>
-                            <label><input type="checkbox" class="column-filter-checkbox" value="name" checked> 名称</label>
-                            <label><input type="checkbox" class="column-filter-checkbox" value="departmentName" checked> 所属名称</label>
-                            <label><input type="checkbox" class="column-filter-checkbox" value="gateNumber" checked> ゲート番号</label>
-                            <label><input type="checkbox" class="column-filter-checkbox" value="gateName" checked> ゲート名称</label>
-                            <label><input type="checkbox" class="column-filter-checkbox" value="remarks" checked> 備考</label>
-                        </div>
-                    </div>
-                </div>
-            </div>
+            <!-- 履歴データヘッダー -->
+            <h5>◆ 履歴データ</h5>
 
             <!-- データテーブル -->
             <table class="data-table">
                 <thead>
-                    <tr>
-                        <th>発生日時</th>
-                        <th>個人コード</th>
-                        <th>名称</th>
-                        <th>所属名称</th>
-                        <th>ゲート番号</th>
-                        <th>ゲート名称</th>
-                        <th>備考</th>
+                    <tr id="tableHeaders">
+                        <th data-column="occurredDate">発生日付
+                            <div class="excel-filter-trigger" onclick="showDataFilter(event, 'occurredDate')"></div>
+                            <div class="excel-filter-menu" id="filter-occurredDate"></div>
+                        </th>
+                        <th data-column="personalCode">個人コード
+                            <div class="excel-filter-trigger" onclick="showDataFilter(event, 'personalCode')"></div>
+                            <div class="excel-filter-menu" id="filter-personalCode"></div>
+                        </th>
+                        <th data-column="name">氏名
+                            <div class="excel-filter-trigger" onclick="showDataFilter(event, 'name')"></div>
+                            <div class="excel-filter-menu" id="filter-name"></div>
+                        </th>
+                        <th data-column="departmentCode">所属コード
+                            <div class="excel-filter-trigger" onclick="showDataFilter(event, 'departmentCode')"></div>
+                            <div class="excel-filter-menu" id="filter-departmentCode"></div>
+                        </th>
+                        <th data-column="departmentName">所属名称
+                            <div class="excel-filter-trigger" onclick="showDataFilter(event, 'departmentName')"></div>
+                            <div class="excel-filter-menu" id="filter-departmentName"></div>
+                        </th>
+                        <th data-column="gateNumber">ゲート番号
+                            <div class="excel-filter-trigger" onclick="showDataFilter(event, 'gateNumber')"></div>
+                            <div class="excel-filter-menu" id="filter-gateNumber"></div>
+                        </th>
+                        <th data-column="gateName">ゲート名称
+                            <div class="excel-filter-trigger" onclick="showDataFilter(event, 'gateName')"></div>
+                            <div class="excel-filter-menu" id="filter-gateName"></div>
+                        </th>
+                        <th data-column="historyDetails">履歴詳細
+                            <div class="excel-filter-trigger" onclick="showDataFilter(event, 'historyDetails')"></div>
+                            <div class="excel-filter-menu" id="filter-historyDetails"></div>
+                        </th>
                     </tr>
                 </thead>
-                <tbody>
+                <tbody id="dataTableBody">
                     <!-- Thymeleafテンプレート（サーバー側データ用） -->
                     <tr th:each="data, iterStat : ${historyDataList}" th:classappend="'row-' + ${data.statusClass}">
                         <td>
@@ -169,10 +309,11 @@
                         </td>
                         <td th:text="${data.personalCode}">000001</td>
                         <td th:text="${data.name}">個人001</td>
+                        <td th:text="${data.departmentCode}">001</td>
                         <td th:text="${data.departmentName}">所属001</td>
                         <td th:text="${data.gateNumber}">0001</td>
                         <td th:text="${data.gateName}">XA0001</td>
-                        <td th:text="${data.remarks}">入室</td>
+                        <td th:text="${data.historyDetails}">入室</td>
                     </tr>
                     <!-- JavaScriptで動的に生成される部分（リアルタイム更新用） -->
                 </tbody>
@@ -180,6 +321,6 @@
 
         </div>
     </div>
-    <script type="text/javascript" th:src="@{/js/dataMonitor.js}"></script>
+    <script type="text/javascript" th:src="@{/resources/static/js/dataMonitor.js}"></script>
 </body>
 </html>

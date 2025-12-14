@@ -1,0 +1,1304 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="/resources/static/css/common.css" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" />
+    <title>個人情報登録</title>
+    <style>
+        .content-wrapper {
+            padding-top: 70px;
+            min-height: calc(100vh - 140px);
+            background: #f8f9fa;
+        }
+        
+        .registration-container {
+            padding: 15px;
+            max-width: none;
+            margin: 0;
+        }
+        
+        .page-title {
+            font-size: 1.8rem;
+            font-weight: 600;
+            color: #495057;
+            margin-bottom: 30px;
+            padding-bottom: 10px;
+            border-bottom: 3px solid #007bff;
+            display: inline-block;
+        }
+        
+        .form-container {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+            overflow: hidden;
+            width: 100%;
+            max-width: none;
+        }
+        
+        .form-header {
+            background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
+            color: white;
+            padding: 20px 30px;
+        }
+        
+        .form-header h3 {
+            margin: 0;
+            font-size: 1.3rem;
+            font-weight: 600;
+        }
+        
+        .form-header .subtitle {
+            font-size: 0.9rem;
+            opacity: 0.9;
+            margin-top: 5px;
+        }
+        
+        .form-body {
+            padding: 20px;
+        }
+        
+        .main-form-area {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 30px;
+            align-items: start;
+            min-height: 800px;
+            width: 100%;
+        }
+        
+        .form-left {
+            display: flex;
+            flex-direction: column;
+            gap: 30px;
+        }
+        
+        .form-section {
+            background: white;
+            padding: 0;
+        }
+        
+        .section-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: #495057;
+            margin-bottom: 20px;
+            padding-bottom: 8px;
+            border-bottom: 2px solid #e9ecef;
+            position: relative;
+        }
+        
+        .section-title::before {
+            content: '';
+            position: absolute;
+            bottom: -2px;
+            left: 0;
+            width: 40px;
+            height: 2px;
+            background: #007bff;
+        }
+        
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 20px;
+        }
+        
+        .form-group {
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .form-label {
+            font-weight: 500;
+            color: #495057;
+            margin-bottom: 8px;
+            font-size: 1rem;
+        }
+        
+        .required {
+            color: #dc3545;
+            margin-left: 3px;
+        }
+        
+        .form-control {
+            border: 2px solid #e9ecef;
+            border-radius: 8px;
+            padding: 15px 18px;
+            font-size: 1rem;
+            transition: all 0.2s ease;
+            background: #fff;
+            min-width: 250px;
+        }
+        
+        .form-control:focus {
+            border-color: #007bff;
+            box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.1);
+            outline: none;
+        }
+        
+        .form-control:hover {
+            border-color: #ced4da;
+        }
+        
+        .date-input-group {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+        
+        .date-input {
+            width: 80px;
+            text-align: center;
+            padding: 12px 8px;
+            border: 2px solid #e9ecef;
+            border-radius: 6px;
+            font-size: 1rem;
+        }
+        
+        .date-select {
+            width: 70px;
+            padding: 12px 8px;
+            border: 2px solid #e9ecef;
+            border-radius: 6px;
+            font-size: 1rem;
+            text-align: center;
+        }
+        
+        .date-separator {
+            font-weight: 500;
+            color: #495057;
+            font-size: 1rem;
+            margin: 0 2px;
+        }
+        
+        .btn-calendar {
+            background: #6c757d;
+            color: white;
+            border: none;
+            padding: 12px 15px;
+            border-radius: 6px;
+            font-size: 0.9rem;
+            transition: all 0.2s ease;
+            margin-left: 8px;
+        }
+        
+        .btn-calendar:hover {
+            background: #5a6268;
+            transform: translateY(-1px);
+        }
+        
+        .date-inline-picker {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            background: white;
+            border: 2px solid #007bff;
+            border-radius: 8px;
+            padding: 12px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            z-index: 100;
+            display: none;
+            width: 280px;
+        }
+        
+        .date-input-group {
+            position: relative;
+        }
+        
+        .calendar-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+            padding-bottom: 8px;
+            border-bottom: 1px solid #e9ecef;
+        }
+        
+        .calendar-nav-btn {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 4px;
+            width: 30px;
+            height: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        
+        .calendar-nav-btn:hover {
+            background: #e9ecef;
+        }
+        
+        .calendar-month-year {
+            font-weight: 600;
+            font-size: 14px;
+            color: #495057;
+        }
+        
+        .calendar-grid {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 2px;
+            text-align: center;
+        }
+        
+        .calendar-day-header {
+            padding: 6px 4px;
+            font-size: 12px;
+            font-weight: 600;
+            color: #6c757d;
+            background: #f8f9fa;
+        }
+        
+        .calendar-day {
+            padding: 8px 4px;
+            font-size: 13px;
+            cursor: pointer;
+            border-radius: 4px;
+            transition: all 0.2s ease;
+            border: 1px solid transparent;
+        }
+        
+        .calendar-day:hover {
+            background: #e3f2fd;
+        }
+        
+        .calendar-day.other-month {
+            color: #adb5bd;
+        }
+        
+        .calendar-day.selected {
+            background: #007bff;
+            color: white;
+        }
+        
+        .calendar-day.today {
+            border: 1px solid #007bff;
+            font-weight: 600;
+        }
+        
+        .calendar-actions {
+            display: flex;
+            gap: 8px;
+            margin-top: 10px;
+            padding-top: 8px;
+            border-top: 1px solid #e9ecef;
+            justify-content: flex-end;
+        }
+        
+        .calendar-btn {
+            padding: 6px 12px;
+            border: none;
+            border-radius: 4px;
+            font-size: 12px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        
+        .calendar-btn.today-btn {
+            background: #f8f9fa;
+            color: #495057;
+            border: 1px solid #dee2e6;
+        }
+        
+        .calendar-btn.close-btn {
+            background: #6c757d;
+            color: white;
+        }
+        
+        .checkbox-group {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            border: 2px solid #e9ecef;
+            transition: all 0.2s ease;
+        }
+        
+        .checkbox-group:hover {
+            background: #e9ecef;
+        }
+        
+        .checkbox-group input[type="checkbox"] {
+            width: 20px;
+            height: 20px;
+            accent-color: #007bff;
+        }
+        
+        .checkbox-group label {
+            margin: 0;
+            font-weight: 500;
+            cursor: pointer;
+            font-size: 1rem;
+        }
+        
+        .form-right {
+            display: flex;
+            flex-direction: column;
+            gap: 25px;
+            height: fit-content;
+        }
+        
+        .photo-section {
+            background: white;
+            border: 2px dashed #dee2e6;
+            border-radius: 12px;
+            padding: 25px;
+            text-align: center;
+            transition: all 0.2s ease;
+        }
+        
+        .photo-section:hover {
+            border-color: #007bff;
+            background: #f8f9fa;
+        }
+        
+        .photo-preview {
+            width: 180px;
+            height: 140px;
+            border: 2px solid #dee2e6;
+            margin: 0 auto 15px;
+            background: #fff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+        
+        .photo-preview img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        
+        .no-image-icon {
+            font-size: 3.5rem;
+            color: #adb5bd;
+            margin-bottom: 10px;
+        }
+        
+        .no-image-text {
+            color: #6c757d;
+            font-size: 1rem;
+            font-weight: 500;
+        }
+        
+        .photo-buttons {
+            display: flex;
+            gap: 12px;
+            justify-content: center;
+        }
+        
+        .btn-photo {
+            padding: 10px 18px;
+            font-size: 0.9rem;
+            border-radius: 6px;
+            font-weight: 500;
+            transition: all 0.2s ease;
+        }
+        
+        .permissions-section {
+            background: white;
+            border: 2px solid #e9ecef;
+            border-radius: 8px;
+            padding: 20px;
+            height: fit-content;
+        }
+        
+        .permissions-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+        
+        .permissions-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: #495057;
+        }
+        
+        .permissions-controls {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .permission-code {
+            width: 60px;
+            padding: 8px;
+            border: 1px solid #dee2e6;
+            border-radius: 4px;
+            text-align: center;
+            font-size: 0.9rem;
+        }
+        
+        .btn-permission {
+            background: #6c757d;
+            color: white;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 4px;
+            font-size: 0.85rem;
+            cursor: pointer;
+        }
+        
+        .permissions-table-container {
+            max-height: 700px;
+            min-height: 400px;
+            overflow-y: auto;
+            border: 1px solid #dee2e6;
+        }
+        
+        .permissions-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.85rem;
+        }
+        
+        .permissions-table thead {
+            background: #f8f9fa;
+            position: sticky;
+            top: 0;
+        }
+        
+        .permissions-table th,
+        .permissions-table td {
+            padding: 6px 8px;
+            text-align: center;
+            border: 1px solid #dee2e6;
+            line-height: 1.3;
+        }
+        
+        .permissions-table th {
+            font-weight: 600;
+            color: #495057;
+            background: #f8f9fa;
+        }
+        
+        .permissions-table tbody tr:nth-child(even) {
+            background: #f8f9fa;
+        }
+        
+        .permissions-table tbody tr:hover {
+            background: #e9ecef;
+        }
+        
+        .action-section {
+            background: #f8f9fa;
+            padding: 30px;
+            border-top: 1px solid #e9ecef;
+        }
+        
+        .action-buttons {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+        }
+        
+        .btn-action {
+            padding: 15px 35px;
+            font-size: 1.1rem;
+            border-radius: 8px;
+            border: none;
+            font-weight: 600;
+            transition: all 0.2s ease;
+            min-width: 150px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+        
+        .btn-save {
+            background: linear-gradient(135deg, #28a745, #20c997);
+            color: white;
+        }
+        
+        .btn-save:hover {
+            background: linear-gradient(135deg, #218838, #1aa085);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 12px rgba(40, 167, 69, 0.3);
+        }
+        
+        .btn-cancel {
+            background: linear-gradient(135deg, #6c757d, #5a6268);
+            color: white;
+        }
+        
+        .btn-cancel:hover {
+            background: linear-gradient(135deg, #5a6268, #495057);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 12px rgba(108, 117, 125, 0.3);
+        }
+        
+        .btn-clear {
+            background: linear-gradient(135deg, #ffc107, #fd7e14);
+            color: #333;
+        }
+        
+        .btn-clear:hover {
+            background: linear-gradient(135deg, #e0a800, #dc7609);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 12px rgba(255, 193, 7, 0.3);
+        }
+        
+        .field-note {
+            font-size: 0.85rem;
+            color: #6c757d;
+            margin-top: 5px;
+            font-style: italic;
+        }
+        
+        @media (max-width: 1200px) {
+            .main-form-area {
+                grid-template-columns: 3fr 2fr;
+                gap: 25px;
+            }
+        }
+        
+        @media (max-width: 992px) {
+            .main-form-area {
+                grid-template-columns: 1fr;
+                gap: 20px;
+            }
+            
+            .form-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .action-buttons {
+                flex-direction: column;
+                align-items: center;
+            }
+            
+            .btn-action {
+                width: 100%;
+                max-width: 300px;
+            }
+            
+            .registration-container {
+                padding: 10px;
+            }
+            
+            .form-body {
+                padding: 15px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- ヘッダー -->
+    <div class="bs-component" id="global-header">
+        <div class="fixed-top">
+            <nav class="sticky-top navbar navbar-expand-lg navbar-dark bg-success p-0">
+                <ul class="d-flex list-unstyled col-12 p-0" style="height:30px;">
+                    <li class="p-0 col-11">
+                        <div class="navbar-brand ms-3">
+                            Web版入退室管理システム
+                        </div>
+                    </li>
+                    <li class="p-0 col-1">
+                        <div class="border border-1 border-white m-1 g-center">
+                            <a class="text-white fs-5 text-decoration-none ms-2" href="/logout">
+                                ログアウト
+                            </a>
+                        </div>
+                    </li>
+                </ul>
+            </nav>
+        </div>
+    </div>
+
+    <!-- ナビゲーション -->
+    <nav>
+        <div class="container-fluid">
+            <ul class="navbar-nav d-flex flex-row justify-content-center w-100">
+                <li class="nav-item">
+                    <a href="/resources/personalList-preview.html" class="nav-link">
+                        <i class="fas fa-users me-1"></i>
+                        個人情報一覧
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="/resources/historyReport-preview.html" class="nav-link">
+                        <i class="fas fa-chart-line me-1"></i>
+                        履歴レポート
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="/resources/dataMonitor-preview.html" class="nav-link">
+                        <i class="fas fa-desktop me-1"></i>
+                        データモニター
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="/resources/statusMonitor-preview.html" class="nav-link">
+                        <i class="fas fa-heartbeat me-1"></i>
+                        ステータスモニター
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="/resources/mapMonitor-preview.html" class="nav-link">
+                        <i class="fas fa-map me-1"></i>
+                        マップモニター
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="/resources/personalRegistration-preview.html" class="nav-link active">
+                        <i class="fas fa-user-plus me-1"></i>
+                        個人情報登録
+                    </a>
+                </li>
+                <li class="nav-item dropdown">
+                    <a href="#" class="nav-link dropdown-toggle" role="button" data-bs-toggle="dropdown">
+                        <i class="fas fa-cogs me-1"></i>
+                        システム設定
+                    </a>
+                    <ul class="dropdown-menu">
+                        <li><a class="dropdown-item" href="#"><i class="fas fa-file-alt me-2"></i>操作ログ</a></li>
+                        <li><a class="dropdown-item" href="#"><i class="fas fa-calendar me-2"></i>休日設定</a></li>
+                        <li><a class="dropdown-item" href="#"><i class="fas fa-clock me-2"></i>時刻送信</a></li>
+                        <li><a class="dropdown-item" href="#"><i class="fas fa-database me-2"></i>バックアップ</a></li>
+                        <li><a class="dropdown-item" href="#"><i class="fas fa-broadcast-tower me-2"></i>一斉送信</a></li>
+                        <li><a class="dropdown-item" href="#"><i class="fas fa-user-shield me-2"></i>ユーザー管理</a></li>
+                    </ul>
+                </li>
+            </ul>
+        </div>
+    </nav>
+
+    <!-- メインコンテンツ -->
+    <main class="content-wrapper">
+        <div class="registration-container">
+            <h2>個人情報登録</h2>
+            
+            <!-- フォームコンテナ -->
+            <div class="form-container">
+                <div class="form-header">
+                    <h3>個人情報新規登録</h3>
+                    <div class="subtitle">個人の基本情報と権限設定を行います</div>
+                </div>
+                
+                <div class="form-body">
+                    <div class="main-form-area">
+                        <!-- 左側フォーム -->
+                        <div class="form-left">
+                            <!-- 必須項目セクション -->
+                            <div class="form-section">
+                                <h4 class="section-title">必須項目</h4>
+                                
+                                <div class="form-grid">
+                                    <div class="form-group">
+                                        <label class="form-label">個人コード<span class="required">*</span></label>
+                                        <input type="text" class="form-control" value="0030302" id="personCode" placeholder="個人コードを入力">
+                                    </div>
+                                    
+                                    <div class="form-group">
+                                        <label class="form-label">発行回数</label>
+                                        <input type="text" class="form-control" value="0" readonly>
+                                    </div>
+                                    
+                                    <div class="form-group">
+                                        <label class="form-label">管理番号</label>
+                                        <input type="text" class="form-control" placeholder="管理番号を入力" id="managementNumber">
+                                    </div>
+                                    
+                                    <div class="form-group">
+                                        <label class="form-label">氏名<span class="required">*</span></label>
+                                        <input type="text" class="form-control" placeholder="氏名を入力" id="name">
+                                    </div>
+                                    
+                                    <div class="form-group">
+                                        <label class="form-label">氏名(ﾌﾘｶﾞﾅ)</label>
+                                        <input type="text" class="form-control" placeholder="フリガナを入力" id="nameKana">
+                                    </div>
+                                    
+                                    <div class="form-group">
+                                        <label class="form-label">テナント</label>
+                                        <input type="text" class="form-control" placeholder="テナントコードを入力" id="tenantCode">
+                                    </div>
+                                    
+                                    <div class="form-group">
+                                        <label class="form-label">所属</label>
+                                        <input type="text" class="form-control" placeholder="所属を入力" id="department">
+                                    </div>
+                                    
+                                    <div class="form-group">
+                                        <label class="form-label">区分</label>
+                                        <input type="text" class="form-control" value="001" id="category">
+                                    </div>
+                                    
+                                    <div class="form-group">
+                                        <label class="form-label">テンキー暗証番号</label>
+                                        <input type="text" class="form-control" value="0000" placeholder="テンキー暗証番号" id="tenkeyNumber">
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- 利用期間設定 -->
+                            <div class="form-section">
+                                <h4 class="section-title">利用期間設定</h4>
+                                
+                                <div class="form-grid">
+                                    <div class="form-group">
+                                        <label class="form-label">利用開始日</label>
+                                        <div class="date-input-group">
+                                            <input type="text" class="date-input" value="0000" maxlength="4" id="startYear" placeholder="年">
+                                            <span class="date-separator">年</span>
+                                            <select class="date-select" id="startMonth">
+                                                <option value="01">01</option>
+                                                <option value="02">02</option>
+                                                <option value="03">03</option>
+                                                <option value="04">04</option>
+                                                <option value="05">05</option>
+                                                <option value="06">06</option>
+                                                <option value="07">07</option>
+                                                <option value="08">08</option>
+                                                <option value="09">09</option>
+                                                <option value="10">10</option>
+                                                <option value="11">11</option>
+                                                <option value="12">12</option>
+                                            </select>
+                                            <span class="date-separator">月</span>
+                                            <select class="date-select" id="startDay">
+                                                <option value="01">01</option>
+                                                <option value="02">02</option>
+                                                <option value="03">03</option>
+                                                <option value="04">04</option>
+                                                <option value="05">05</option>
+                                                <option value="06">06</option>
+                                                <option value="07">07</option>
+                                                <option value="08">08</option>
+                                                <option value="09">09</option>
+                                                <option value="10">10</option>
+                                                <option value="11">11</option>
+                                                <option value="12">12</option>
+                                                <option value="13">13</option>
+                                                <option value="14">14</option>
+                                                <option value="15">15</option>
+                                                <option value="16">16</option>
+                                                <option value="17">17</option>
+                                                <option value="18">18</option>
+                                                <option value="19">19</option>
+                                                <option value="20">20</option>
+                                                <option value="21">21</option>
+                                                <option value="22">22</option>
+                                                <option value="23">23</option>
+                                                <option value="24">24</option>
+                                                <option value="25">25</option>
+                                                <option value="26">26</option>
+                                                <option value="27">27</option>
+                                                <option value="28">28</option>
+                                                <option value="29">29</option>
+                                                <option value="30">30</option>
+                                                <option value="31">31</option>
+                                            </select>
+                                            <span class="date-separator">日</span>
+                                            <button class="btn-calendar" onclick="toggleInlineDatePicker('start')">
+                                                <i class="fas fa-calendar-alt"></i>
+                                            </button>
+                                            <div class="date-inline-picker" id="startDatePicker">
+                                                <div class="calendar-header">
+                                                    <button class="calendar-nav-btn" onclick="navigateMonth('start', -1)">‹</button>
+                                                    <span class="calendar-month-year" id="startMonthYear"></span>
+                                                    <button class="calendar-nav-btn" onclick="navigateMonth('start', 1)">›</button>
+                                                </div>
+                                                <div class="calendar-grid" id="startCalendarGrid"></div>
+                                                <div class="calendar-actions">
+                                                    <button class="calendar-btn today-btn" onclick="selectToday('start')">今日</button>
+                                                    <button class="calendar-btn close-btn" onclick="hideInlineDatePicker('start')">閉じる</button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="field-note">手入力・出来ればカレンダーも追加したい</div>
+                                    </div>
+                                    
+                                    <div class="form-group">
+                                        <label class="form-label">利用終了日</label>
+                                        <div class="date-input-group">
+                                            <input type="text" class="date-input" value="0000" maxlength="4" id="endYear" placeholder="年">
+                                            <span class="date-separator">年</span>
+                                            <select class="date-select" id="endMonth">
+                                                <option value="01">01</option>
+                                                <option value="02">02</option>
+                                                <option value="03">03</option>
+                                                <option value="04">04</option>
+                                                <option value="05">05</option>
+                                                <option value="06">06</option>
+                                                <option value="07">07</option>
+                                                <option value="08">08</option>
+                                                <option value="09">09</option>
+                                                <option value="10">10</option>
+                                                <option value="11">11</option>
+                                                <option value="12">12</option>
+                                            </select>
+                                            <span class="date-separator">月</span>
+                                            <select class="date-select" id="endDay">
+                                                <option value="01">01</option>
+                                                <option value="02">02</option>
+                                                <option value="03">03</option>
+                                                <option value="04">04</option>
+                                                <option value="05">05</option>
+                                                <option value="06">06</option>
+                                                <option value="07">07</option>
+                                                <option value="08">08</option>
+                                                <option value="09">09</option>
+                                                <option value="10">10</option>
+                                                <option value="11">11</option>
+                                                <option value="12">12</option>
+                                                <option value="13">13</option>
+                                                <option value="14">14</option>
+                                                <option value="15">15</option>
+                                                <option value="16">16</option>
+                                                <option value="17">17</option>
+                                                <option value="18">18</option>
+                                                <option value="19">19</option>
+                                                <option value="20">20</option>
+                                                <option value="21">21</option>
+                                                <option value="22">22</option>
+                                                <option value="23">23</option>
+                                                <option value="24">24</option>
+                                                <option value="25">25</option>
+                                                <option value="26">26</option>
+                                                <option value="27">27</option>
+                                                <option value="28">28</option>
+                                                <option value="29">29</option>
+                                                <option value="30">30</option>
+                                                <option value="31">31</option>
+                                            </select>
+                                            <span class="date-separator">日</span>
+                                            <button class="btn-calendar" onclick="toggleInlineDatePicker('end')">
+                                                <i class="fas fa-calendar-alt"></i>
+                                            </button>
+                                            <div class="date-inline-picker" id="endDatePicker">
+                                                <div class="calendar-header">
+                                                    <button class="calendar-nav-btn" onclick="navigateMonth('end', -1)">‹</button>
+                                                    <span class="calendar-month-year" id="endMonthYear"></span>
+                                                    <button class="calendar-nav-btn" onclick="navigateMonth('end', 1)">›</button>
+                                                </div>
+                                                <div class="calendar-grid" id="endCalendarGrid"></div>
+                                                <div class="calendar-actions">
+                                                    <button class="calendar-btn today-btn" onclick="selectToday('end')">今日</button>
+                                                    <button class="calendar-btn close-btn" onclick="hideInlineDatePicker('end')">閉じる</button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="field-note">手入力・出来ればカレンダーも追加したい</div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- 代替設定 -->
+                            <div class="form-section">
+                                <h4 class="section-title">代替設定</h4>
+                                
+                                <div class="form-grid">
+                                    <div class="form-group">
+                                        <label class="form-label">代替コード</label>
+                                        <input type="text" class="form-control" placeholder="代替コードを入力" id="altCode">
+                                    </div>
+                                    
+                                    <div class="form-group">
+                                        <label class="form-label">代替コード利用終了日</label>
+                                        <div class="date-input-group">
+                                            <input type="text" class="date-input" value="0000" maxlength="4" id="altYear" placeholder="年">
+                                            <span class="date-separator">年</span>
+                                            <select class="date-select" id="altMonth">
+                                                <option value="01">01</option>
+                                                <option value="02">02</option>
+                                                <option value="03">03</option>
+                                                <option value="04">04</option>
+                                                <option value="05">05</option>
+                                                <option value="06">06</option>
+                                                <option value="07">07</option>
+                                                <option value="08">08</option>
+                                                <option value="09">09</option>
+                                                <option value="10">10</option>
+                                                <option value="11">11</option>
+                                                <option value="12">12</option>
+                                            </select>
+                                            <span class="date-separator">月</span>
+                                            <select class="date-select" id="altDay">
+                                                <option value="01">01</option>
+                                                <option value="02">02</option>
+                                                <option value="03">03</option>
+                                                <option value="04">04</option>
+                                                <option value="05">05</option>
+                                                <option value="06">06</option>
+                                                <option value="07">07</option>
+                                                <option value="08">08</option>
+                                                <option value="09">09</option>
+                                                <option value="10">10</option>
+                                                <option value="11">11</option>
+                                                <option value="12">12</option>
+                                                <option value="13">13</option>
+                                                <option value="14">14</option>
+                                                <option value="15">15</option>
+                                                <option value="16">16</option>
+                                                <option value="17">17</option>
+                                                <option value="18">18</option>
+                                                <option value="19">19</option>
+                                                <option value="20">20</option>
+                                                <option value="21">21</option>
+                                                <option value="22">22</option>
+                                                <option value="23">23</option>
+                                                <option value="24">24</option>
+                                                <option value="25">25</option>
+                                                <option value="26">26</option>
+                                                <option value="27">27</option>
+                                                <option value="28">28</option>
+                                                <option value="29">29</option>
+                                                <option value="30">30</option>
+                                                <option value="31">31</option>
+                                            </select>
+                                            <span class="date-separator">日</span>
+                                            <button class="btn-calendar" onclick="toggleInlineDatePicker('alt')">
+                                                <i class="fas fa-calendar-alt"></i>
+                                            </button>
+                                            <div class="date-inline-picker" id="altDatePicker">
+                                                <div class="calendar-header">
+                                                    <button class="calendar-nav-btn" onclick="navigateMonth('alt', -1)">‹</button>
+                                                    <span class="calendar-month-year" id="altMonthYear"></span>
+                                                    <button class="calendar-nav-btn" onclick="navigateMonth('alt', 1)">›</button>
+                                                </div>
+                                                <div class="calendar-grid" id="altCalendarGrid"></div>
+                                                <div class="calendar-actions">
+                                                    <button class="calendar-btn today-btn" onclick="selectToday('alt')">今日</button>
+                                                    <button class="calendar-btn close-btn" onclick="hideInlineDatePicker('alt')">閉じる</button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="field-note">手入力・出来ればカレンダーも追加したい</div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- 生体INDEX設定 -->
+                            <div class="form-section">
+                                <h4 class="section-title">生体INDEX設定</h4>
+                                
+                                <div class="form-grid">
+                                    <div class="form-group">
+                                        <label class="form-label">バイオID</label>
+                                        <input type="text" class="form-control" placeholder="バイオIDを入力" id="bioID">
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- 通門モード -->
+                            <div class="form-section">
+                                <h4 class="section-title">通門モード</h4>
+                                
+                                <div class="form-grid">
+                                    <div class="checkbox-group">
+                                        <input type="checkbox" id="readProhibition" class="form-check-input" checked>
+                                        <label for="readProhibition" class="form-check-label">読取禁止</label>
+                                    </div>
+                                    
+                                    <div class="checkbox-group">
+                                        <input type="checkbox" id="antiPassback" class="form-check-input" checked>
+                                        <label for="antiPassback" class="form-check-label">アンチパス</label>
+                                    </div>
+                                    
+                                    <div class="checkbox-group">
+                                        <input type="checkbox" id="securityOpDisable" class="form-check-input">
+                                        <label for="securityOpDisable" class="form-check-label">警備セット操作不可</label>
+                                    </div>
+                                    
+                                    <div class="checkbox-group">
+                                        <input type="checkbox" id="monitoringCard" class="form-check-input">
+                                        <label for="monitoringCard" class="form-check-label">監視カード</label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- 右側エリア -->
+                        <div class="form-right">
+                            <!-- 顔写真 -->
+                            <div class="photo-section">
+                                <label class="form-label">顔写真</label>
+                                <div class="photo-preview">
+                                    <div class="no-image-content">
+                                        <i class="fas fa-user no-image-icon"></i>
+                                        <div class="no-image-text">NO IMAGE</div>
+                                    </div>
+                                </div>
+                                <div class="photo-buttons">
+                                    <button class="btn btn-outline-primary btn-photo">
+                                        <i class="fas fa-folder-open"></i> 参照
+                                    </button>
+                                    <button class="btn btn-outline-secondary btn-photo">
+                                        <i class="fas fa-trash"></i> 削除
+                                    </button>
+                                </div>
+                                <input type="file" id="photoUpload" accept="image/*" style="display: none;">
+                            </div>
+                            
+                            <!-- 通行権限 -->
+                            <div class="permissions-section">
+                                <div class="permissions-header">
+                                    <div class="permissions-title">◆通行権限</div>
+                                    <div class="permissions-controls">
+                                        <input type="text" class="permission-code" value="001" placeholder="001">
+                                        <button class="btn-permission">参照</button>
+                                    </div>
+                                </div>
+                                <div class="permissions-table-container">
+                                    <table class="permissions-table">
+                                        <thead>
+                                            <tr>
+                                                <th>ゲートNo</th>
+                                                <th>ゲート名称</th>
+                                                <th>TC</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <tr><td>0001</td><td>ゲート0001</td><td>C</td></tr>
+                                            <tr><td>0002</td><td>ゲート0002</td><td>C</td></tr>
+                                            <tr><td>0003</td><td>ゲート0003</td><td>C</td></tr>
+                                            <tr><td>0004</td><td>ゲート0004</td><td>C</td></tr>
+                                            <tr><td>0005</td><td>ゲート0005</td><td>C</td></tr>
+                                            <tr><td>0006</td><td>ゲート0006</td><td>C</td></tr>
+                                            <tr><td>0007</td><td>ゲート0007</td><td>C</td></tr>
+                                            <tr><td>0008</td><td>ゲート0008</td><td>C</td></tr>
+                                            <tr><td>0009</td><td>ゲート0009</td><td>C</td></tr>
+                                            <tr><td>0010</td><td>ゲート0010</td><td>C</td></tr>
+                                            <tr><td>0011</td><td>ゲート0011</td><td>C</td></tr>
+                                            <tr><td>0012</td><td>ゲート0012</td><td>C</td></tr>
+                                            <tr><td>0013</td><td>ゲート0013</td><td>C</td></tr>
+                                            <tr><td>0014</td><td>ゲート0014</td><td>C</td></tr>
+                                            <tr><td>0015</td><td>ゲート0015</td><td>C</td></tr>
+                                            <tr><td>0016</td><td>ゲート0016</td><td>C</td></tr>
+                                            <tr><td>0017</td><td>ゲート0017</td><td>C</td></tr>
+                                            <tr><td>0018</td><td>ゲート0018</td><td>C</td></tr>
+                                            <tr><td>0019</td><td>ゲート0019</td><td>C</td></tr>
+                                            <tr><td>0020</td><td>ゲート0020</td><td>C</td></tr>
+                                            <tr><td>0021</td><td>ゲート0021</td><td>C</td></tr>
+                                            <tr><td>0022</td><td>ゲート0022</td><td>C</td></tr>
+                                            <tr><td>0023</td><td>ゲート0023</td><td>C</td></tr>
+                                            <tr><td>0024</td><td>ゲート0024</td><td>C</td></tr>
+                                            <tr><td>0025</td><td>ゲート0025</td><td>C</td></tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- アクションセクション -->
+                <div class="action-section">
+                    <div class="action-buttons">
+                        <button class="btn-action btn-save" onclick="savePerson()">
+                            <i class="fas fa-save"></i> 登録送信
+                        </button>
+                        <button class="btn-action btn-cancel" onclick="cancelEdit()">
+                            <i class="fas fa-times"></i> キャンセル
+                        </button>
+                        <button class="btn-action btn-clear" onclick="clearForm()">
+                            <i class="fas fa-eraser"></i> クリア
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+
+    <!-- フッター -->
+    <div id="global-footer" class="mt-5">
+        <footer>
+            <p class="text-right"><small>© ART JAPAN CO., LTD. All Rights Reserved.</small></p>
+        </footer>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script type="text/javascript" src="/resources/static/js/jquery/3.7.1/jquery.min.js"></script>
+    <script type="text/javascript" src="/resources/static/js/common.js"></script>
+    <script type="text/javascript" src="/resources/static/js/personalRegistration.js"></script>
+    
+    <script>
+        let calendarData = {
+            start: { currentDate: new Date(), selectedDate: null },
+            end: { currentDate: new Date(), selectedDate: null },
+            alt: { currentDate: new Date(), selectedDate: null }
+        };
+        
+        const monthNames = ['1月', '2月', '3月', '4月', '5月', '6月', '7月', '8月', '9月', '10月', '11月', '12月'];
+        const dayHeaders = ['日', '月', '火', '水', '木', '金', '土'];
+        
+        function toggleInlineDatePicker(type) {
+            // 他のピッカーを閉じる
+            const allPickers = document.querySelectorAll('.date-inline-picker');
+            allPickers.forEach(picker => {
+                if (picker.id !== type + 'DatePicker') {
+                    picker.style.display = 'none';
+                }
+            });
+            
+            const picker = document.getElementById(type + 'DatePicker');
+            
+            if (picker.style.display === 'block') {
+                picker.style.display = 'none';
+            } else {
+                // 現在の値を取得
+                let year, month, day;
+                if (type === 'start') {
+                    year = parseInt(document.getElementById('startYear').value);
+                    month = parseInt(document.getElementById('startMonth').value);
+                    day = parseInt(document.getElementById('startDay').value);
+                } else if (type === 'end') {
+                    year = parseInt(document.getElementById('endYear').value);
+                    month = parseInt(document.getElementById('endMonth').value);
+                    day = parseInt(document.getElementById('endDay').value);
+                } else if (type === 'alt') {
+                    year = parseInt(document.getElementById('altYear').value);
+                    month = parseInt(document.getElementById('altMonth').value);
+                    day = parseInt(document.getElementById('altDay').value);
+                }
+                
+                // 現在の日付を設定
+                if (year > 0 && year !== 0000 && month && day) {
+                    calendarData[type].currentDate = new Date(year, month - 1, day);
+                    calendarData[type].selectedDate = new Date(year, month - 1, day);
+                } else {
+                    calendarData[type].currentDate = new Date();
+                    calendarData[type].selectedDate = null;
+                }
+                
+                renderCalendar(type);
+                picker.style.display = 'block';
+            }
+        }
+        
+        function renderCalendar(type) {
+            const currentDate = calendarData[type].currentDate;
+            const selectedDate = calendarData[type].selectedDate;
+            const today = new Date();
+            
+            // ヘッダーの月年表示
+            const monthYear = document.getElementById(type + 'MonthYear');
+            monthYear.textContent = `${currentDate.getFullYear()}年${monthNames[currentDate.getMonth()]}`;
+            
+            // カレンダーグリッドを作成
+            const grid = document.getElementById(type + 'CalendarGrid');
+            grid.innerHTML = '';
+            
+            // 曜日ヘッダー
+            dayHeaders.forEach(dayHeader => {
+                const dayHeaderEl = document.createElement('div');
+                dayHeaderEl.className = 'calendar-day-header';
+                dayHeaderEl.textContent = dayHeader;
+                grid.appendChild(dayHeaderEl);
+            });
+            
+            // 月の最初の日と最後の日
+            const firstDay = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1);
+            const lastDay = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0);
+            const startDate = new Date(firstDay);
+            startDate.setDate(startDate.getDate() - firstDay.getDay());
+            
+            // カレンダーの日付を生成
+            for (let i = 0; i < 42; i++) {
+                const date = new Date(startDate);
+                date.setDate(startDate.getDate() + i);
+                
+                const dayEl = document.createElement('div');
+                dayEl.className = 'calendar-day';
+                dayEl.textContent = date.getDate();
+                
+                // 他の月の日付
+                if (date.getMonth() !== currentDate.getMonth()) {
+                    dayEl.classList.add('other-month');
+                }
+                
+                // 今日の日付
+                if (date.toDateString() === today.toDateString()) {
+                    dayEl.classList.add('today');
+                }
+                
+                // 選択された日付
+                if (selectedDate && date.toDateString() === selectedDate.toDateString()) {
+                    dayEl.classList.add('selected');
+                }
+                
+                // クリックイベント
+                dayEl.addEventListener('click', () => selectDate(type, date));
+                
+                grid.appendChild(dayEl);
+            }
+        }
+        
+        function selectDate(type, date) {
+            calendarData[type].selectedDate = date;
+            
+            // 年月日フィールドに反映
+            const year = date.getFullYear();
+            const month = String(date.getMonth() + 1).padStart(2, '0');
+            const day = String(date.getDate()).padStart(2, '0');
+            
+            if (type === 'start') {
+                document.getElementById('startYear').value = year;
+                document.getElementById('startMonth').value = month;
+                document.getElementById('startDay').value = day;
+            } else if (type === 'end') {
+                document.getElementById('endYear').value = year;
+                document.getElementById('endMonth').value = month;
+                document.getElementById('endDay').value = day;
+            } else if (type === 'alt') {
+                document.getElementById('altYear').value = year;
+                document.getElementById('altMonth').value = month;
+                document.getElementById('altDay').value = day;
+            }
+            
+            // カレンダーを再描画して選択状態を表示
+            renderCalendar(type);
+            
+            // カレンダーを閉じる
+            hideInlineDatePicker(type);
+        }
+        
+        function navigateMonth(type, direction) {
+            const currentDate = calendarData[type].currentDate;
+            currentDate.setMonth(currentDate.getMonth() + direction);
+            renderCalendar(type);
+        }
+        
+        function selectToday(type) {
+            const today = new Date();
+            selectDate(type, today);
+        }
+        
+        function hideInlineDatePicker(type) {
+            const picker = document.getElementById(type + 'DatePicker');
+            picker.style.display = 'none';
+        }
+        
+        // ページ外クリックで全てのピッカーを閉じる
+        document.addEventListener('click', function(e) {
+            const isCalendarButton = e.target.closest('.btn-calendar');
+            const isDatePicker = e.target.closest('.date-inline-picker');
+            
+            if (!isCalendarButton && !isDatePicker) {
+                const allPickers = document.querySelectorAll('.date-inline-picker');
+                allPickers.forEach(picker => {
+                    picker.style.display = 'none';
+                });
+            }
+        });
+    </script>
+</body>
+</html>

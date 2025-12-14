@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>基本動作テスト</title>
+</head>
+<body>
+    <h1>🔍 基本動作徹底テスト</h1>
+    
+    <h2>テスト1: 最も基本的なクリックイベント</h2>
+    <button onclick="alert('ボタンクリック成功！')">ボタンテスト</button>
+    
+    <h2>テスト2: DIV要素のイベント</h2>
+    <div onclick="alert('DIVクリック成功！')" 
+         style="background: blue; color: white; padding: 20px; cursor: pointer;">
+        このDIVをクリック
+    </div>
+    
+    <h2>テスト3: DIV要素のダブルクリック</h2>
+    <div ondblclick="alert('DIVダブルクリック成功！')" 
+         style="background: green; color: white; padding: 20px; cursor: pointer;">
+        このDIVをダブルクリック
+    </div>
+    
+    <h2>テスト4: DIV要素の右クリック</h2>
+    <div oncontextmenu="alert('DIV右クリック成功！'); return false;" 
+         style="background: red; color: white; padding: 20px; cursor: pointer;">
+        このDIVを右クリック
+    </div>
+    
+    <h2>テスト5: 全イベント統合DIV</h2>
+    <div onclick="alert('統合DIVクリック！')"
+         ondblclick="alert('統合DIVダブルクリック！')" 
+         oncontextmenu="alert('統合DIV右クリック！'); return false;"
+         style="background: purple; color: white; padding: 20px; cursor: pointer; user-select: none;">
+        このDIVで全イベントテスト
+    </div>
+    
+    <h2>テスト6: 基本テーブル</h2>
+    <table style="border: 1px solid black;">
+        <tr onclick="alert('テーブル行クリック！')"
+            ondblclick="alert('テーブル行ダブルクリック！')" 
+            oncontextmenu="alert('テーブル行右クリック！'); return false;"
+            style="background: orange; cursor: pointer; user-select: none;">
+            <td style="padding: 20px; border: 1px solid black;">テーブル行をダブルクリック・右クリック</td>
+        </tr>
+    </table>
+    
+    <hr>
+    
+    <h3>📋 診断結果:</h3>
+    <ul>
+        <li><strong>ボタンテストが動作しない</strong> → HTMLまたはブラウザの基本的な問題</li>
+        <li><strong>DIVクリックが動作しない</strong> → onclick属性の問題</li>
+        <li><strong>DIVダブルクリックが動作しない</strong> → ondblclick属性の問題</li>
+        <li><strong>DIV右クリックが動作しない</strong> → oncontextmenu属性の問題</li>
+        <li><strong>テーブル行が動作しない</strong> → テーブル固有の問題</li>
+    </ul>
+    
+    <script>
+        console.log('🔍 Basic test page loaded');
+        console.log('Browser:', navigator.userAgent);
+        console.log('JavaScript enabled:', true);
+        
+        // 1秒後にさらなるテスト
+        setTimeout(() => {
+            console.log('🔍 Testing programmatic event assignment...');
+            
+            // プログラムでイベントを設定
+            const testDiv = document.createElement('div');
+            testDiv.innerHTML = '🔬 プログラム生成テストDIV - ダブルクリック';
+            testDiv.style.cssText = 'background: #FF69B4; color: white; padding: 20px; cursor: pointer; margin: 10px;';
+            
+            testDiv.ondblclick = function() {
+                alert('🔬 プログラム生成DIVダブルクリック成功！');
+            };
+            
+            testDiv.oncontextmenu = function(e) {
+                e.preventDefault();
+                alert('🔬 プログラム生成DIV右クリック成功！');
+                return false;
+            };
+            
+            document.body.appendChild(testDiv);
+            console.log('🔬 Programmatic test div added');
+        }, 1000);
+    </script>
+</body>
+</html>

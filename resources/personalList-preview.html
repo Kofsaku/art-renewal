@@ -1,0 +1,1459 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="/resources/static/css/common.css" />
+    <link rel="stylesheet" href="/resources/static/css/unified-table.css" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" />
+    <title>個人情報一覧</title>
+    <style>
+        .content-wrapper {
+            padding-top: 70px;
+            min-height: calc(100vh - 140px);
+        }
+
+        .personal-list-container {
+            padding: 15px;
+            max-width: none;
+        }
+
+        .action-toolbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            padding: 10px 15px;
+            background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
+            border: 1px solid #dee2e6;
+            border-radius: 5px;
+        }
+
+        .primary-actions {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+
+        .filter-status-display {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 5px 15px;
+            background: #e3f2fd;
+            border: 1px solid #1976d2;
+            border-radius: 5px;
+            margin-bottom: 10px;
+            font-size: 0.9em;
+        }
+
+        .filter-active-badge {
+            font-weight: 500;
+            color: #1976d2;
+        }
+
+        .filter-details {
+            font-size: 0.8em;
+            color: #666;
+        }
+
+        .secondary-actions {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+
+        .action-group {
+            display: flex;
+            gap: 6px;
+            align-items: center;
+            padding-right: 15px;
+            margin-right: 15px;
+            border-right: 1px solid #dee2e6;
+        }
+
+        .action-group:last-child {
+            border-right: none;
+            margin-right: 0;
+            padding-right: 0;
+        }
+
+        .button-group-title {
+            font-size: 0.9em;
+            color: #495057;
+            margin-bottom: 8px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .priority-icon {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+        }
+
+        .priority-high {
+            background-color: #28a745;
+        }
+
+        .priority-medium {
+            background-color: #ffc107;
+        }
+
+        .priority-low {
+            background-color: #6c757d;
+        }
+
+        .btn-action {
+            margin-right: 8px;
+            margin-bottom: 6px;
+            font-size: 0.85em;
+            padding: 8px 16px;
+            border-radius: 5px;
+            transition: all 0.2s ease;
+            border: none;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        }
+
+        .btn-action:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+        }
+
+        .btn-primary-action {
+            background: linear-gradient(135deg, #28a745, #20c997);
+            color: white;
+        }
+
+        .btn-primary-action:hover {
+            background: linear-gradient(135deg, #218838, #1aa085);
+            color: white;
+        }
+
+        .btn-secondary-action {
+            background: linear-gradient(135deg, #6c757d, #5a6268);
+            color: white;
+        }
+
+        .btn-secondary-action:hover {
+            background: linear-gradient(135deg, #5a6268, #495057);
+            color: white;
+        }
+
+        .btn-rarely-used {
+            background: linear-gradient(135deg, #f8f9fa, #e9ecef);
+            color: #495057;
+            border: 1px solid #adb5bd;
+        }
+
+        .btn-rarely-used:hover {
+            background: linear-gradient(135deg, #e9ecef, #dee2e6);
+            color: #495057;
+        }
+
+        .filter-controls {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding: 15px;
+            background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
+            border-radius: 8px;
+            border: 1px solid #dee2e6;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+        }
+
+        .filter-info {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 0.9em;
+        }
+
+        .filter-badge {
+            background: #e3f2fd;
+            color: #1976d2;
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 0.8em;
+            font-weight: 500;
+        }
+
+        .column-controls {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+        }
+
+        .column-controls .btn {
+            padding: 8px 16px;
+            font-size: 0.85em;
+            border-radius: 6px;
+            transition: all 0.2s ease;
+        }
+
+        .column-controls .btn:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+        }
+
+        .table-responsive {
+            border: 1px solid #dee2e6;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+            overflow: hidden;
+        }
+
+        .unified-table {
+            margin-bottom: 0;
+            font-size: 0.85em;
+        }
+
+        .unified-table th {
+            background: linear-gradient(135deg, #495057, #343a40);
+            color: white;
+            border-bottom: 2px solid #007bff;
+            padding: 12px 8px;
+            font-weight: 600;
+            position: relative;
+            white-space: nowrap;
+            text-align: center;
+            vertical-align: middle;
+            cursor: move;
+            user-select: none;
+            transition: all 0.2s ease;
+        }
+
+        .unified-table th:hover {
+            background: linear-gradient(135deg, #5a6268, #495057);
+            transform: translateY(-1px);
+        }
+
+        .unified-table th.dragging {
+            opacity: 0.5;
+            z-index: 1000;
+            transform: rotate(3deg);
+        }
+
+        .unified-table th.drag-over {
+            border-left: 3px solid #007bff;
+            background: linear-gradient(135deg, #007bff, #0056b3);
+        }
+
+        .column-visibility-toggle {
+            position: absolute;
+            top: 2px;
+            right: 2px;
+            width: 12px;
+            height: 12px;
+            background: rgba(255, 255, 255, 0.8);
+            border-radius: 2px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 8px;
+            color: #495057;
+            transition: all 0.2s ease;
+        }
+
+        .column-visibility-toggle:hover {
+            background: rgba(255, 255, 255, 1);
+            transform: scale(1.2);
+        }
+
+        .column-visibility-toggle.hidden {
+            background: rgba(220, 53, 69, 0.8);
+            color: white;
+        }
+
+        .unified-table td {
+            padding: 10px 8px;
+            border-bottom: 1px solid #e9ecef;
+            vertical-align: middle;
+            text-align: center;
+        }
+
+        .unified-table tbody tr {
+            transition: all 0.2s ease;
+        }
+
+        .unified-table tbody tr:nth-child(even) {
+            background-color: #f8f9fa;
+        }
+
+        .unified-table tbody tr:hover {
+            background-color: #e3f2fd;
+            transform: scale(1.001);
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        @media (max-width: 1200px) {
+            .unified-table {
+                font-size: 0.8em;
+            }
+
+            .unified-table th,
+            .unified-table td {
+                padding: 8px 4px;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .button-groups-container {
+                flex-direction: column;
+            }
+
+            .button-group {
+                min-width: auto;
+            }
+
+            .filter-controls {
+                flex-direction: column;
+                gap: 10px;
+                align-items: stretch;
+            }
+
+            .column-controls {
+                justify-content: center;
+            }
+
+            .unified-table {
+                font-size: 0.75em;
+            }
+        }
+
+        .excel-filter-trigger {
+            position: absolute;
+            top: 50%;
+            right: 8px;
+            transform: translateY(-50%);
+            width: 12px;
+            height: 12px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 2px;
+            transition: all 0.2s ease;
+        }
+
+        .excel-filter-trigger:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: translateY(-50%) scale(1.1);
+        }
+
+        .excel-filter-trigger::after {
+            content: '▼';
+            font-size: 8px;
+            color: white;
+        }
+
+        .excel-filter-menu {
+            display: none;
+            position: absolute;
+            top: 100%;
+            right: 0;
+            background: white;
+            border: 2px solid #e7e7e7;
+            border-radius: 0;
+            padding: 0;
+            z-index: 1000;
+            min-width: 280px;
+            max-width: 350px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        .excel-filter-menu.show {
+            display: block;
+        }
+
+        .excel-filter-header {
+            background: linear-gradient(180deg, #f7f7f7 0%, #e7e7e7 100%);
+            border-bottom: 1px solid #d0d0d0;
+            padding: 8px 12px;
+            font-size: 0.85em;
+            font-weight: 600;
+            color: #333;
+        }
+
+        .excel-search-section {
+            padding: 10px 12px;
+            border-bottom: 1px solid #e7e7e7;
+            background: #fafafa;
+        }
+
+        .excel-search-box {
+            width: 100%;
+            padding: 6px 10px;
+            border: 1px solid #b7b7b7;
+            border-radius: 0;
+            font-size: 0.85em;
+            background: white;
+        }
+
+        .excel-search-box:focus {
+            outline: none;
+            border-color: #4472c4;
+            box-shadow: 0 0 3px rgba(68, 114, 196, 0.3);
+        }
+
+        .excel-filter-actions {
+            padding: 8px 12px;
+            background: #f7f7f7;
+            border-bottom: 1px solid #e7e7e7;
+            display: flex;
+            gap: 8px;
+        }
+
+        .excel-action-btn {
+            padding: 4px 12px;
+            border: 1px solid #b7b7b7;
+            background: white;
+            font-size: 0.8em;
+            cursor: pointer;
+            border-radius: 0;
+            transition: all 0.1s ease;
+        }
+
+        .excel-action-btn:hover {
+            background: #e7e7e7;
+        }
+
+        .excel-action-btn.primary {
+            background: #4472c4;
+            color: white;
+            border-color: #4472c4;
+        }
+
+        .excel-action-btn.primary:hover {
+            background: #365a9b;
+        }
+
+        .excel-filter-list {
+            max-height: 400px;
+            min-height: 120px;
+            height: 200px;
+            overflow-y: auto;
+            background: white;
+            position: relative;
+        }
+
+        .excel-filter-resize-handle {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 10px;
+            background: linear-gradient(to bottom, transparent, #e7e7e7);
+            cursor: ns-resize;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            user-select: none;
+        }
+
+        .excel-filter-resize-handle::before {
+            content: '⋯';
+            color: #999;
+            font-size: 12px;
+            transform: rotate(90deg);
+        }
+
+        .excel-filter-resize-handle:hover {
+            background: linear-gradient(to bottom, transparent, #d0d0d0);
+        }
+
+        .excel-filter-item {
+            display: flex;
+            align-items: center;
+            padding: 4px 12px;
+            border-bottom: 1px solid #f0f0f0;
+            cursor: pointer;
+            font-size: 0.85em;
+            transition: background-color 0.1s ease;
+        }
+
+        .excel-filter-item:hover {
+            background: #e7f3ff;
+        }
+
+        .excel-filter-item input[type="checkbox"] {
+            margin-right: 8px;
+            cursor: pointer;
+        }
+
+        .excel-filter-item.select-all {
+            background: #f7f7f7;
+            font-weight: 600;
+            border-bottom: 2px solid #d0d0d0;
+        }
+
+        .excel-filter-stats {
+            padding: 6px 12px;
+            background: #f7f7f7;
+            border-top: 1px solid #e7e7e7;
+            font-size: 0.75em;
+            color: #666;
+            text-align: center;
+        }
+
+        /* Excel-like table styling */
+        .unified-table {
+            border-collapse: separate;
+            border-spacing: 0;
+            border: 1px solid #d0d0d0;
+        }
+
+        .unified-table th {
+            background: linear-gradient(180deg, #f7f7f7 0%, #e7e7e7 100%);
+            border-right: 1px solid #d0d0d0;
+            border-bottom: 1px solid #d0d0d0;
+            color: #333;
+            font-weight: 600;
+            position: relative;
+            padding-right: 25px;
+        }
+
+        .unified-table td {
+            border-right: 1px solid #e7e7e7;
+            border-bottom: 1px solid #e7e7e7;
+            background: white;
+        }
+
+        .unified-table tbody tr:nth-child(even) td {
+            background: #f9f9f9;
+        }
+
+        .unified-table tbody tr:hover td {
+            background: #e7f3ff;
+        }
+
+        .btn-history {
+            background-color: #17a2b8;
+            border-color: #17a2b8;
+            color: white;
+            font-size: 0.7em;
+            padding: 2px 6px;
+        }
+
+        .btn-history:hover {
+            background-color: #138496;
+            color: white;
+        }
+
+        .gate-permissions {
+            position: relative;
+            min-width: 120px;
+            max-width: 300px;
+        }
+
+        .gate-permissions-summary {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 4px 8px;
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .gate-permissions-summary:hover {
+            background: #e9ecef;
+            border-color: #adb5bd;
+        }
+
+        .permission-stats {
+            display: flex;
+            gap: 6px;
+            font-size: 0.75em;
+        }
+
+        .permission-stat {
+            display: flex;
+            align-items: center;
+            gap: 2px;
+        }
+
+        .permission-indicator {
+            width: 10px;
+            height: 10px;
+            border-radius: 2px;
+            display: inline-block;
+        }
+
+        .permission-indicator.access {
+            background-color: #28a745;
+        }
+
+        .permission-indicator.no-access {
+            background-color: #dc3545;
+        }
+
+        .permission-indicator.restricted {
+            background-color: #ffc107;
+        }
+
+        .permission-count {
+            font-weight: 500;
+            color: #495057;
+        }
+
+        .expand-icon {
+            margin-left: auto;
+            font-size: 0.8em;
+            color: #6c757d;
+            transition: transform 0.2s ease;
+        }
+
+        .gate-permissions-detail {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            background: white;
+            border: 1px solid #dee2e6;
+            border-radius: 4px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            z-index: 1000;
+            display: none;
+            padding: 10px;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+
+        .gate-permissions-detail.show {
+            display: block;
+        }
+
+        .gate-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(35px, 1fr));
+            gap: 2px;
+            margin-bottom: 8px;
+        }
+
+        .gate-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 2px;
+            border-radius: 3px;
+            font-size: 0.7em;
+            position: relative;
+        }
+
+        .gate-number {
+            font-size: 0.6em;
+            color: #6c757d;
+            margin-bottom: 1px;
+        }
+
+        .gate-permission {
+            width: 20px;
+            height: 20px;
+            border-radius: 3px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 0.7em;
+            border: 1px solid rgba(0, 0, 0, 0.1);
+        }
+
+        .gate-permission.access {
+            background-color: #28a745;
+            color: white;
+        }
+
+        .gate-permission.no-access {
+            background-color: #dc3545;
+            color: white;
+        }
+
+        .gate-permission.restricted {
+            background-color: #ffc107;
+            color: #333;
+        }
+
+        .gate-permission.none {
+            background-color: #f8f9fa;
+            color: #6c757d;
+            border-style: dashed;
+        }
+
+        .gate-legend {
+            display: flex;
+            gap: 8px;
+            font-size: 0.7em;
+            color: #6c757d;
+            border-top: 1px solid #dee2e6;
+            padding-top: 6px;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 3px;
+        }
+
+        .column-list {
+            border: 1px solid #dee2e6;
+            border-radius: 4px;
+            min-height: 200px;
+            max-height: 300px;
+            overflow-y: auto;
+            padding: 8px;
+            background: #f8f9fa;
+        }
+
+        .column-item-manager {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 6px 8px;
+            margin-bottom: 4px;
+            background: white;
+            border: 1px solid #dee2e6;
+            border-radius: 3px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .column-item-manager:hover {
+            background: #e9ecef;
+            border-color: #adb5bd;
+        }
+
+        .column-item-manager.hidden {
+            background: #fff3cd;
+            border-color: #ffc107;
+        }
+
+        .column-item-manager .column-name {
+            font-size: 0.9em;
+            font-weight: 500;
+        }
+
+        .column-item-manager .column-toggle-btn {
+            background: none;
+            border: none;
+            color: #6c757d;
+            cursor: pointer;
+            padding: 2px 6px;
+            border-radius: 3px;
+            transition: all 0.2s ease;
+        }
+
+        .column-item-manager .column-toggle-btn:hover {
+            background: #dee2e6;
+            color: #495057;
+        }
+
+        .column-item-manager.hidden .column-toggle-btn {
+            color: #f57c00;
+        }
+
+        .pagination-controls {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 15px;
+        }
+
+        .items-per-page {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .page-info {
+            font-size: 0.9em;
+            color: #6c757d;
+        }
+
+        .column-visibility-modal .modal-body {
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .column-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 8px;
+            border: 1px solid #dee2e6;
+            border-radius: 4px;
+            margin-bottom: 5px;
+            cursor: move;
+            background-color: #f8f9fa;
+        }
+
+        .column-item:hover {
+            background-color: #e9ecef;
+        }
+
+        .column-item.dragging {
+            opacity: 0.5;
+        }
+
+        .drag-handle {
+            color: #6c757d;
+            margin-right: 10px;
+        }
+
+        .hidden-column {
+            display: none;
+        }
+
+        .status-legend {
+            font-size: 0.8em;
+            color: #6c757d;
+            margin-left: 10px;
+        }
+
+        .legend-item {
+            display: inline-block;
+            margin-right: 15px;
+        }
+
+        .legend-color {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border-radius: 2px;
+            margin-right: 5px;
+            vertical-align: middle;
+        }
+
+        /* ヘッダー右端のコントロール（枠なし） */
+        .header-right-controls {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.95rem;
+        }
+
+        .count-info {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .count-label {
+            color: #dc3545;
+            font-weight: 600;
+        }
+
+        .count-value {
+            font-weight: bold;
+            color: #dc3545;
+            font-size: 1.2em;
+        }
+
+        /* フィルター黒三角の視覚化 */
+        .excel-filter-trigger.filtered::after {
+            content: '▼';
+            color: #000;
+            font-weight: bold;
+            background: rgba(255, 255, 255, 0.9);
+            border-radius: 2px;
+            padding: 1px 2px;
+        }
+
+        /* 右クリックコンテキストメニュー */
+        .context-menu {
+            position: fixed;
+            background: white;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            z-index: 10000;
+            padding: 8px 0;
+            min-width: 200px;
+            display: none;
+            font-size: 0.9em;
+        }
+
+        .context-menu-item {
+            padding: 10px 16px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            transition: background-color 0.2s;
+            border-bottom: 1px solid #f0f0f0;
+        }
+
+        .context-menu-item:last-child {
+            border-bottom: none;
+        }
+
+        .context-menu-item:hover {
+            background-color: #f8f9fa;
+        }
+
+        .context-menu-item.primary:hover {
+            background-color: #e3f2fd;
+            color: #1976d2;
+        }
+
+        .context-menu-item.danger:hover {
+            background-color: #ffebee;
+            color: #d32f2f;
+        }
+
+        .context-menu-header {
+            padding: 8px 16px;
+            font-weight: bold;
+            color: #666;
+            border-bottom: 2px solid #e0e0e0;
+            background-color: #f8f9fa;
+            font-size: 0.85em;
+        }
+
+        .row-highlight {
+            background-color: #e3f2fd !important;
+            box-shadow: 0 0 0 2px #2196f3 !important;
+        }
+
+        .personal-row {
+            cursor: pointer !important;
+            pointer-events: auto !important;
+            user-select: none !important;
+            -webkit-user-select: none !important;
+            -moz-user-select: none !important;
+            -ms-user-select: none !important;
+        }
+
+        .personal-row:hover {
+            background-color: #f8f9fa !important;
+        }
+
+        .personal-row td {
+            pointer-events: auto !important;
+            cursor: pointer !important;
+            user-select: none !important;
+            -webkit-user-select: none !important;
+            -moz-user-select: none !important;
+            -ms-user-select: none !important;
+        }
+
+        /* テーブル全体のイベント設定 */
+        .unified-table {
+            pointer-events: auto !important;
+        }
+
+        .unified-table tbody {
+            pointer-events: auto !important;
+        }
+
+        /* テーブル全体でテキスト選択とデフォルト動作を完全無効化 */
+        .unified-table tbody tr {
+            user-select: none !important;
+            -webkit-user-select: none !important;
+            -moz-user-select: none !important;
+            -ms-user-select: none !important;
+            -webkit-touch-callout: none !important;
+            -webkit-tap-highlight-color: transparent !important;
+        }
+
+        .unified-table tbody tr * {
+            user-select: none !important;
+            -webkit-user-select: none !important;
+            -moz-user-select: none !important;
+            -ms-user-select: none !important;
+            -webkit-touch-callout: none !important;
+        }
+
+        /* チェックボックス以外のテキスト選択を完全無効化 */
+        .unified-table tbody tr td:not(:has(input[type="checkbox"])) {
+            user-select: none !important;
+            -webkit-user-select: none !important;
+            -moz-user-select: none !important;
+            -ms-user-select: none !important;
+        }
+
+        /* 操作完了メッセージエリア */
+        .operation-status-area {
+            margin-bottom: 15px;
+        }
+
+        .operation-status-message {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 12px 16px;
+            border-radius: 8px;
+            margin-bottom: 10px;
+            animation: slideInDown 0.3s ease-out;
+        }
+
+        .operation-status-message.success {
+            background: linear-gradient(135deg, #d4edda, #c3e6cb);
+            border: 1px solid #28a745;
+            color: #155724;
+        }
+
+        .operation-status-message.info {
+            background: linear-gradient(135deg, #cce7ff, #b3d9ff);
+            border: 1px solid #007bff;
+            color: #004085;
+        }
+
+        .operation-status-message.warning {
+            background: linear-gradient(135deg, #fff3cd, #ffeaa7);
+            border: 1px solid #ffc107;
+            color: #856404;
+        }
+
+        @keyframes slideInDown {
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes slideOutUp {
+            from {
+                opacity: 1;
+                transform: translateY(0);
+            }
+
+            to {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <!-- ヘッダー -->
+    <div class="bs-component" id="global-header">
+        <div class="fixed-top">
+            <nav class="sticky-top navbar navbar-expand-lg navbar-dark bg-success p-0">
+                <ul class="d-flex list-unstyled col-12 p-0" style="height:30px;">
+                    <li class="p-0 col-11">
+                        <div class="navbar-brand ms-3">
+                            Web版入退室管理システム
+                        </div>
+                    </li>
+                    <li class="p-0 col-1">
+                        <div class="border border-1 border-white m-1 g-center">
+                            <a class="text-white fs-5 text-decoration-none ms-2" href="/logout">
+                                ログアウト
+                            </a>
+                        </div>
+                    </li>
+                </ul>
+            </nav>
+        </div>
+    </div>
+
+    <!-- ナビゲーション -->
+    <nav>
+        <div class="container-fluid">
+            <ul class="navbar-nav d-flex flex-row justify-content-center w-100">
+                <li class="nav-item">
+                    <a href="/resources/personalList-preview.html" class="nav-link active">
+                        <i class="fas fa-users me-1"></i>
+                        個人情報一覧
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="/resources/historyReport-preview.html" class="nav-link">
+                        <i class="fas fa-chart-line me-1"></i>
+                        履歴レポート
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="/resources/dataMonitor-preview.html" class="nav-link">
+                        <i class="fas fa-desktop me-1"></i>
+                        データモニター
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="/resources/statusMonitor-preview.html" class="nav-link">
+                        <i class="fas fa-heartbeat me-1"></i>
+                        ステータスモニター
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="/resources/mapMonitor-preview.html" class="nav-link">
+                        <i class="fas fa-map me-1"></i>
+                        マップモニター
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="/resources/personalRegistration-preview.html" class="nav-link">
+                        <i class="fas fa-user-plus me-1"></i>
+                        個人情報登録
+                    </a>
+                </li>
+                <li class="nav-item dropdown">
+                    <a href="#" class="nav-link dropdown-toggle" role="button" data-bs-toggle="dropdown">
+                        <i class="fas fa-cogs me-1"></i>
+                        システム設定
+                    </a>
+                    <ul class="dropdown-menu">
+                        <li><a class="dropdown-item" href="#"><i class="fas fa-file-alt me-2"></i>操作ログ</a></li>
+                        <li><a class="dropdown-item" href="#"><i class="fas fa-calendar me-2"></i>休日設定</a></li>
+                        <li><a class="dropdown-item" href="#"><i class="fas fa-clock me-2"></i>時刻送信</a></li>
+                        <li><a class="dropdown-item" href="#"><i class="fas fa-database me-2"></i>バックアップ</a></li>
+                        <li><a class="dropdown-item" href="#"><i class="fas fa-broadcast-tower me-2"></i>一斉送信</a></li>
+                        <li><a class="dropdown-item" href="#"><i class="fas fa-user-shield me-2"></i>ユーザー管理</a></li>
+                    </ul>
+                </li>
+            </ul>
+        </div>
+    </nav>
+
+    <!-- メインコンテンツ -->
+    <main class="content-wrapper">
+        <div class="personal-list-container">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                <h2>個人情報一覧</h2>
+                <!-- 右端の現条件人数表示と送信ボタン -->
+                <div class="header-right-controls" id="currentCountDisplay">
+                    <span class="count-label">現条件：</span>
+                    <span class="count-value" id="currentCountValue">0</span>人
+                    <button class="btn btn-primary btn-sm ms-2" onclick="sendPersonalData()">
+                        <i class="fas fa-paper-plane"></i> 送信
+                    </button>
+                </div>
+            </div>
+
+            <!-- 操作完了メッセージエリア -->
+            <div class="operation-status-area" id="operationStatusArea" style="display: none;">
+                <!-- Operation status messages will be displayed here -->
+            </div>
+
+            <!-- アクションツールバー -->
+            <div class="unified-action-toolbar">
+                <div class="primary-actions">
+                    <div class="action-group">
+                        <button class="btn btn-primary btn-sm" onclick="addNewPerson()">
+                            <i class="fas fa-plus"></i> 新規登録
+                        </button>
+                        <button class="btn btn-outline-warning btn-sm" onclick="bulkDelete()">
+                            <i class="fas fa-trash-alt"></i> 削除
+                        </button>
+                        <button class="btn btn-outline-danger btn-sm" onclick="bulkErase()">
+                            <i class="fas fa-eraser"></i> 消去
+                        </button>
+                    </div>
+
+                    <div class="action-group">
+                        <button class="btn btn-outline-success btn-sm" onclick="uploadData()">
+                            <i class="fas fa-upload"></i> インポート
+                        </button>
+                        <button class="btn btn-outline-info btn-sm" onclick="downloadData()">
+                            <i class="fas fa-download"></i> エクスポート
+                        </button>
+                    </div>
+
+                    <div class="action-group">
+                        <button class="btn btn-outline-secondary btn-sm" onclick="editDepartment()">
+                            <i class="fas fa-building"></i> 所属管理
+                        </button>
+                        <button class="btn btn-outline-secondary btn-sm" onclick="editCategory()">
+                            <i class="fas fa-tags"></i> 区分管理
+                        </button>
+                    </div>
+
+                    <div class="action-group">
+                        <button class="btn btn-outline-info btn-sm" onclick="manageTimeRestrictions()">
+                            <i class="fas fa-clock"></i> 入退室制限時間帯の管理
+                        </button>
+                        <button class="btn btn-outline-warning btn-sm" onclick="bulkChangeGatePermissions()">
+                            <i class="fas fa-users-cog"></i> 通門権限の一括変更
+                        </button>
+                    </div>
+                </div>
+
+                <div class="secondary-actions">
+                    <span class="filter-badge">Excel形式フィルター</span>
+                    <button class="btn btn-outline-secondary btn-sm" onclick="resetFilters()">
+                        <i class="fas fa-filter-circle-xmark"></i> フィルターリセット
+                    </button>
+                    <button class="btn btn-outline-info btn-sm" onclick="showColumnManager()" id="columnManagerBtn">
+                        <i class="fas fa-columns"></i> 列表示管理
+                        <span class="badge bg-warning ms-1" id="hiddenColumnsBadge" style="display: none;">0</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- フィルタステータス表示 -->
+            <div class="filter-status-display" id="filterStatusDisplay" style="display: none;">
+                <span class="filter-active-badge">フィルター実行中 <i class="fas fa-filter"></i></span>
+                <span class="filter-details" id="filterDetails"></span>
+            </div>
+
+            <!-- 🚨 問題特定：ダブルクリック速度・右クリック問題対応 -->
+            <div
+                style="background: #dc3545; color: white; padding: 20px; margin: 15px 0; border-radius: 8px; text-align: center;">
+                <h4>🚨 問題特定：ダブルクリック速度・右クリック設定の問題</h4>
+                <p><strong>解決策を実装しました</strong></p>
+
+                <!-- 解決策1: 超遅いダブルクリック判定 -->
+                <div id="slowDoubleClickTest"
+                    style="background: #28a745; color: white; padding: 20px; margin: 10px; cursor: pointer; user-select: none; border: 3px solid white;">
+                    🐌 超遅ダブルクリックテスト - ゆっくり2回クリック（1秒間隔でもOK）
+                </div>
+
+                <!-- 解決策2: 連続クリック検出 -->
+                <div id="continuousClickTest"
+                    style="background: #ffc107; color: black; padding: 20px; margin: 10px; cursor: pointer; user-select: none; border: 3px solid black;">
+                    🔄 連続クリック検出 - 何回でもクリック（5回で編集画面）
+                </div>
+
+                <!-- 解決策3: 強制右クリック無効化 -->
+                <div id="forceRightClickTest"
+                    style="background: #6f42c1; color: white; padding: 20px; margin: 10px; cursor: pointer; user-select: none; border: 3px solid white;">
+                    🚫 強制右クリック無効化 - 右クリックを完全ブロック
+                </div>
+
+                <!-- 解決策4: キーボード併用 -->
+                <div
+                    style="background: #fd7e14; color: white; padding: 20px; margin: 10px; cursor: pointer; user-select: none; border: 3px solid white;">
+                    ⌨️ Ctrl+クリック または Shift+クリック で編集画面
+                </div>
+            </div>
+
+            <!-- 🎯 statusMonitor方式実装完了 -->
+            <div
+                style="background: #d4edda; padding: 15px; margin: 15px 0; border: 1px solid #28a745; border-radius: 8px;">
+                <h5>✅ statusMonitor方式実装完了</h5>
+                <p><strong>statusMonitor-preview.htmlと同じ方式で実装しました</strong></p>
+                <div style="display: flex; gap: 20px; align-items: center;">
+                    <div>
+                        <h6>🖱️ 操作方法：</h6>
+                        <ul style="margin: 5px 0;">
+                            <li><strong>ダブルクリック</strong>: 編集画面に遷移</li>
+                            <li><strong>右クリック</strong>: 履歴選択表示</li>
+                        </ul>
+                    </div>
+                    <div>
+                        <button onclick="testStatusMonitorMethod()" class="btn btn-success me-2">
+                            🧪 statusMonitor方式テスト
+                        </button>
+                        <button onclick="analyzeTableStructure()" class="btn btn-warning me-2">
+                            🔍 テーブル構造分析
+                        </button>
+                        <button onclick="createManualTestRow()" class="btn btn-info me-2">
+                            ➕ 手動テスト行追加
+                        </button>
+                        <button onclick="forceSetTableEvents()" class="btn btn-danger">
+                            🚨 強制イベント設定
+                        </button>
+                    </div>
+                </div>
+                <p style="margin: 10px 0; color: #155724;"><strong>💡 注意:</strong> 1行目（黄色）がテスト専用行です。</p>
+            </div>
+
+            <!-- 🔬 リアルタイムデバッグログ -->
+            <div id="debugLogArea"
+                style="display: none; background: #000; color: #0f0; padding: 15px; margin: 15px 0; border-radius: 5px; font-family: monospace; height: 200px; overflow-y: scroll;">
+            </div>
+
+            <!-- 個人情報テーブル -->
+            <div class="table-responsive">
+                <table class="unified-table" id="personalTable">
+                    <thead>
+                        <tr id="tableHeaders">
+                            <!-- Headers will be dynamically generated by JavaScript -->
+                        </tr>
+                    </thead>
+                    <tbody id="personalTableBody">
+                        <!-- データはJavaScriptで動的生成 -->
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- ページネーション -->
+            <div class="pagination-controls">
+                <div class="items-per-page">
+                    <label for="itemsPerPage">表示件数:</label>
+                    <select id="itemsPerPage" class="form-select form-select-sm" style="width: auto;"
+                        onchange="changeItemsPerPage()">
+                        <option value="20">20件</option>
+                        <option value="30" selected>30件</option>
+                        <option value="50">50件</option>
+                        <option value="100">100件</option>
+                    </select>
+                </div>
+
+                <div class="page-info" id="pageInfo">
+                    1-30 / 1,000件中
+                </div>
+
+                <nav aria-label="ページネーション">
+                    <ul class="pagination pagination-sm" id="pagination">
+                        <!-- ページネーションボタンはJavaScriptで動的生成 -->
+                    </ul>
+                </nav>
+            </div>
+
+            <!-- 凡例 -->
+            <div class="mt-3">
+                <div class="status-legend">
+                    <strong>ゲート権限凡例:</strong>
+                    <span class="legend-item">
+                        <span class="legend-color" style="background-color: #28a745;"></span>0-9: アクセス可能
+                    </span>
+                    <span class="legend-item">
+                        <span class="legend-color" style="background-color: #dc3545;"></span>C: アクセス不可
+                    </span>
+                    <span class="legend-item">
+                        <span class="legend-color" style="background-color: #ffc107;"></span>R: 時間制限
+                    </span>
+                    <span class="legend-item">
+                        <span class="legend-color" style="background-color: #f8f9fa; border: 1px solid #ccc;"></span>-:
+                        権限なし
+                    </span>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- 列表示管理モーダル -->
+    <div class="modal fade" id="columnManagerModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">
+                        <i class="fas fa-columns text-primary"></i>
+                        列表示管理
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h6 class="text-success">
+
+                                <hr class="my-3">
+
+                                <div class="d-flex gap-2">
+                                    <button type="button" class="btn btn-outline-success btn-sm"
+                                        onclick="showAllColumns()">
+                                        <i class="fas fa-plus"></i> すべて表示
+                                    </button>
+                                    <button type="button" class="btn btn-outline-secondary btn-sm"
+                                        onclick="resetToDefault()">
+                                        <i class="fas fa-undo"></i> デフォルトに戻す
+                                    </button>
+                                </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">閉じる</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 右クリックコンテキストメニュー -->
+            <div class="context-menu" id="contextMenu">
+                <!-- Content will be populated by JavaScript -->
+            </div>
+
+            <!-- フッター -->
+            <div id="global-footer" class="mt-5">
+                <footer>
+                    <p class="text-right"><small>© ART JAPAN CO., LTD. All Rights Reserved.</small></p>
+                </footer>
+            </div>
+
+            <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+            <script type="text/javascript" src="/resources/static/js/jquery/3.7.1/jquery.min.js"></script>
+            <script type="text/javascript" src="/resources/static/js/common.js"></script>
+            <script type="text/javascript" src="/resources/static/js/personalList.js"></script>
+
+            <script>
+                // 🚨 即座に実行されるテスト（ページ読み込み時）
+                console.log('🚨 EMERGENCY: Script execution test - IMMEDIATE');
+
+                // ページタイトルを変更してJavaScriptが動作していることを視覚的に確認
+                document.title = '🚨 JavaScript動作確認中 - ' + document.title;
+
+                // 🔍 テーブル構造分析
+                function analyzeTableStructure() {
+                    console.log('🔍 テーブル構造分析開始...');
+                    const table = document.getElementById('personalTable');
+                    const tbody = document.getElementById('personalTableBody');
+
+                    if (!table || !tbody) {
+                        console.log('❌ テーブル要素が見つかりません');
+                        return;
+                    }
+
+                    const rows = tbody.querySelectorAll('tr');
+                    console.log(`🔍 発見された行数: ${rows.length}`);
+
+                    rows.forEach((row, index) => {
+                        console.log(`🔍 行${index + 1}分析:`);
+                        console.log(`   - onclick: ${!!row.onclick}`);
+                        console.log(`   - ondblclick: ${!!row.ondblclick}`);
+                        console.log(`   - oncontextmenu: ${!!row.oncontextmenu}`);
+                    });
+
+                    alert(`🔍 テーブル分析完了\n行数: ${rows.length}\n詳細はコンソールを確認してください`);
+                }
+
+                // ➕ 手動テスト行追加 (イベントなし)
+                function createManualTestRow() {
+                    const tbody = document.getElementById('personalTableBody');
+                    if (!tbody) {
+                        alert('❌ テーブルボディが見つかりません');
+                        return;
+                    }
+
+                    const testRow = document.createElement('tr');
+                    testRow.className = 'manual-test-row';
+                    testRow.style.cssText = 'background: #FF69B4; color: white; cursor: pointer; user-select: none;';
+                    testRow.innerHTML = `
+                        <td colspan="12" style="padding: 20px; text-align: center; font-weight: bold; font-size: 16px;">
+                            ➕ 手動作成テスト行 - イベントなし
+                        </td>
+                    `;
+                    tbody.appendChild(testRow);
+                    console.log('➕ 手動テスト行追加完了 (イベントなし)');
+                }
+
+                // DOM読み込み完了時
+                document.addEventListener('DOMContentLoaded', function () {
+                    console.log('🔥 DOM読み込み完了 - 行イベントは全て削除されています');
+
+                    // 既存のイベントをクリアするための安全策
+                    setTimeout(() => {
+                        const tbody = document.getElementById('personalTableBody');
+                        if (tbody) {
+                            const rows = tbody.querySelectorAll('tr');
+                            rows.forEach(row => {
+                                row.onclick = null;
+                                row.ondblclick = null;
+                                row.oncontextmenu = null;
+                            });
+                        }
+                    }, 1000);
+                });
+            </script>
+</body>
+
+</html>
