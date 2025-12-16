@@ -13,6 +13,7 @@ class StatusMonitor {
         this.currentGateId = null;
         this.selectedGateGroup = null; // 選択されたゲートグループ
         this.sidebarCollapsed = false;
+        this.statusFilters = ['normal', 'warning', 'error', 'offline']; // フィルター設定
         this.init();
     }
 
@@ -46,6 +47,17 @@ class StatusMonitor {
         document.getElementById('sidebarToggle')?.addEventListener('click', () => {
             this.toggleSidebar();
         });
+
+        // ステータスフィルターチェックボックス（遅延実行で確実にDOM要素を取得）
+        setTimeout(() => {
+            document.querySelectorAll('.status-filter-checkbox').forEach(checkbox => {
+                checkbox.addEventListener('change', () => {
+                    console.log('Filter changed:', checkbox.value, checkbox.checked);
+                    this.updateStatusFilters();
+                });
+            });
+            console.log('Status filter checkboxes initialized:', document.querySelectorAll('.status-filter-checkbox').length);
+        }, 100);
     }
 
     generateGateData() {
@@ -213,6 +225,33 @@ class StatusMonitor {
         console.log(`Container: ${containerWidth}px, Cols: ${cols}, Layout: ${this.currentLayout}, Card: ${actualCardWidth}px`);
     }
 
+    updateStatusFilters() {
+        console.log('updateStatusFilters called');
+        
+        this.statusFilters = [];
+        const checkboxes = document.querySelectorAll('.status-filter-checkbox:checked');
+        console.log('Found checkboxes:', checkboxes.length);
+        
+        checkboxes.forEach(checkbox => {
+            console.log('Checkbox value:', checkbox.value, 'checked:', checkbox.checked);
+            this.statusFilters.push(checkbox.value);
+        });
+        
+        console.log('Current status filters:', this.statusFilters);
+        console.log('Total gates before filter:', this.gates.length);
+        
+        // ゲートのステータス分布を確認
+        const statusCounts = {};
+        this.gates.slice(0, this.currentLayout).forEach(gate => {
+            const status = gate.online ? gate.status : 'offline';
+            statusCounts[status] = (statusCounts[status] || 0) + 1;
+        });
+        console.log('Gate status distribution:', statusCounts);
+        
+        this.renderGates();
+        this.renderGateButtons(); // ボタン一覧も更新
+    }
+
     renderGates() {
         const grid = document.getElementById('gateGrid');
         if (!grid) return;
@@ -235,6 +274,26 @@ class StatusMonitor {
             displayGates = this.gates.slice(0, this.currentLayout);
         }
 
+        // ステータスフィルターを適用
+        const beforeFilterCount = displayGates.length;
+        console.log('Before filter - gates to check:', displayGates.length);
+        console.log('Active status filters:', this.statusFilters);
+        
+        const filteredGates = [];
+        displayGates.forEach((gate, index) => {
+            const gateStatus = gate.online ? gate.status : 'offline';
+            const shouldInclude = this.statusFilters.includes(gateStatus);
+            
+            console.log(`Gate ${gate.number}: status=${gateStatus}, online=${gate.online}, shouldInclude=${shouldInclude}`);
+            
+            if (shouldInclude) {
+                filteredGates.push(gate);
+            }
+        });
+        
+        displayGates = filteredGates;
+        console.log(`Gates after filter: ${displayGates.length} (was ${beforeFilterCount})`);
+
         displayGates.forEach(gate => {
             const gateCard = this.createGateCard(gate);
             grid.appendChild(gateCard);
@@ -248,6 +307,10 @@ class StatusMonitor {
         buttonList.innerHTML = '';
 
         this.gateGroups.forEach(group => {
+            // グループが現在のフィルターに該当するかチェック
+            const shouldShow = this.statusFilters.includes(group.status);
+            if (!shouldShow) return;
+
             const button = document.createElement('button');
             button.className = 'gate-button';
             button.setAttribute('data-group-id', group.id);
@@ -866,8 +929,8 @@ class StatusMonitor {
 // グローバルインスタンス
 let statusMonitor;
 
-
 // ページ読み込み時に初期化
 document.addEventListener('DOMContentLoaded', () => {
     statusMonitor = new StatusMonitor();
+    window.statusMonitor = statusMonitor; // グローバルスコープに追加
 });

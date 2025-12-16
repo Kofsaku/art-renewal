@@ -912,7 +912,7 @@ function displayCurrentPage() {
                     break;
                 case 'actions':
                     cellContent = `
-                        <button class="btn btn-history" onclick="showPersonHistory(${person.id})" title="履歴表示">
+                        <button class="btn btn-history btn-sm" onclick="showPersonHistory(${person.id})" title="履歴表示">
                             <i class="fas fa-history"></i> 履歴
                         </button>
                     `;
@@ -2578,37 +2578,272 @@ function showPersonEditModal(personId, personName) {
     openEditPage(personId, personName);
 }
 
-// Save person data function (保持)  
+// Save person data function (保持)
+function savePersonData(personId) {
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">
+                        <i class="fas fa-user-edit text-primary"></i>
+                        個人データ編集: ${person.name}
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="personEditForm">
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label class="form-label">個人コード</label>
+                                <input type="text" class="form-control" name="personalCode" value="${person.personalCode}" readonly>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">管理番号</label>
+                                <input type="text" class="form-control" name="managementNumber" value="${person.managementNumber}">
+                            </div>
+                        </div>
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label class="form-label">氏名</label>
+                                <input type="text" class="form-control" name="name" value="${person.name}">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">フリガナ</label>
+                                <input type="text" class="form-control" name="katakana" value="${person.katakana}">
+                            </div>
+                        </div>
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label class="form-label">所属コード</label>
+                                <input type="text" class="form-control" name="departmentCode" value="${person.departmentCode}">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">区分コード</label>
+                                <input type="text" class="form-control" name="kubunCode" value="${person.kubunCode}">
+                            </div>
+                        </div>
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label class="form-label">テナント番号</label>
+                                <input type="text" class="form-control" name="tenantNumber" value="${person.tenantNumber}">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">通門コード</label>
+                                <input type="text" class="form-control" name="tumonCode" value="${person.tumonCode}">
+                            </div>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">キャンセル</button>
+                    <button type="button" class="btn btn-primary" onclick="savePersonData(${personId})">
+                        <i class="fas fa-save"></i> 保存
+                    </button>
+                </div>
+            </div>
+        </div>
+    `;
+
+    document.body.appendChild(modal);
+    const bootstrapModal = new bootstrap.Modal(modal);
+    bootstrapModal.show();
+
+    // Remove modal from DOM when hidden
+    modal.addEventListener('hidden.bs.modal', () => {
+        document.body.removeChild(modal);
+    });
+}
+
 function savePersonData(personId) {
     const person = personalData.find(p => p.id === personId);
     if (!person) return;
-    
-    console.log('データ保存:', person.name);
-    alert('データ保存機能は個別編集画面で実装予定です');
+
+    const form = document.getElementById('personEditForm');
+    const formData = new FormData(form);
+
+    // Update person data (simulated)
+    person.managementNumber = formData.get('managementNumber');
+    person.name = formData.get('name');
+    person.katakana = formData.get('katakana');
+    person.departmentCode = formData.get('departmentCode');
+    person.kubunCode = formData.get('kubunCode');
+    person.tenantNumber = formData.get('tenantNumber');
+    person.tumonCode = formData.get('tumonCode');
+
+    // Close modal
+    const modal = bootstrap.Modal.getInstance(document.getElementById('personEditModal'));
+    modal.hide();
+
+    // Refresh table
+    applyFiltersAndDisplay();
+    showOperationStatus(`${person.name}のデータを保存しました`, 'success');
 }
 
-// 編集画面を開く
-function openEditPage(personId, personName) {
-    console.log(`編集画面遷移: ${personName} (ID: ${personId})`);
-    window.location.href = `/resources/personalRegistration-preview.html?id=${personId}&name=${encodeURIComponent(personName)}`;
+// Show history selection modal on right-click
+function showHistorySelectionModal(person) {
+    const modal = document.createElement('div');
+    modal.className = 'modal fade';
+    modal.id = 'historySelectionModal';
+    modal.innerHTML = `
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">
+                        <i class="fas fa-history text-info"></i>
+                        履歴表示設定 - ${person.name}
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h6>期間</h6>
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="periodToday" value="today">
+                                <label class="form-check-label" for="periodToday">当日</label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="periodYesterday" value="yesterday">
+                                <label class="form-check-label" for="periodYesterday">前日～</label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="periodWeek" value="week">
+                                <label class="form-check-label" for="periodWeek">1週間前～</label>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <h6>履歴種類</h6>
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="historyAll" value="all">
+                                <label class="form-check-label" for="historyAll">全て</label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="historyLightError" value="light-error">
+                                <label class="form-check-label" for="historyLightError">軽エラー</label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="historyHeavyError" value="heavy-error">
+                                <label class="form-check-label" for="historyHeavyError">重エラー</label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="historyRecovery" value="recovery">
+                                <label class="form-check-label" for="historyRecovery">重エラー復旧</label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">キャンセル</button>
+                    <button type="button" class="btn btn-primary" onclick="executeHistoryDisplay('${person.personalCode}', '${person.name}')">
+                        <i class="fas fa-play"></i> 実行
+                    </button>
+                </div>
+            </div>
+        </div>
+    `;
+
+    document.body.appendChild(modal);
+    const bootstrapModal = new bootstrap.Modal(modal);
+    bootstrapModal.show();
+
+    // Remove modal from DOM when hidden
+    modal.addEventListener('hidden.bs.modal', () => {
+        document.body.removeChild(modal);
+    });
+}
+
+function executeHistoryDisplay(personalCode, personName) {
+    const periodOptions = [];
+    const historyTypes = [];
+
+    // Get selected periods
+    if (document.getElementById('periodToday').checked) periodOptions.push('当日');
+    if (document.getElementById('periodYesterday').checked) periodOptions.push('前日～');
+    if (document.getElementById('periodWeek').checked) periodOptions.push('1週間前～');
+
+    // Get selected history types
+    if (document.getElementById('historyAll').checked) historyTypes.push('全て');
+    if (document.getElementById('historyLightError').checked) historyTypes.push('軽エラー');
+    if (document.getElementById('historyHeavyError').checked) historyTypes.push('重エラー');
+    if (document.getElementById('historyRecovery').checked) historyTypes.push('重エラー復旧');
+
+    if (periodOptions.length === 0 && historyTypes.length === 0) {
+        alert('期間または履歴種類を選択してください');
+        return;
+    }
+
+    // Close modal
+    const modal = bootstrap.Modal.getInstance(document.getElementById('historySelectionModal'));
+    modal.hide();
+
+    // Show confirmation
+    let message = `履歴画面に遷移します\n\n対象者: ${personName} (${personalCode})`;
+    if (periodOptions.length > 0) {
+        message += `\n期間: ${periodOptions.join(', ')}`;
+    }
+    if (historyTypes.length > 0) {
+        message += `\n履歴種類: ${historyTypes.join(', ')}`;
+    }
+
+    alert(message);
+}
+
+// Direct functions for HTML attributes
+function editPersonDirect(personId) {
+    const person = personalData.find(p => p.id === personId);
+    if (person) {
+        console.log('Direct edit function called for:', person.name);
+        alert(`編集画面に遷移します\n\n対象: ${person.name} (${person.personalCode})`);
+    }
+}
+
+function showHistoryModalDirect(personId) {
+    const person = personalData.find(p => p.id === personId);
+    if (person) {
+        console.log('Direct history modal function called for:', person.name);
+        showHistorySelectionModal(person);
+    }
+}
+
+// New direct functions for inline HTML events with enhanced event prevention
+function editPersonDirectly(personId) {
+    // Clear any text selection
+    if (window.getSelection) {
+        window.getSelection().removeAllRanges();
+    }
+
+    const person = personalData.find(p => p.id === personId);
+    if (person) {
+        console.log('✅ ダブルクリック成功！編集画面に遷移:', person.name);
+        alert(`✅ ダブルクリック成功！\n編集画面に遷移します\n\n対象: ${person.name} (${person.personalCode})`);
+    }
+    return false;
+}
+
+function showHistoryModalDirectly(personId) {
+    // Clear any text selection and prevent default browser menu
+    if (window.getSelection) {
+        window.getSelection().removeAllRanges();
+    }
+
+    const person = personalData.find(p => p.id === personId);
+    if (person) {
+        console.log('✅ 右クリック成功！履歴モーダル表示:', person.name);
+        showHistorySelectionModal(person);
+    }
+    return false;
 }
 
 // 履歴ボタンクリック時に呼び出される関数
 function showPersonHistory(personId) {
-    console.log(`履歴ボタンクリック: personId=${personId}`);
     const person = personalData.find(p => p.id === personId);
     if (person) {
-        console.log(`履歴表示開始: ${person.name}`);
+        console.log('履歴ボタンクリック:', person.name);
         showHistorySelectionModal(person);
-    } else {
-        console.error(`Person not found: ID=${personId}`);
     }
 }
 
 // 履歴選択モーダルを表示
 function showHistorySelectionModal(person) {
-    console.log(`履歴選択モーダル表示: ${person.name}`);
-    
     const modal = document.createElement('div');
     modal.className = 'modal fade';
     modal.id = 'historySelectionModal';
@@ -2679,6 +2914,7 @@ function showHistorySelectionModal(person) {
     const bootstrapModal = new bootstrap.Modal(modal);
     bootstrapModal.show();
     
+    // Remove modal from DOM when hidden
     modal.addEventListener('hidden.bs.modal', () => {
         document.body.removeChild(modal);
     });
@@ -2703,8 +2939,339 @@ function executeHistoryView(personalCode, personName) {
     
     console.log(`履歴表示実行: ${personName} - 期間: ${periodText} - 種類: ${historyTypes.join(', ')}`);
     
-    // 報告書画面に遷移
+    // 報告書画面に遷移（パラメータ付き）
     const reportUrl = `/resources/historyReport-preview.html?personCode=${personalCode}&name=${encodeURIComponent(personName)}&period=${period}&types=${historyTypes.join(',')}`;
     console.log(`報告書画面遷移: ${reportUrl}`);
     window.location.href = reportUrl;
 }
+
+// 編集画面を開く
+function openEditPage(personId, personName) {
+    console.log(`編集画面遷移: ${personName} (ID: ${personId})`);
+    
+    // 個人情報登録/編集画面に遷移（IDをパラメータとして渡す）
+    const editUrl = `/resources/personalRegistration-preview.html?id=${personId}&name=${encodeURIComponent(personName)}`;
+    console.log(`編集画面遷移URL: ${editUrl}`);
+    window.location.href = editUrl;
+}
+
+// 新しいシンプルなイベントハンドラー
+function handleRowDoubleClick(personId, event) {
+    console.log('🔥 handleRowDoubleClick called for person ID:', personId);
+
+    // 完全にデフォルト動作を防ぐ
+    if (event) {
+        event.preventDefault();
+        event.stopPropagation();
+        event.stopImmediatePropagation();
+    }
+
+    // テキスト選択を強制クリア
+    if (window.getSelection) {
+        window.getSelection().removeAllRanges();
+    }
+    if (document.selection) {
+        document.selection.empty();
+    }
+
+    const person = personalData.find(p => p.id === personId);
+    if (person) {
+        console.log('✅ ダブルクリック成功！編集画面に遷移:', person.name);
+        alert(`✅ ダブルクリック成功！\n編集画面に遷移します\n\n対象: ${person.name} (${person.personalCode})`);
+    }
+
+    return false;
+}
+
+function handleRowRightClick(personId, event) {
+    console.log('🔥 handleRowRightClick called for person ID:', personId);
+
+    // 完全にデフォルト動作を防ぐ
+    if (event) {
+        event.preventDefault();
+        event.stopPropagation();
+        event.stopImmediatePropagation();
+    }
+
+    // テキスト選択を強制クリア
+    if (window.getSelection) {
+        window.getSelection().removeAllRanges();
+    }
+
+    const person = personalData.find(p => p.id === personId);
+    if (person) {
+        console.log('✅ 右クリック成功！履歴モーダル表示:', person.name);
+        showHistorySelectionModal(person);
+    }
+
+    return false;
+}
+
+// 🎯 成功確認済み遅延処理関数をJavaScriptファイルに追加
+let personClickTimer = null;
+let personClickCount = 0;
+let lastClickedPersonId = null;
+
+function handlePersonRowClick(personId, personName, element, event) {
+    console.log(`🖱️ handlePersonRowClick実行: ${personName}`);
+    console.log(`🖱️ 現在のクリック数: ${personClickCount}`);
+    console.log(`🖱️ 前回クリック対象: ${lastClickedPersonId}`);
+
+    // 同じ行の連続クリックかチェック
+    if (lastClickedPersonId !== personId) {
+        console.log(`🔄 クリック対象変更: ${lastClickedPersonId} → ${personId}`);
+        personClickCount = 0;
+        lastClickedPersonId = personId;
+    }
+
+    personClickCount++;
+    console.log(`📊 クリック数更新: ${personClickCount}`);
+
+    if (personClickTimer) {
+        console.log('⏱️ 既存タイマークリア');
+        clearTimeout(personClickTimer);
+    }
+
+    console.log('⏱️ 300ms遅延タイマー開始');
+    personClickTimer = setTimeout(() => {
+        console.log(`⏰ タイマー実行: ${personClickCount}回クリック`);
+
+        if (personClickCount === 1) {
+            console.log(`🔥 ${personName} シングルクリック確定`);
+            // シングルクリック時は何もしない
+        } else if (personClickCount >= 2) {
+            console.log(`🔥🔥 ${personName} ダブルクリック確定`);
+            console.log(`🔥🔥 ${personName}の編集画面遷移処理開始`);
+            alert(`🔥🔥 ${personName}の編集画面に遷移します`);
+        }
+
+        console.log('🔄 クリック状態リセット');
+        personClickCount = 0;
+        lastClickedPersonId = null;
+    }, 300);
+}
+
+// 🚨 実用解決策: 超遅ダブルクリック関数
+function handleSuperSlowDoubleClick(element, personId, personName) {
+    console.log(`🐌 超遅処理開始: ${personName}`);
+
+    const currentCount = parseInt(element.dataset.clickCount || 0);
+    const newCount = currentCount + 1;
+    element.dataset.clickCount = newCount;
+
+    console.log(`🐌 ${personName} クリック回数: ${newCount}`);
+
+    // 2秒以内の2回目のクリックでダブルクリック判定
+    setTimeout(() => {
+        const finalCount = parseInt(element.dataset.clickCount || 0);
+        console.log(`🐌 ${personName} 最終判定: ${finalCount}回`);
+
+        if (finalCount >= 2) {
+            console.log(`🐌🐌 ${personName} 超遅ダブルクリック成功！`);
+            alert(`🐌🐌 ${personName}の編集画面に遷移します（超遅ダブルクリック）`);
+        } else {
+            console.log(`🐌 ${personName} シングルクリック`);
+        }
+
+        // カウンターリセット
+        element.dataset.clickCount = 0;
+    }, 2000);
+}
+
+
+
+function showPersonHistoryModal(personId, personName) {
+    console.log(`🔥 showPersonHistoryModal実行: ${personName}`);
+
+    // statusMonitorと同じ構造でモーダル作成
+    const existingPopup = document.getElementById('personHistoryModal');
+    if (existingPopup) {
+        existingPopup.remove();
+    }
+
+    const popup = document.createElement('div');
+    popup.id = 'personHistoryModal';
+    popup.style.cssText = `
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        background: white;
+        border: 2px solid #17a2b8;
+        border-radius: 8px;
+        padding: 20px;
+        z-index: 9999;
+        box-shadow: 0 4px 16px rgba(0,0,0,0.3);
+        min-width: 350px;
+    `;
+
+    popup.innerHTML = `
+        <div style="text-align: center; margin-bottom: 20px;">
+            <h5 style="margin: 0; color: #17a2b8;">履歴選択</h5>
+            <p style="margin: 5px 0 0 0; color: #666;">対象: ${personName}</p>
+        </div>
+        <div style="border: 2px solid #17a2b8; border-radius: 8px; padding: 15px; margin-bottom: 15px;">
+            <h6 style="margin: 0 0 10px 0; color: #17a2b8;">期間</h6>
+            <div style="margin-bottom: 8px;">
+                <label style="display: flex; align-items: center; cursor: pointer; padding: 5px;">
+                    <input type="checkbox" name="personHistoryPeriod" value="today" style="margin-right: 12px;"> 当日
+                </label>
+            </div>
+            <div style="margin-bottom: 8px;">
+                <label style="display: flex; align-items: center; cursor: pointer; padding: 5px;">
+                    <input type="checkbox" name="personHistoryPeriod" value="yesterday" style="margin-right: 12px;"> 前日～
+                </label>
+            </div>
+            <div style="margin-bottom: 15px;">
+                <label style="display: flex; align-items: center; cursor: pointer; padding: 5px;">
+                    <input type="checkbox" name="personHistoryPeriod" value="week" style="margin-right: 12px;"> 1週間前～
+                </label>
+            </div>
+            
+            <h6 style="margin: 15px 0 10px 0; color: #17a2b8;">履歴種類</h6>
+            <div style="margin-bottom: 8px;">
+                <label style="display: flex; align-items: center; cursor: pointer; padding: 5px;">
+                    <input type="checkbox" name="personHistoryType" value="all" style="margin-right: 12px;"> 全て
+                </label>
+            </div>
+            <div style="margin-bottom: 8px;">
+                <label style="display: flex; align-items: center; cursor: pointer; padding: 5px;">
+                    <input type="checkbox" name="personHistoryType" value="minor_error" style="margin-right: 12px;"> 軽エラー
+                </label>
+            </div>
+            <div style="margin-bottom: 8px;">
+                <label style="display: flex; align-items: center; cursor: pointer; padding: 5px;">
+                    <input type="checkbox" name="personHistoryType" value="major_error" style="margin-right: 12px;"> 重エラー
+                </label>
+            </div>
+            <div style="margin-bottom: 8px;">
+                <label style="display: flex; align-items: center; cursor: pointer; padding: 5px;">
+                    <input type="checkbox" name="personHistoryType" value="error_recovery" style="margin-right: 12px;"> 重エラー復旧
+                </label>
+            </div>
+        </div>
+        <div style="text-align: center; display: flex; gap: 10px; justify-content: center;">
+            <button onclick="executePersonHistorySearch('${personId}', '${personName}')" 
+                    style="padding: 10px 20px; border: none; border-radius: 4px; background: #17a2b8; color: white; cursor: pointer;">
+                実行
+            </button>
+            <button onclick="closePersonHistoryModal()" 
+                    style="padding: 10px 20px; border: 1px solid #ccc; border-radius: 4px; background: #f8f9fa; cursor: pointer;">
+                キャンセル
+            </button>
+        </div>
+    `;
+
+    const overlay = document.createElement('div');
+    overlay.id = 'personHistoryOverlay';
+    overlay.style.cssText = `
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0,0,0,0.5);
+        z-index: 9998;
+    `;
+    overlay.onclick = () => closePersonHistoryModal();
+
+    document.body.appendChild(overlay);
+    document.body.appendChild(popup);
+}
+
+function closePersonHistoryModal() {
+    const popup = document.getElementById('personHistoryModal');
+    const overlay = document.getElementById('personHistoryOverlay');
+    if (popup) popup.remove();
+    if (overlay) overlay.remove();
+}
+
+function executePersonHistorySearch(personId, personName) {
+    const selectedPeriod = document.querySelector('input[name="personHistoryPeriod"]:checked');
+    const selectedType = document.querySelector('input[name="personHistoryType"]:checked');
+
+    if (!selectedPeriod || !selectedType) {
+        alert('期間と履歴種類を選択してください。');
+        return;
+    }
+
+    const periodNames = { 'today': '当日', 'yesterday': '前日～', 'week': '1週間前～' };
+    const typeNames = { 'all': '全て', 'minor_error': '軽エラー', 'major_error': '重エラー', 'error_recovery': '重エラー復旧' };
+
+    const periodName = periodNames[selectedPeriod.value];
+    const typeName = typeNames[selectedType.value];
+
+    console.log(`履歴検索実行: ${personName} - 期間: ${periodName}, 種類: ${typeName}`);
+    alert(`${personName}の履歴検索を実行します\n期間: ${periodName}\n種類: ${typeName}`);
+    closePersonHistoryModal();
+}
+
+// 🎯 実データ行用の安定したクリック処理
+function handleDataRowClick(element, personId, personName) {
+    console.log(`🎯 ${personName} 実データ行クリック検出`);
+
+    const currentTime = Date.now();
+    const lastClickTime = parseInt(element.dataset.lastClickTime || 0);
+    const timeDiff = currentTime - lastClickTime;
+
+    console.log(`🎯 ${personName} クリック間隔: ${timeDiff}ms`);
+
+    // 2秒以内の連続クリックでダブルクリック判定
+    if (timeDiff < 2000 && timeDiff > 50) { // 50ms～2000ms
+        console.log(`🎯🎯 ${personName} ダブルクリック成功！`);
+        alert(`🎯🎯 ${personName}の編集画面に遷移します`);
+        element.dataset.lastClickTime = 0; // リセット
+    } else {
+        console.log(`🎯 ${personName} シングルクリック（次のクリック待機中）`);
+        element.dataset.lastClickTime = currentTime;
+
+        // 3秒後にリセット
+        setTimeout(() => {
+            element.dataset.lastClickTime = 0;
+            console.log(`🎯 ${personName} クリック待機タイムアウト`);
+        }, 3000);
+    }
+}
+
+// 🚫 右クリック代替機能：Ctrl+クリック
+document.addEventListener('click', function (event) {
+    if (event.ctrlKey || event.metaKey) { // Ctrl+クリック または Cmd+クリック
+        const row = event.target.closest('tr.personal-row');
+        if (row) {
+            event.preventDefault();
+            const personId = row.dataset.personId;
+            const personName = row.dataset.personName;
+            console.log(`🚫 ${personName} Ctrl+クリック検出（右クリック代替）`);
+            alert(`🚫 ${personName}の履歴選択表示（Ctrl+クリック）`);
+        }
+    }
+});
+
+// 🚫 長押し検出で右クリック代替
+let longPressTimer = null;
+let isLongPress = false;
+
+document.addEventListener('mousedown', function (event) {
+    const row = event.target.closest('tr.personal-row');
+    if (row) {
+        isLongPress = false;
+        longPressTimer = setTimeout(() => {
+            isLongPress = true;
+            const personName = row.dataset.personName;
+            console.log(`🚫 ${personName} 長押し検出（右クリック代替）`);
+            alert(`🚫 ${personName}の履歴選択表示（長押し）`);
+        }, 1000); // 1秒長押し
+    }
+});
+
+document.addEventListener('mouseup', function (event) {
+    if (longPressTimer) {
+        clearTimeout(longPressTimer);
+    }
+});
+
+document.addEventListener('mouseleave', function (event) {
+    if (longPressTimer) {
+        clearTimeout(longPressTimer);
+    }
+});

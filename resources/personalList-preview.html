@@ -9,7 +9,7 @@
     <link rel="stylesheet" href="/resources/static/css/common.css" />
     <link rel="stylesheet" href="/resources/static/css/unified-table.css" />
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" />
-    <title>個人情報一覧</title>
+    <title>個人情報一覧 v2.0</title>
     <style>
         .content-wrapper {
             padding-top: 70px;
@@ -1205,72 +1205,6 @@
                 <span class="filter-details" id="filterDetails"></span>
             </div>
 
-            <!-- 🚨 問題特定：ダブルクリック速度・右クリック問題対応 -->
-            <div
-                style="background: #dc3545; color: white; padding: 20px; margin: 15px 0; border-radius: 8px; text-align: center;">
-                <h4>🚨 問題特定：ダブルクリック速度・右クリック設定の問題</h4>
-                <p><strong>解決策を実装しました</strong></p>
-
-                <!-- 解決策1: 超遅いダブルクリック判定 -->
-                <div id="slowDoubleClickTest"
-                    style="background: #28a745; color: white; padding: 20px; margin: 10px; cursor: pointer; user-select: none; border: 3px solid white;">
-                    🐌 超遅ダブルクリックテスト - ゆっくり2回クリック（1秒間隔でもOK）
-                </div>
-
-                <!-- 解決策2: 連続クリック検出 -->
-                <div id="continuousClickTest"
-                    style="background: #ffc107; color: black; padding: 20px; margin: 10px; cursor: pointer; user-select: none; border: 3px solid black;">
-                    🔄 連続クリック検出 - 何回でもクリック（5回で編集画面）
-                </div>
-
-                <!-- 解決策3: 強制右クリック無効化 -->
-                <div id="forceRightClickTest"
-                    style="background: #6f42c1; color: white; padding: 20px; margin: 10px; cursor: pointer; user-select: none; border: 3px solid white;">
-                    🚫 強制右クリック無効化 - 右クリックを完全ブロック
-                </div>
-
-                <!-- 解決策4: キーボード併用 -->
-                <div
-                    style="background: #fd7e14; color: white; padding: 20px; margin: 10px; cursor: pointer; user-select: none; border: 3px solid white;">
-                    ⌨️ Ctrl+クリック または Shift+クリック で編集画面
-                </div>
-            </div>
-
-            <!-- 🎯 statusMonitor方式実装完了 -->
-            <div
-                style="background: #d4edda; padding: 15px; margin: 15px 0; border: 1px solid #28a745; border-radius: 8px;">
-                <h5>✅ statusMonitor方式実装完了</h5>
-                <p><strong>statusMonitor-preview.htmlと同じ方式で実装しました</strong></p>
-                <div style="display: flex; gap: 20px; align-items: center;">
-                    <div>
-                        <h6>🖱️ 操作方法：</h6>
-                        <ul style="margin: 5px 0;">
-                            <li><strong>ダブルクリック</strong>: 編集画面に遷移</li>
-                            <li><strong>右クリック</strong>: 履歴選択表示</li>
-                        </ul>
-                    </div>
-                    <div>
-                        <button onclick="testStatusMonitorMethod()" class="btn btn-success me-2">
-                            🧪 statusMonitor方式テスト
-                        </button>
-                        <button onclick="analyzeTableStructure()" class="btn btn-warning me-2">
-                            🔍 テーブル構造分析
-                        </button>
-                        <button onclick="createManualTestRow()" class="btn btn-info me-2">
-                            ➕ 手動テスト行追加
-                        </button>
-                        <button onclick="forceSetTableEvents()" class="btn btn-danger">
-                            🚨 強制イベント設定
-                        </button>
-                    </div>
-                </div>
-                <p style="margin: 10px 0; color: #155724;"><strong>💡 注意:</strong> 1行目（黄色）がテスト専用行です。</p>
-            </div>
-
-            <!-- 🔬 リアルタイムデバッグログ -->
-            <div id="debugLogArea"
-                style="display: none; background: #000; color: #0f0; padding: 15px; margin: 15px 0; border-radius: 5px; font-family: monospace; height: 200px; overflow-y: scroll;">
-            </div>
 
             <!-- 個人情報テーブル -->
             <div class="table-responsive">
@@ -1347,113 +1281,62 @@
                     <div class="row">
                         <div class="col-md-6">
                             <h6 class="text-success">
-
-                                <hr class="my-3">
-
-                                <div class="d-flex gap-2">
-                                    <button type="button" class="btn btn-outline-success btn-sm"
-                                        onclick="showAllColumns()">
-                                        <i class="fas fa-plus"></i> すべて表示
-                                    </button>
-                                    <button type="button" class="btn btn-outline-secondary btn-sm"
-                                        onclick="resetToDefault()">
-                                        <i class="fas fa-undo"></i> デフォルトに戻す
-                                    </button>
-                                </div>
+                                <i class="fas fa-check"></i> 表示中の列
+                            </h6>
+                            <div class="column-list" id="visibleColumnsList">
+                                <!-- JavaScriptで動的生成 -->
+                            </div>
                         </div>
-                        <div class="modal-footer">
-                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">閉じる</button>
+                        <div class="col-md-6">
+                            <h6 class="text-muted">
+                                <i class="fas fa-times"></i> 非表示の列
+                            </h6>
+                            <div class="column-list" id="hiddenColumnsList">
+                                <!-- JavaScriptで動的生成 -->
+                            </div>
+                            <div class="text-center mt-3" id="noHiddenColumns" style="display: none;">
+                                <span class="text-muted">
+                                    <i class="fas fa-check-circle"></i>
+                                    非表示の列はありません
+                                </span>
+                            </div>
                         </div>
                     </div>
+
+                    <hr class="my-3">
+
+                    <div class="d-flex gap-2">
+                        <button type="button" class="btn btn-outline-success btn-sm" onclick="showAllColumns()">
+                            <i class="fas fa-plus"></i> すべて表示
+                        </button>
+                        <button type="button" class="btn btn-outline-secondary btn-sm" onclick="resetToDefault()">
+                            <i class="fas fa-undo"></i> デフォルトに戻す
+                        </button>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">閉じる</button>
                 </div>
             </div>
+        </div>
+    </div>
 
-            <!-- 右クリックコンテキストメニュー -->
-            <div class="context-menu" id="contextMenu">
-                <!-- Content will be populated by JavaScript -->
-            </div>
+    <!-- 右クリックコンテキストメニュー -->
+    <div class="context-menu" id="contextMenu">
+        <!-- Content will be populated by JavaScript -->
+    </div>
 
-            <!-- フッター -->
-            <div id="global-footer" class="mt-5">
-                <footer>
-                    <p class="text-right"><small>© ART JAPAN CO., LTD. All Rights Reserved.</small></p>
-                </footer>
-            </div>
+    <!-- フッター -->
+    <div id="global-footer" class="mt-5">
+        <footer>
+            <p class="text-right"><small>© ART JAPAN CO., LTD. All Rights Reserved.</small></p>
+        </footer>
+    </div>
 
-            <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-            <script type="text/javascript" src="/resources/static/js/jquery/3.7.1/jquery.min.js"></script>
-            <script type="text/javascript" src="/resources/static/js/common.js"></script>
-            <script type="text/javascript" src="/resources/static/js/personalList.js"></script>
-
-            <script>
-                // 🚨 即座に実行されるテスト（ページ読み込み時）
-                console.log('🚨 EMERGENCY: Script execution test - IMMEDIATE');
-
-                // ページタイトルを変更してJavaScriptが動作していることを視覚的に確認
-                document.title = '🚨 JavaScript動作確認中 - ' + document.title;
-
-                // 🔍 テーブル構造分析
-                function analyzeTableStructure() {
-                    console.log('🔍 テーブル構造分析開始...');
-                    const table = document.getElementById('personalTable');
-                    const tbody = document.getElementById('personalTableBody');
-
-                    if (!table || !tbody) {
-                        console.log('❌ テーブル要素が見つかりません');
-                        return;
-                    }
-
-                    const rows = tbody.querySelectorAll('tr');
-                    console.log(`🔍 発見された行数: ${rows.length}`);
-
-                    rows.forEach((row, index) => {
-                        console.log(`🔍 行${index + 1}分析:`);
-                        console.log(`   - onclick: ${!!row.onclick}`);
-                        console.log(`   - ondblclick: ${!!row.ondblclick}`);
-                        console.log(`   - oncontextmenu: ${!!row.oncontextmenu}`);
-                    });
-
-                    alert(`🔍 テーブル分析完了\n行数: ${rows.length}\n詳細はコンソールを確認してください`);
-                }
-
-                // ➕ 手動テスト行追加 (イベントなし)
-                function createManualTestRow() {
-                    const tbody = document.getElementById('personalTableBody');
-                    if (!tbody) {
-                        alert('❌ テーブルボディが見つかりません');
-                        return;
-                    }
-
-                    const testRow = document.createElement('tr');
-                    testRow.className = 'manual-test-row';
-                    testRow.style.cssText = 'background: #FF69B4; color: white; cursor: pointer; user-select: none;';
-                    testRow.innerHTML = `
-                        <td colspan="12" style="padding: 20px; text-align: center; font-weight: bold; font-size: 16px;">
-                            ➕ 手動作成テスト行 - イベントなし
-                        </td>
-                    `;
-                    tbody.appendChild(testRow);
-                    console.log('➕ 手動テスト行追加完了 (イベントなし)');
-                }
-
-                // DOM読み込み完了時
-                document.addEventListener('DOMContentLoaded', function () {
-                    console.log('🔥 DOM読み込み完了 - 行イベントは全て削除されています');
-
-                    // 既存のイベントをクリアするための安全策
-                    setTimeout(() => {
-                        const tbody = document.getElementById('personalTableBody');
-                        if (tbody) {
-                            const rows = tbody.querySelectorAll('tr');
-                            rows.forEach(row => {
-                                row.onclick = null;
-                                row.ondblclick = null;
-                                row.oncontextmenu = null;
-                            });
-                        }
-                    }, 1000);
-                });
-            </script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script type="text/javascript" src="/resources/static/js/jquery/3.7.1/jquery.min.js"></script>
+    <script type="text/javascript" src="/resources/static/js/common.js"></script>
+    <script type="text/javascript" src="/resources/static/js/personallist-renew.js?t=1734247000"></script>
 </body>
 
 </html>

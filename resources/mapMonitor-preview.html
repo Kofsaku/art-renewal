@@ -293,7 +293,150 @@
             border-top-color: rgba(0,0,0,0.9);
         }
         
-        .gate-indicator:hover .gate-tooltip {
+        /* ゲート詳細ステータスカード */
+        .gate-status-card {
+            position: absolute;
+            background: white;
+            border: 2px solid #dee2e6;
+            border-radius: 8px;
+            padding: 12px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            z-index: 1001;
+            min-width: 200px;
+            opacity: 0;
+            transform: scale(0.8);
+            transition: all 0.3s ease;
+            pointer-events: none;
+        }
+
+        .sensor-icon:hover .gate-status-card {
+            opacity: 1;
+            transform: scale(1);
+        }
+
+        .status-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 10px;
+            font-weight: bold;
+            font-size: 0.9rem;
+        }
+
+        .status-header .status-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            margin-right: 8px;
+        }
+
+        .status-icons-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 6px;
+            margin-top: 8px;
+        }
+
+        .status-icon-item {
+            display: flex;
+            align-items: center;
+            font-size: 0.75rem;
+            padding: 4px 6px;
+            border-radius: 4px;
+            border: 1px solid #dee2e6;
+        }
+
+        .status-icon-item .icon {
+            width: 16px;
+            height: 16px;
+            margin-right: 6px;
+            border-radius: 2px;
+            background-size: contain;
+            background-repeat: no-repeat;
+            background-position: center;
+        }
+
+        .icon-door-status { background-image: url('/resources/static/images/ゲート/①開閉状態/door_closed.png'); }
+        .icon-lock-status { background-image: url('/resources/static/images/ゲート/②施解錠状態/door_locking.png'); }
+        .icon-security-status { background-image: url('/resources/static/images/ゲート/④警備状態/gate_sec_set.png'); }
+        .icon-comm-status { background-image: url('/resources/static/images/ゲート/①開閉状態/door_opening.png'); }
+
+        /* センサーアイコンのスタイル */
+        .sensor-icon {
+            position: absolute;
+            width: 40px;
+            height: 40px;
+            border-radius: 6px;
+            border: 2px solid white;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            background-size: contain;
+            background-repeat: no-repeat;
+            background-position: center;
+        }
+
+        .sensor-icon:hover {
+            transform: scale(1.3);
+            z-index: 10;
+        }
+
+        .sensor-loop-make {
+            background-image: url('/resources/static/images/センサー/①ループ状態/loop_make.png');
+        }
+
+        .sensor-loop-break {
+            background-image: url('/resources/static/images/センサー/①ループ状態/loop_break.png');
+        }
+
+        .sensor-sec-normal {
+            background-image: url('/resources/static/images/センサー/②警備状態/sensor_sec_normal.png');
+        }
+
+        .sensor-sec-set {
+            background-image: url('/resources/static/images/センサー/②警備状態/sensor_sec_set.png');
+        }
+
+        .sensor-sec-bulletin {
+            background-image: url('/resources/static/images/センサー/②警備状態/sensor_sec_bulletin.png');
+            animation: pulse-alert 2s infinite;
+        }
+
+        @keyframes pulse-alert {
+            0% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.1); opacity: 0.8; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+
+        /* センサーツールチップ */
+        .sensor-tooltip {
+            position: absolute;
+            background: rgba(0,0,0,0.9);
+            color: white;
+            padding: 8px 12px;
+            border-radius: 4px;
+            font-size: 12px;
+            white-space: nowrap;
+            pointer-events: none;
+            z-index: 1000;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+            transform: translateX(-50%) translateY(-100%);
+            margin-top: -10px;
+            min-width: 100px;
+        }
+
+        .sensor-tooltip::after {
+            content: '';
+            position: absolute;
+            bottom: -5px;
+            left: 50%;
+            transform: translateX(-50%);
+            border: 5px solid transparent;
+            border-top-color: rgba(0,0,0,0.9);
+        }
+
+        .sensor-icon:hover .sensor-tooltip {
             opacity: 1;
         }
         
@@ -559,13 +702,13 @@
             <!-- メインコンテンツ：マップ表示 -->
             <div class="main-content">
                 <div class="monitor-header">
-                    <div style="display: flex; align-items: center; gap: 20px;">
+                    <div>
                         <h2>マップモニター</h2>
-                    </div>
-                    <div class="header-actions">
-                        <button class="btn btn-primary" onclick="showGroupControlModal()">
-                            <i class="fas fa-list"></i> 一斉制御
-                        </button>
+                        <div style="margin-top: 10px;">
+                            <button class="btn" onclick="showGroupControlModal()" style="background: linear-gradient(135deg, #fd7e14, #e17c47); color: white; border: none; padding: 8px 20px; border-radius: 6px; font-weight: 500; box-shadow: 0 2px 4px rgba(0,0,0,0.2);">
+                                一斉制御
+                            </button>
+                        </div>
                     </div>
                 </div>
                 
@@ -600,34 +743,281 @@
                         <button class="zoom-btn" onclick="resetZoom()">⌂</button>
                     </div>
                     
+
                     <!-- フロアマップ -->
                     <div class="floor-plan" id="floorPlan">
-                        
-                        <!-- ゲートインジケーター -->
-                        <div class="gate-indicator status-normal" style="left: 120px; top: 120px;" data-gate="1">
-                            <div class="gate-tooltip">ゲート①<br><span style="font-size: 10px;">状態: 正常</span></div>
+                        <!-- センサーアイコンを配置（5種類をランダムに配置） -->
+                        <div class="sensor-icon sensor-loop-make" style="left: 120px; top: 80px;" data-sensor="001" onclick="showSensorControlModal(this)">
+                            <div class="gate-status-card" style="left: 25px; top: -150px;">
+                                <div class="status-header">
+                                    <div class="status-dot status-normal"></div>
+                                    <span>ゲート001</span>
+                                </div>
+                                <div style="font-size: 0.8rem; color: #666; margin-bottom: 8px;">エントランス</div>
+                                <div class="status-icons-grid">
+                                    <div class="status-icon-item">
+                                        <div class="icon icon-door-status"></div>
+                                        <span>扉:閉</span>
+                                    </div>
+                                    <div class="status-icon-item">
+                                        <div class="icon icon-lock-status"></div>
+                                        <span>施錠</span>
+                                    </div>
+                                    <div class="status-icon-item">
+                                        <div class="icon icon-security-status"></div>
+                                        <span>警備:ON</span>
+                                    </div>
+                                    <div class="status-icon-item">
+                                        <div class="icon icon-comm-status"></div>
+                                        <span>通信:正常</span>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
-                        <div class="gate-indicator status-warning" style="left: 220px; top: 120px;" data-gate="2">
-                            <div class="gate-tooltip">ゲート②<br><span style="font-size: 10px;">状態: 警告</span></div>
+                        <div class="sensor-icon sensor-sec-normal" style="left: 280px; top: 150px;" data-sensor="002" onclick="showSensorControlModal(this)">
+                            <div class="gate-status-card" style="left: 25px; top: -150px;">
+                                <div class="status-header">
+                                    <div class="status-dot status-normal"></div>
+                                    <span>ゲート002</span>
+                                </div>
+                                <div style="font-size: 0.8rem; color: #666; margin-bottom: 8px;">サーバールーム</div>
+                                <div class="status-icons-grid">
+                                    <div class="status-icon-item">
+                                        <div class="icon icon-door-status"></div>
+                                        <span>扉:閉</span>
+                                    </div>
+                                    <div class="status-icon-item">
+                                        <div class="icon icon-lock-status"></div>
+                                        <span>施錠</span>
+                                    </div>
+                                    <div class="status-icon-item">
+                                        <div class="icon icon-security-status"></div>
+                                        <span>警備:ON</span>
+                                    </div>
+                                    <div class="status-icon-item">
+                                        <div class="icon icon-comm-status"></div>
+                                        <span>通信:正常</span>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
-                        <div class="gate-indicator status-normal" style="left: 330px; top: 120px;" data-gate="3">
-                            <div class="gate-tooltip">ゲート③<br><span style="font-size: 10px;">状態: 正常</span></div>
+                        <div class="sensor-icon sensor-sec-set" style="left: 450px; top: 90px;" data-sensor="003" onclick="showSensorControlModal(this)">
+                            <div class="gate-status-card" style="left: 25px; top: -150px;">
+                                <div class="status-header">
+                                    <div class="status-dot status-warning"></div>
+                                    <span>ゲート003</span>
+                                </div>
+                                <div style="font-size: 0.8rem; color: #666; margin-bottom: 8px;">会議室</div>
+                                <div class="status-icons-grid">
+                                    <div class="status-icon-item">
+                                        <div class="icon icon-door-status"></div>
+                                        <span>扉:開</span>
+                                    </div>
+                                    <div class="status-icon-item">
+                                        <div class="icon icon-lock-status"></div>
+                                        <span>解錠</span>
+                                    </div>
+                                    <div class="status-icon-item">
+                                        <div class="icon icon-security-status"></div>
+                                        <span>警備:セット中</span>
+                                    </div>
+                                    <div class="status-icon-item">
+                                        <div class="icon icon-comm-status"></div>
+                                        <span>通信:正常</span>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
-                        <div class="gate-indicator status-error" style="left: 430px; top: 120px;" data-gate="4">
-                            <div class="gate-tooltip">ゲート④<br><span style="font-size: 10px;">状態: 異常</span></div>
+                        <div class="sensor-icon sensor-loop-break" style="left: 180px; top: 250px;" data-sensor="004" onclick="showSensorControlModal(this)">
+                            <div class="gate-status-card" style="left: 25px; top: -150px;">
+                                <div class="status-header">
+                                    <div class="status-dot status-error"></div>
+                                    <span>ゲート004</span>
+                                </div>
+                                <div style="font-size: 0.8rem; color: #666; margin-bottom: 8px;">役員室</div>
+                                <div class="status-icons-grid">
+                                    <div class="status-icon-item">
+                                        <div class="icon icon-door-status"></div>
+                                        <span>扉:異常</span>
+                                    </div>
+                                    <div class="status-icon-item">
+                                        <div class="icon icon-lock-status"></div>
+                                        <span>施錠異常</span>
+                                    </div>
+                                    <div class="status-icon-item">
+                                        <div class="icon icon-security-status"></div>
+                                        <span>警備:エラー</span>
+                                    </div>
+                                    <div class="status-icon-item">
+                                        <div class="icon icon-comm-status"></div>
+                                        <span>通信:切断</span>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
-                        <div class="gate-indicator status-normal" style="left: 530px; top: 120px;" data-gate="5">
-                            <div class="gate-tooltip">ゲート⑤<br><span style="font-size: 10px;">状態: 正常</span></div>
+                        <div class="sensor-icon sensor-sec-bulletin" style="left: 380px; top: 180px;" data-sensor="005" onclick="showSensorControlModal(this)">
+                            <div class="gate-status-card" style="left: 25px; top: -150px;">
+                                <div class="status-header">
+                                    <div class="status-dot status-error"></div>
+                                    <span>ゲート005</span>
+                                </div>
+                                <div style="font-size: 0.8rem; color: #666; margin-bottom: 8px;">倉庫</div>
+                                <div class="status-icons-grid">
+                                    <div class="status-icon-item">
+                                        <div class="icon icon-door-status"></div>
+                                        <span>扉:開放警報</span>
+                                    </div>
+                                    <div class="status-icon-item">
+                                        <div class="icon icon-lock-status"></div>
+                                        <span>解錠</span>
+                                    </div>
+                                    <div class="status-icon-item">
+                                        <div class="icon icon-security-status"></div>
+                                        <span>警備:警報中</span>
+                                    </div>
+                                    <div class="status-icon-item">
+                                        <div class="icon icon-comm-status"></div>
+                                        <span>通信:正常</span>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
-                        <div class="gate-indicator status-offline" style="left: 630px; top: 120px;" data-gate="6">
-                            <div class="gate-tooltip">ゲート⑥<br><span style="font-size: 10px;">状態: オフライン</span></div>
+                        <div class="sensor-icon sensor-loop-make" style="left: 600px; top: 120px;" data-sensor="006" onclick="showSensorControlModal(this)">
+                            <div class="gate-status-card" style="left: 25px; top: -150px;">
+                                <div class="status-header">
+                                    <div class="status-dot status-normal"></div>
+                                    <span>ゲート006</span>
+                                </div>
+                                <div style="font-size: 0.8rem; color: #666; margin-bottom: 8px;">ショールーム</div>
+                                <div class="status-icons-grid">
+                                    <div class="status-icon-item">
+                                        <div class="icon icon-door-status"></div>
+                                        <span>扉:閉</span>
+                                    </div>
+                                    <div class="status-icon-item">
+                                        <div class="icon icon-lock-status"></div>
+                                        <span>施錠</span>
+                                    </div>
+                                    <div class="status-icon-item">
+                                        <div class="icon icon-security-status"></div>
+                                        <span>警備:ON</span>
+                                    </div>
+                                    <div class="status-icon-item">
+                                        <div class="icon icon-comm-status"></div>
+                                        <span>通信:正常</span>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
-                        <div class="gate-indicator status-warning" style="left: 550px; top: 220px;" data-gate="7">
-                            <div class="gate-tooltip">ゲート⑦<br><span style="font-size: 10px;">状態: 警告</span></div>
+                        <div class="sensor-icon sensor-sec-normal" style="left: 520px; top: 280px;" data-sensor="007" onclick="showSensorControlModal(this)">
+                            <div class="gate-status-card" style="left: 25px; top: -150px;">
+                                <div class="status-header">
+                                    <div class="status-dot status-normal"></div>
+                                    <span>ゲート007</span>
+                                </div>
+                                <div style="font-size: 0.8rem; color: #666; margin-bottom: 8px;">資料室</div>
+                                <div class="status-icons-grid">
+                                    <div class="status-icon-item">
+                                        <div class="icon icon-door-status"></div>
+                                        <span>扉:閉</span>
+                                    </div>
+                                    <div class="status-icon-item">
+                                        <div class="icon icon-lock-status"></div>
+                                        <span>施錠</span>
+                                    </div>
+                                    <div class="status-icon-item">
+                                        <div class="icon icon-security-status"></div>
+                                        <span>警備:ON</span>
+                                    </div>
+                                    <div class="status-icon-item">
+                                        <div class="icon icon-comm-status"></div>
+                                        <span>通信:正常</span>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
-                        <div class="gate-indicator status-normal" style="left: 100px; top: 320px;" data-gate="8">
-                            <div class="gate-tooltip">ゲート⑧<br><span style="font-size: 10px;">状態: 正常</span></div>
+                        <div class="sensor-icon sensor-loop-break" style="left: 340px; top: 320px;" data-sensor="008" onclick="showSensorControlModal(this)">
+                            <div class="gate-status-card" style="left: 25px; top: -150px;">
+                                <div class="status-header">
+                                    <div class="status-dot status-offline"></div>
+                                    <span>ゲート008</span>
+                                </div>
+                                <div style="font-size: 0.8rem; color: #666; margin-bottom: 8px;">地下駐車場</div>
+                                <div class="status-icons-grid">
+                                    <div class="status-icon-item">
+                                        <div class="icon icon-door-status"></div>
+                                        <span>扉:不明</span>
+                                    </div>
+                                    <div class="status-icon-item">
+                                        <div class="icon icon-lock-status"></div>
+                                        <span>施錠:不明</span>
+                                    </div>
+                                    <div class="status-icon-item">
+                                        <div class="icon icon-security-status"></div>
+                                        <span>警備:不明</span>
+                                    </div>
+                                    <div class="status-icon-item">
+                                        <div class="icon icon-comm-status"></div>
+                                        <span>通信:オフライン</span>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
+                        <div class="sensor-icon sensor-sec-set" style="left: 680px; top: 200px;" data-sensor="009" onclick="showSensorControlModal(this)">
+                            <div class="gate-status-card" style="left: 25px; top: -150px;">
+                                <div class="status-header">
+                                    <div class="status-dot status-warning"></div>
+                                    <span>ゲート009</span>
+                                </div>
+                                <div style="font-size: 0.8rem; color: #666; margin-bottom: 8px;">屋上</div>
+                                <div class="status-icons-grid">
+                                    <div class="status-icon-item">
+                                        <div class="icon icon-door-status"></div>
+                                        <span>扉:開</span>
+                                    </div>
+                                    <div class="status-icon-item">
+                                        <div class="icon icon-lock-status"></div>
+                                        <span>解錠</span>
+                                    </div>
+                                    <div class="status-icon-item">
+                                        <div class="icon icon-security-status"></div>
+                                        <span>警備:セット中</span>
+                                    </div>
+                                    <div class="status-icon-item">
+                                        <div class="icon icon-comm-status"></div>
+                                        <span>通信:正常</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="sensor-icon sensor-sec-bulletin" style="left: 80px; top: 180px;" data-sensor="010" onclick="showSensorControlModal(this)">
+                            <div class="gate-status-card" style="left: 25px; top: -150px;">
+                                <div class="status-header">
+                                    <div class="status-dot status-error"></div>
+                                    <span>ゲート010</span>
+                                </div>
+                                <div style="font-size: 0.8rem; color: #666; margin-bottom: 8px;">非常口</div>
+                                <div class="status-icons-grid">
+                                    <div class="status-icon-item">
+                                        <div class="icon icon-door-status"></div>
+                                        <span>扉:開放警報</span>
+                                    </div>
+                                    <div class="status-icon-item">
+                                        <div class="icon icon-lock-status"></div>
+                                        <span>解錠</span>
+                                    </div>
+                                    <div class="status-icon-item">
+                                        <div class="icon icon-security-status"></div>
+                                        <span>警備:警報中</span>
+                                    </div>
+                                    <div class="status-icon-item">
+                                        <div class="icon icon-comm-status"></div>
+                                        <span>通信:正常</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
                     </div>
                     
                 </div>
@@ -757,9 +1147,203 @@
         </div>
     </div>
 
+    <!-- センサー制御モーダル -->
+    <div class="modal fade" id="sensorControlModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">センサー制御 - <span id="modalSensorNumber"></span></h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h6>現在状態</h6>
+                            <p id="modalSensorStatus"></p>
+                        </div>
+                        <div class="col-md-6">
+                            <h6>最終更新</h6>
+                            <p id="modalSensorLastUpdate"></p>
+                        </div>
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col-12">
+                            <h6>遠隔操作 <span class="text-muted">※複数選択不可</span></h6>
+                            <div class="form-check">
+                                <input class="form-check-input" type="radio" name="sensorRemoteOperation" value="reset_loop" id="sensorResetLoop">
+                                <label class="form-check-label" for="sensorResetLoop">ループリセット</label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="radio" name="sensorRemoteOperation" value="security_set" id="sensorSecuritySet">
+                                <label class="form-check-label" for="sensorSecuritySet">警備セット</label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="radio" name="sensorRemoteOperation" value="security_release" id="sensorSecurityRelease">
+                                <label class="form-check-label" for="sensorSecurityRelease">警備解除</label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="radio" name="sensorRemoteOperation" value="alarm_reset" id="sensorAlarmReset">
+                                <label class="form-check-label" for="sensorAlarmReset">警報リセット</label>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="text-end">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">キャンセル</button>
+                        <button type="button" class="btn btn-primary" onclick="executeSensorRemoteCommand()">実行</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script type="text/javascript" src="/resources/static/js/jquery/3.7.1/jquery.min.js"></script>
     <script type="text/javascript" src="/resources/static/js/common.js"></script>
     <script type="text/javascript" src="/resources/static/js/mapMonitor.js"></script>
+    <script>
+        // ゲート制御モーダルを表示
+        function showGateControlModal(element) {
+            const gateNumber = element.getAttribute('data-gate');
+            const gateStatus = element.className.includes('status-normal') ? '正常' : 
+                              element.className.includes('status-warning') ? '警告' : 
+                              element.className.includes('status-error') ? '異常' : 'オフライン';
+            
+            document.getElementById('modalGateNumber').textContent = `ゲート${gateNumber}`;
+            document.getElementById('modalGateStatus').textContent = gateStatus;
+            document.getElementById('modalLastUpdate').textContent = new Date().toLocaleString();
+            
+            // ラジオボタンをリセット
+            document.querySelectorAll('input[name="singleRemoteOperation"]').forEach(radio => {
+                radio.checked = false;
+            });
+            
+            const modal = new bootstrap.Modal(document.getElementById('gateDetailModal'));
+            modal.show();
+        }
+
+        // センサー制御モーダルを表示  
+        function showSensorControlModal(element) {
+            const sensorNumber = element.getAttribute('data-sensor');
+            let sensorStatus = '';
+            
+            if (element.className.includes('sensor-loop-make')) {
+                sensorStatus = 'ループ接続';
+            } else if (element.className.includes('sensor-loop-break')) {
+                sensorStatus = 'ループ切断';
+            } else if (element.className.includes('sensor-sec-normal')) {
+                sensorStatus = '警備正常';
+            } else if (element.className.includes('sensor-sec-set')) {
+                sensorStatus = '警備セット';
+            } else if (element.className.includes('sensor-sec-bulletin')) {
+                sensorStatus = '警備警報';
+            }
+            
+            document.getElementById('modalSensorNumber').textContent = `センサー${sensorNumber}`;
+            document.getElementById('modalSensorStatus').textContent = sensorStatus;
+            document.getElementById('modalSensorLastUpdate').textContent = new Date().toLocaleString();
+            
+            // ラジオボタンをリセット
+            document.querySelectorAll('input[name="sensorRemoteOperation"]').forEach(radio => {
+                radio.checked = false;
+            });
+            
+            const modal = new bootstrap.Modal(document.getElementById('sensorControlModal'));
+            modal.show();
+        }
+
+        // ゲート遠隔操作実行
+        function executeSingleRemoteCommand() {
+            const selectedOperation = document.querySelector('input[name="singleRemoteOperation"]:checked');
+            if (!selectedOperation) {
+                alert('操作を選択してください。');
+                return;
+            }
+            
+            const gateNumber = document.getElementById('modalGateNumber').textContent;
+            const operationName = selectedOperation.nextElementSibling.textContent;
+            
+            // 実際の操作をここで実装
+            alert(`${gateNumber}に対して「${operationName}」を実行します。\n\n※実際のシステムでは、ここでサーバーへの通信処理が実行されます。`);
+            
+            // モーダルを閉じる
+            bootstrap.Modal.getInstance(document.getElementById('gateDetailModal')).hide();
+        }
+
+        // センサー遠隔操作実行
+        function executeSensorRemoteCommand() {
+            const selectedOperation = document.querySelector('input[name="sensorRemoteOperation"]:checked');
+            if (!selectedOperation) {
+                alert('操作を選択してください。');
+                return;
+            }
+            
+            const sensorNumber = document.getElementById('modalSensorNumber').textContent;
+            const operationName = selectedOperation.nextElementSibling.textContent;
+            
+            // 実際の操作をここで実装
+            alert(`${sensorNumber}に対して「${operationName}」を実行します。\n\n※実際のシステムでは、ここでサーバーへの通信処理が実行されます。`);
+            
+            // モーダルを閉じる
+            bootstrap.Modal.getInstance(document.getElementById('sensorControlModal')).hide();
+        }
+
+        // グループ制御モーダルを表示
+        function showGroupControlModal() {
+            const modal = new bootstrap.Modal(document.getElementById('groupControlModal'));
+            modal.show();
+        }
+
+        // グループ制御実行
+        function executeGroupControl() {
+            const selectedGroups = [];
+            document.querySelectorAll('.group-selection input[type="checkbox"]:checked').forEach(checkbox => {
+                selectedGroups.push(checkbox.value);
+            });
+            
+            const selectedOperation = document.querySelector('input[name="remoteOperation"]:checked');
+            
+            if (selectedGroups.length === 0) {
+                alert('グループを選択してください。');
+                return;
+            }
+            
+            if (!selectedOperation) {
+                alert('操作を選択してください。');
+                return;
+            }
+            
+            const operationName = selectedOperation.nextElementSibling.textContent;
+            
+            // 実際の操作をここで実装
+            alert(`グループ${selectedGroups.join(', ')}に対して「${operationName}」を実行します。\n\n※実際のシステムでは、ここでサーバーへの通信処理が実行されます。`);
+            
+            // モーダルを閉じる
+            bootstrap.Modal.getInstance(document.getElementById('groupControlModal')).hide();
+        }
+
+        // ズーム機能
+        let zoomLevel = 1;
+        
+        function zoomIn() {
+            zoomLevel = Math.min(zoomLevel + 0.2, 3);
+            applyZoom();
+        }
+        
+        function zoomOut() {
+            zoomLevel = Math.max(zoomLevel - 0.2, 0.5);
+            applyZoom();
+        }
+        
+        function resetZoom() {
+            zoomLevel = 1;
+            applyZoom();
+        }
+        
+        function applyZoom() {
+            const floorPlan = document.getElementById('floorPlan');
+            floorPlan.style.transform = `scale(${zoomLevel})`;
+            floorPlan.style.transformOrigin = '50% 50%';
+        }
+    </script>
 </body>
 </html>

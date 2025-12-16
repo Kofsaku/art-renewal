@@ -10,9 +10,14 @@ class DataMonitor {
         this.currentFilters = {
             dataType: 'all',
             selectedGates: [],
+            selectedStatuses: ['normal', 'warning', 'error', 'info'],
             visibleColumns: ['occurredDate', 'personalCode', 'name', 'departmentCode', 'departmentName', 'gateNumber', 'gateName', 'historyDetails']
         };
         this.excelFilters = {};
+        this.sortConfig = {
+            column: null,
+            direction: 'asc'
+        };
         
         this.init();
     }
@@ -43,6 +48,13 @@ class DataMonitor {
             });
         });
 
+        // ステータスフィルタ
+        document.querySelectorAll('.status-filter-checkbox').forEach(checkbox => {
+            checkbox.addEventListener('change', () => {
+                this.updateStatusFilters();
+            });
+        });
+
         // 列表示/非表示フィルタ
         document.querySelectorAll('.column-filter-checkbox').forEach(checkbox => {
             checkbox.addEventListener('change', () => {
@@ -55,6 +67,23 @@ class DataMonitor {
             if (!e.target.closest('.excel-filter-trigger') && !e.target.closest('.excel-filter-menu')) {
                 this.hideAllExcelFilters();
             }
+        });
+        
+        // テーブルヘッダーのソート機能
+        document.querySelectorAll('.data-table th').forEach((th, index) => {
+            th.addEventListener('click', (e) => {
+                // フィルタートリガーをクリックした場合はソートしない
+                if (e.target.closest('.excel-filter-trigger')) {
+                    return;
+                }
+                
+                const columnKeys = ['occurredDate', 'personalCode', 'name', 'departmentCode', 'departmentName', 'gateNumber', 'gateName', 'historyDetails'];
+                const columnKey = columnKeys[index];
+                
+                if (columnKey) {
+                    this.sortTable(columnKey);
+                }
+            });
         });
     }
 
@@ -192,6 +221,14 @@ class DataMonitor {
         this.applyFilters();
     }
 
+    updateStatusFilters() {
+        this.currentFilters.selectedStatuses = [];
+        document.querySelectorAll('.status-filter-checkbox:checked').forEach(checkbox => {
+            this.currentFilters.selectedStatuses.push(checkbox.value);
+        });
+        this.applyFilters();
+    }
+
     updateColumnVisibility() {
         this.currentFilters.visibleColumns = [];
         document.querySelectorAll('.column-filter-checkbox:checked').forEach(checkbox => {
@@ -216,6 +253,13 @@ class DataMonitor {
                 this.currentFilters.selectedGates.includes(data.gateNumber)
             );
         }
+
+        // ステータスフィルタ
+        if (this.currentFilters.selectedStatuses.length > 0) {
+            filteredData = filteredData.filter(data => 
+                this.currentFilters.selectedStatuses.includes(data.statusClass)
+            );
+        }
         
         // Excel-like filters (No.14)
         for (const [columnKey, filterValues] of Object.entries(this.excelFilters)) {
@@ -227,6 +271,11 @@ class DataMonitor {
                     return filterValues.includes(data[columnKey]);
                 });
             }
+        }
+
+        // ソートを適用
+        if (this.sortConfig.column) {
+            filteredData = this.applySorting(filteredData);
         }
 
         this.renderTable(filteredData);
@@ -461,7 +510,8 @@ class DataMonitor {
     updateFilterStatusDisplay() {
         const hasFilters = Object.keys(this.excelFilters).length > 0 || 
                           this.currentFilters.dataType !== 'all' || 
-                          this.currentFilters.selectedGates.length > 0;
+                          this.currentFilters.selectedGates.length > 0 ||
+                          this.currentFilters.selectedStatuses.length < 4;
         
         if (hasFilters) {
             const filterContainer = document.querySelector('.filter-panel');
@@ -496,6 +546,17 @@ class DataMonitor {
         
         if (this.currentFilters.selectedGates.length > 0) {
             descriptions.push(`ゲート: ${this.currentFilters.selectedGates.join(', ')}`);
+        }
+        
+        if (this.currentFilters.selectedStatuses.length < 4) {
+            const statusNames = {
+                'normal': '正常',
+                'warning': '警告', 
+                'error': '異常',
+                'info': 'オフライン'
+            };
+            const selectedStatusNames = this.currentFilters.selectedStatuses.map(status => statusNames[status]);
+            descriptions.push(`ステータス: ${selectedStatusNames.join(', ')}`);
         }
         
         for (const [columnKey, filterValues] of Object.entries(this.excelFilters)) {
@@ -550,6 +611,74 @@ class DataMonitor {
 
     formatDateTime(date) {
         return `${date.getFullYear()}/${(date.getMonth() + 1).toString().padStart(2, '0')}/${date.getDate().toString().padStart(2, '0')} ${date.getHours().toString().padStart(2, '0')}:${date.getMinutes().toString().padStart(2, '0')}:${date.getSeconds().toString().padStart(2, '0')}`;
+    }
+
+    sortTable(columnKey) {
+        // 同じ列をクリックした場合は方向を切り替え、違う列の場合は昇順から開始
+        if (this.sortConfig.column === columnKey) {
+            this.sortConfig.direction = this.sortConfig.direction === 'asc' ? 'desc' : 'asc';
+        } else {
+            this.sortConfig.column = columnKey;
+            this.sortConfig.direction = 'asc';
+        }
+
+        this.updateSortHeaders();
+        this.applyFilters(); // フィルターとソートを再適用
+    }
+
+    applySorting(data) {
+        const { column, direction } = this.sortConfig;
+        
+        return data.sort((a, b) => {
+            let aValue = a[column] || '';
+            let bValue = b[column] || '';
+
+            // 日付列の場合は特別な処理
+            if (column === 'occurredDate') {
+                aValue = a.timestamp || 0;
+                bValue = b.timestamp || 0;
+            } else {
+                // 文字列として比較（数値は文字列として扱う）
+                aValue = aValue.toString().toLowerCase();
+                bValue = bValue.toString().toLowerCase();
+            }
+
+            let result = 0;
+            if (aValue < bValue) result = -1;
+            else if (aValue > bValue) result = 1;
+
+            return direction === 'desc' ? -result : result;
+        });
+    }
+
+    updateSortHeaders() {
+        // すべてのヘッダーからソート表示をクリア
+        document.querySelectorAll('.data-table th').forEach(th => {
+            th.classList.remove('sort-asc', 'sort-desc');
+            const existingSortIcon = th.querySelector('.sort-indicator');
+            if (existingSortIcon) {
+                existingSortIcon.remove();
+            }
+        });
+
+        // 現在のソート列にソート表示を追加
+        if (this.sortConfig.column) {
+            const columnKeys = ['occurredDate', 'personalCode', 'name', 'departmentCode', 'departmentName', 'gateNumber', 'gateName', 'historyDetails'];
+            const columnIndex = columnKeys.indexOf(this.sortConfig.column);
+            
+            if (columnIndex >= 0) {
+                const th = document.querySelectorAll('.data-table th')[columnIndex];
+                if (th) {
+                    th.classList.add(`sort-${this.sortConfig.direction}`);
+                    
+                    // ソートインジケーターを追加
+                    const sortIndicator = document.createElement('span');
+                    sortIndicator.className = 'sort-indicator';
+                    sortIndicator.innerHTML = this.sortConfig.direction === 'asc' ? ' ↑' : ' ↓';
+                    th.appendChild(sortIndicator);
+                }
+            }
+        }
     }
 }
 

@@ -597,18 +597,22 @@
                             <h6 style="margin: 0 0 10px 0; font-size: 0.9em;">状態凡例</h6>
                             <div style="display: flex; gap: 15px; flex-wrap: wrap;">
                                 <div class="legend-item">
+                                    <input type="checkbox" class="status-filter-checkbox" value="normal" checked style="margin-right: 5px;">
                                     <div class="legend-indicator status-normal"></div>
                                     <span style="font-size: 0.8em;">正常</span>
                                 </div>
                                 <div class="legend-item">
+                                    <input type="checkbox" class="status-filter-checkbox" value="warning" checked style="margin-right: 5px;">
                                     <div class="legend-indicator status-warning"></div>
                                     <span style="font-size: 0.8em;">警告</span>
                                 </div>
                                 <div class="legend-item">
+                                    <input type="checkbox" class="status-filter-checkbox" value="error" checked style="margin-right: 5px;">
                                     <div class="legend-indicator status-error"></div>
                                     <span style="font-size: 0.8em;">異常</span>
                                 </div>
                                 <div class="legend-item">
+                                    <input type="checkbox" class="status-filter-checkbox" value="offline" checked style="margin-right: 5px;">
                                     <div class="legend-indicator status-offline"></div>
                                     <span style="font-size: 0.8em;">オフライン</span>
                                 </div>
@@ -653,6 +657,16 @@
         document.addEventListener('DOMContentLoaded', function() {
             setTimeout(function() {
                 if (window.statusMonitor) {
+                    console.log('StatusMonitor found, setting up filter events...');
+                    
+                    // フィルターイベントを再設定
+                    document.querySelectorAll('.status-filter-checkbox').forEach(checkbox => {
+                        checkbox.onclick = function() {
+                            console.log('Checkbox clicked via event:', this.value, this.checked);
+                            window.statusMonitor.updateStatusFilters();
+                        };
+                    });
+                    
                     // 100件のゲートグループを強制生成
                     statusMonitor.gateGroups = [];
                     for (let i = 0; i < 100; i++) {
@@ -665,6 +679,7 @@
                         });
                     }
                     statusMonitor.renderGateButtons();
+                    console.log('Filter initialization complete');
                 }
             }, 100);
         });
