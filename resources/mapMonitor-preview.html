@@ -334,25 +334,19 @@
             grid-template-columns: repeat(2, 1fr);
             gap: 6px;
             margin-top: 8px;
+            width: 100px;
+            height: 60px;
         }
 
         .status-icon-item {
-            display: flex;
-            align-items: center;
-            font-size: 0.75rem;
-            padding: 4px 6px;
+            width: 100%;
+            height: 100%;
             border-radius: 4px;
             border: 1px solid #dee2e6;
-        }
-
-        .status-icon-item .icon {
-            width: 16px;
-            height: 16px;
-            margin-right: 6px;
-            border-radius: 2px;
             background-size: contain;
             background-repeat: no-repeat;
             background-position: center;
+            min-height: 25px;
         }
 
         .icon-door-status { background-image: url('/resources/static/images/ゲート/①開閉状態/door_closed.png'); }
@@ -755,22 +749,10 @@
                                 </div>
                                 <div style="font-size: 0.8rem; color: #666; margin-bottom: 8px;">エントランス</div>
                                 <div class="status-icons-grid">
-                                    <div class="status-icon-item">
-                                        <div class="icon icon-door-status"></div>
-                                        <span>扉:閉</span>
-                                    </div>
-                                    <div class="status-icon-item">
-                                        <div class="icon icon-lock-status"></div>
-                                        <span>施錠</span>
-                                    </div>
-                                    <div class="status-icon-item">
-                                        <div class="icon icon-security-status"></div>
-                                        <span>警備:ON</span>
-                                    </div>
-                                    <div class="status-icon-item">
-                                        <div class="icon icon-comm-status"></div>
-                                        <span>通信:正常</span>
-                                    </div>
+                                    <div class="status-icon-item icon-door-status"></div>
+                                    <div class="status-icon-item icon-lock-status"></div>
+                                    <div class="status-icon-item icon-security-status"></div>
+                                    <div class="status-icon-item icon-comm-status"></div>
                                 </div>
                             </div>
                         </div>
@@ -782,22 +764,10 @@
                                 </div>
                                 <div style="font-size: 0.8rem; color: #666; margin-bottom: 8px;">サーバールーム</div>
                                 <div class="status-icons-grid">
-                                    <div class="status-icon-item">
-                                        <div class="icon icon-door-status"></div>
-                                        <span>扉:閉</span>
-                                    </div>
-                                    <div class="status-icon-item">
-                                        <div class="icon icon-lock-status"></div>
-                                        <span>施錠</span>
-                                    </div>
-                                    <div class="status-icon-item">
-                                        <div class="icon icon-security-status"></div>
-                                        <span>警備:ON</span>
-                                    </div>
-                                    <div class="status-icon-item">
-                                        <div class="icon icon-comm-status"></div>
-                                        <span>通信:正常</span>
-                                    </div>
+                                    <div class="status-icon-item icon-door-status"></div>
+                                    <div class="status-icon-item icon-lock-status"></div>
+                                    <div class="status-icon-item icon-security-status"></div>
+                                    <div class="status-icon-item icon-comm-status"></div>
                                 </div>
                             </div>
                         </div>
@@ -809,22 +779,10 @@
                                 </div>
                                 <div style="font-size: 0.8rem; color: #666; margin-bottom: 8px;">会議室</div>
                                 <div class="status-icons-grid">
-                                    <div class="status-icon-item">
-                                        <div class="icon icon-door-status"></div>
-                                        <span>扉:開</span>
-                                    </div>
-                                    <div class="status-icon-item">
-                                        <div class="icon icon-lock-status"></div>
-                                        <span>解錠</span>
-                                    </div>
-                                    <div class="status-icon-item">
-                                        <div class="icon icon-security-status"></div>
-                                        <span>警備:セット中</span>
-                                    </div>
-                                    <div class="status-icon-item">
-                                        <div class="icon icon-comm-status"></div>
-                                        <span>通信:正常</span>
-                                    </div>
+                                    <div class="status-icon-item icon-door-status"></div>
+                                    <div class="status-icon-item icon-lock-status"></div>
+                                    <div class="status-icon-item icon-security-status"></div>
+                                    <div class="status-icon-item icon-comm-status"></div>
                                 </div>
                             </div>
                         </div>
@@ -836,22 +794,10 @@
                                 </div>
                                 <div style="font-size: 0.8rem; color: #666; margin-bottom: 8px;">役員室</div>
                                 <div class="status-icons-grid">
-                                    <div class="status-icon-item">
-                                        <div class="icon icon-door-status"></div>
-                                        <span>扉:異常</span>
-                                    </div>
-                                    <div class="status-icon-item">
-                                        <div class="icon icon-lock-status"></div>
-                                        <span>施錠異常</span>
-                                    </div>
-                                    <div class="status-icon-item">
-                                        <div class="icon icon-security-status"></div>
-                                        <span>警備:エラー</span>
-                                    </div>
-                                    <div class="status-icon-item">
-                                        <div class="icon icon-comm-status"></div>
-                                        <span>通信:切断</span>
-                                    </div>
+                                    <div class="status-icon-item icon-door-status"></div>
+                                    <div class="status-icon-item icon-lock-status"></div>
+                                    <div class="status-icon-item icon-security-status"></div>
+                                    <div class="status-icon-item icon-comm-status"></div>
                                 </div>
                             </div>
                         </div>
@@ -863,22 +809,10 @@
                                 </div>
                                 <div style="font-size: 0.8rem; color: #666; margin-bottom: 8px;">倉庫</div>
                                 <div class="status-icons-grid">
-                                    <div class="status-icon-item">
-                                        <div class="icon icon-door-status"></div>
-                                        <span>扉:開放警報</span>
-                                    </div>
-                                    <div class="status-icon-item">
-                                        <div class="icon icon-lock-status"></div>
-                                        <span>解錠</span>
-                                    </div>
-                                    <div class="status-icon-item">
-                                        <div class="icon icon-security-status"></div>
-                                        <span>警備:警報中</span>
-                                    </div>
-                                    <div class="status-icon-item">
-                                        <div class="icon icon-comm-status"></div>
-                                        <span>通信:正常</span>
-                                    </div>
+                                    <div class="status-icon-item icon-door-status"></div>
+                                    <div class="status-icon-item icon-lock-status"></div>
+                                    <div class="status-icon-item icon-security-status"></div>
+                                    <div class="status-icon-item icon-comm-status"></div>
                                 </div>
                             </div>
                         </div>
@@ -890,22 +824,10 @@
                                 </div>
                                 <div style="font-size: 0.8rem; color: #666; margin-bottom: 8px;">ショールーム</div>
                                 <div class="status-icons-grid">
-                                    <div class="status-icon-item">
-                                        <div class="icon icon-door-status"></div>
-                                        <span>扉:閉</span>
-                                    </div>
-                                    <div class="status-icon-item">
-                                        <div class="icon icon-lock-status"></div>
-                                        <span>施錠</span>
-                                    </div>
-                                    <div class="status-icon-item">
-                                        <div class="icon icon-security-status"></div>
-                                        <span>警備:ON</span>
-                                    </div>
-                                    <div class="status-icon-item">
-                                        <div class="icon icon-comm-status"></div>
-                                        <span>通信:正常</span>
-                                    </div>
+                                    <div class="status-icon-item icon-door-status"></div>
+                                    <div class="status-icon-item icon-lock-status"></div>
+                                    <div class="status-icon-item icon-security-status"></div>
+                                    <div class="status-icon-item icon-comm-status"></div>
                                 </div>
                             </div>
                         </div>
@@ -917,22 +839,10 @@
                                 </div>
                                 <div style="font-size: 0.8rem; color: #666; margin-bottom: 8px;">資料室</div>
                                 <div class="status-icons-grid">
-                                    <div class="status-icon-item">
-                                        <div class="icon icon-door-status"></div>
-                                        <span>扉:閉</span>
-                                    </div>
-                                    <div class="status-icon-item">
-                                        <div class="icon icon-lock-status"></div>
-                                        <span>施錠</span>
-                                    </div>
-                                    <div class="status-icon-item">
-                                        <div class="icon icon-security-status"></div>
-                                        <span>警備:ON</span>
-                                    </div>
-                                    <div class="status-icon-item">
-                                        <div class="icon icon-comm-status"></div>
-                                        <span>通信:正常</span>
-                                    </div>
+                                    <div class="status-icon-item icon-door-status"></div>
+                                    <div class="status-icon-item icon-lock-status"></div>
+                                    <div class="status-icon-item icon-security-status"></div>
+                                    <div class="status-icon-item icon-comm-status"></div>
                                 </div>
                             </div>
                         </div>
@@ -944,22 +854,10 @@
                                 </div>
                                 <div style="font-size: 0.8rem; color: #666; margin-bottom: 8px;">地下駐車場</div>
                                 <div class="status-icons-grid">
-                                    <div class="status-icon-item">
-                                        <div class="icon icon-door-status"></div>
-                                        <span>扉:不明</span>
-                                    </div>
-                                    <div class="status-icon-item">
-                                        <div class="icon icon-lock-status"></div>
-                                        <span>施錠:不明</span>
-                                    </div>
-                                    <div class="status-icon-item">
-                                        <div class="icon icon-security-status"></div>
-                                        <span>警備:不明</span>
-                                    </div>
-                                    <div class="status-icon-item">
-                                        <div class="icon icon-comm-status"></div>
-                                        <span>通信:オフライン</span>
-                                    </div>
+                                    <div class="status-icon-item icon-door-status"></div>
+                                    <div class="status-icon-item icon-lock-status"></div>
+                                    <div class="status-icon-item icon-security-status"></div>
+                                    <div class="status-icon-item icon-comm-status"></div>
                                 </div>
                             </div>
                         </div>
@@ -971,22 +869,10 @@
                                 </div>
                                 <div style="font-size: 0.8rem; color: #666; margin-bottom: 8px;">屋上</div>
                                 <div class="status-icons-grid">
-                                    <div class="status-icon-item">
-                                        <div class="icon icon-door-status"></div>
-                                        <span>扉:開</span>
-                                    </div>
-                                    <div class="status-icon-item">
-                                        <div class="icon icon-lock-status"></div>
-                                        <span>解錠</span>
-                                    </div>
-                                    <div class="status-icon-item">
-                                        <div class="icon icon-security-status"></div>
-                                        <span>警備:セット中</span>
-                                    </div>
-                                    <div class="status-icon-item">
-                                        <div class="icon icon-comm-status"></div>
-                                        <span>通信:正常</span>
-                                    </div>
+                                    <div class="status-icon-item icon-door-status"></div>
+                                    <div class="status-icon-item icon-lock-status"></div>
+                                    <div class="status-icon-item icon-security-status"></div>
+                                    <div class="status-icon-item icon-comm-status"></div>
                                 </div>
                             </div>
                         </div>
@@ -998,22 +884,10 @@
                                 </div>
                                 <div style="font-size: 0.8rem; color: #666; margin-bottom: 8px;">非常口</div>
                                 <div class="status-icons-grid">
-                                    <div class="status-icon-item">
-                                        <div class="icon icon-door-status"></div>
-                                        <span>扉:開放警報</span>
-                                    </div>
-                                    <div class="status-icon-item">
-                                        <div class="icon icon-lock-status"></div>
-                                        <span>解錠</span>
-                                    </div>
-                                    <div class="status-icon-item">
-                                        <div class="icon icon-security-status"></div>
-                                        <span>警備:警報中</span>
-                                    </div>
-                                    <div class="status-icon-item">
-                                        <div class="icon icon-comm-status"></div>
-                                        <span>通信:正常</span>
-                                    </div>
+                                    <div class="status-icon-item icon-door-status"></div>
+                                    <div class="status-icon-item icon-lock-status"></div>
+                                    <div class="status-icon-item icon-security-status"></div>
+                                    <div class="status-icon-item icon-comm-status"></div>
                                 </div>
                             </div>
                         </div>
