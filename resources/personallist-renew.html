@@ -1040,6 +1040,57 @@
                 transform: translateY(-20px);
             }
         }
+
+        /* 列幅変更機能 */
+        .unified-table th {
+            position: relative;
+            min-width: 60px;
+        }
+
+        .column-resizer {
+            position: absolute;
+            top: 0;
+            right: -2px;
+            bottom: 0;
+            width: 4px;
+            cursor: col-resize;
+            background: rgba(0, 123, 255, 0.1);
+            z-index: 20;
+            transition: all 0.2s ease;
+            border-right: 1px solid rgba(0, 123, 255, 0.3);
+        }
+
+        .column-resizer:hover {
+            background: rgba(0, 123, 255, 0.3);
+            border-right: 2px solid #007bff;
+            width: 6px;
+            right: -3px;
+        }
+
+        .column-resizer.resizing {
+            background: #007bff;
+            border-right: 3px solid #0056b3;
+            width: 6px;
+        }
+
+        .unified-table th.resizing {
+            border-right: 3px solid #007bff !important;
+            background: rgba(0, 123, 255, 0.05) !important;
+        }
+
+        .unified-table th {
+            border-right: 1px solid #dee2e6;
+        }
+
+        /* リサイザーを常に表示 */
+        .unified-table th .column-resizer {
+            opacity: 0.7;
+        }
+
+        .unified-table th:hover .column-resizer {
+            opacity: 1;
+            background: rgba(0, 123, 255, 0.2);
+        }
     </style>
 </head>
 
@@ -1136,6 +1187,9 @@
                     <button class="btn btn-primary btn-sm ms-2" onclick="sendPersonalData()">
                         <i class="fas fa-paper-plane"></i> 送信
                     </button>
+                    <button class="btn btn-secondary btn-sm ms-2" onclick="sendUnsentData()">
+                        <i class="fas fa-paper-plane"></i> 未送信データの送信
+                    </button>
                 </div>
             </div>
 
@@ -1178,17 +1232,16 @@
                     </div>
 
                     <div class="action-group">
-                        <button class="btn btn-outline-info btn-sm" onclick="manageTimeRestrictions()">
+                        <button class="btn btn-outline-info btn-sm" onclick="alert('入退室制限時間帯の管理画面に遷移します')">
                             <i class="fas fa-clock"></i> 入退室制限時間帯の管理
                         </button>
-                        <button class="btn btn-outline-warning btn-sm" onclick="bulkChangeGatePermissions()">
+                        <button class="btn btn-outline-warning btn-sm" onclick="alert('通門権限の一括変更画面に遷移します')">
                             <i class="fas fa-users-cog"></i> 通門権限の一括変更
                         </button>
                     </div>
                 </div>
 
                 <div class="secondary-actions">
-                    <span class="filter-badge">Excel形式フィルター</span>
                     <button class="btn btn-outline-secondary btn-sm" onclick="resetFilters()">
                         <i class="fas fa-filter-circle-xmark"></i> フィルターリセット
                     </button>
@@ -1203,6 +1256,21 @@
             <div class="filter-status-display" id="filterStatusDisplay" style="display: none;">
                 <span class="filter-active-badge">フィルター実行中 <i class="fas fa-filter"></i></span>
                 <span class="filter-details" id="filterDetails"></span>
+            </div>
+
+            <!-- 表示件数コントロール -->
+            <div class="items-per-page-controls" style="margin-bottom: 15px; padding: 10px; background: #f8f9fa; border-radius: 5px; display: flex; align-items: center; gap: 10px;">
+                <label for="itemsPerPage" style="margin: 0; font-weight: 600;">表示件数:</label>
+                <select id="itemsPerPage" class="form-select form-select-sm" style="width: auto;"
+                    onchange="changeItemsPerPage()">
+                    <option value="20">20件</option>
+                    <option value="30" selected>30件</option>
+                    <option value="50">50件</option>
+                    <option value="100">100件</option>
+                </select>
+                <div class="page-info" id="pageInfo">
+                    1-30 / 1,000件中
+                </div>
             </div>
 
             <!-- 🚨 問題特定：ダブルクリック速度・右クリック問題対応 -->
@@ -1324,22 +1392,7 @@
             </div>
 
             <!-- ページネーション -->
-            <div class="pagination-controls">
-                <div class="items-per-page">
-                    <label for="itemsPerPage">表示件数:</label>
-                    <select id="itemsPerPage" class="form-select form-select-sm" style="width: auto;"
-                        onchange="changeItemsPerPage()">
-                        <option value="20">20件</option>
-                        <option value="30" selected>30件</option>
-                        <option value="50">50件</option>
-                        <option value="100">100件</option>
-                    </select>
-                </div>
-
-                <div class="page-info" id="pageInfo">
-                    1-30 / 1,000件中
-                </div>
-
+            <div class="pagination-controls" style="justify-content: center;">
                 <nav aria-label="ページネーション">
                     <ul class="pagination pagination-sm" id="pagination">
                         <!-- ページネーションボタンはJavaScriptで動的生成 -->
@@ -1347,23 +1400,13 @@
                 </nav>
             </div>
 
-            <!-- 凡例 -->
+            <!-- 操作ヘルプ -->
             <div class="mt-3">
-                <div class="status-legend">
-                    <strong>ゲート権限凡例:</strong>
-                    <span class="legend-item">
-                        <span class="legend-color" style="background-color: #28a745;"></span>0-9: アクセス可能
-                    </span>
-                    <span class="legend-item">
-                        <span class="legend-color" style="background-color: #dc3545;"></span>C: アクセス不可
-                    </span>
-                    <span class="legend-item">
-                        <span class="legend-color" style="background-color: #ffc107;"></span>R: 時間制限
-                    </span>
-                    <span class="legend-item">
-                        <span class="legend-color" style="background-color: #f8f9fa; border: 1px solid #ccc;"></span>-:
-                        権限なし
-                    </span>
+                <div class="operation-help" style="background: #f8f9fa; padding: 10px; border-radius: 5px; font-size: 0.9em;">
+                    <strong>操作方法:</strong>
+                    <span style="margin-left: 15px;"><i class="fas fa-arrows-alt-h"></i> 列境界をドラッグで幅変更</span>
+                    <span style="margin-left: 15px;"><i class="fas fa-mouse-pointer"></i> 行をダブルクリックで編集</span>
+                    <span style="margin-left: 15px;"><i class="fas fa-mouse-pointer"></i> 行を右クリックで履歴</span>
                 </div>
             </div>
         </div>

@@ -1136,6 +1136,9 @@
                     <button class="btn btn-primary btn-sm ms-2" onclick="sendPersonalData()">
                         <i class="fas fa-paper-plane"></i> 送信
                     </button>
+                    <button class="btn btn-secondary btn-sm ms-2" onclick="sendUnsentData()">
+                        <i class="fas fa-paper-plane"></i> 未送信データの送信
+                    </button>
                 </div>
             </div>
 
@@ -1178,17 +1181,16 @@
                     </div>
 
                     <div class="action-group">
-                        <button class="btn btn-outline-info btn-sm" onclick="manageTimeRestrictions()">
+                        <button class="btn btn-outline-info btn-sm" onclick="alert('入退室制限時間帯の管理画面に遷移します')">
                             <i class="fas fa-clock"></i> 入退室制限時間帯の管理
                         </button>
-                        <button class="btn btn-outline-warning btn-sm" onclick="bulkChangeGatePermissions()">
+                        <button class="btn btn-outline-warning btn-sm" onclick="alert('通門権限の一括変更画面に遷移します')">
                             <i class="fas fa-users-cog"></i> 通門権限の一括変更
                         </button>
                     </div>
                 </div>
 
                 <div class="secondary-actions">
-                    <span class="filter-badge">Excel形式フィルター</span>
                     <button class="btn btn-outline-secondary btn-sm" onclick="resetFilters()">
                         <i class="fas fa-filter-circle-xmark"></i> フィルターリセット
                     </button>

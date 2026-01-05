@@ -6,8 +6,8 @@ let filteredData = [];
 let currentPage = 1;
 let itemsPerPage = 30;
 let currentFilters = {};
-let columnOrder = ['select', 'personalSend', 'registrationStatus', 'personalCode', 'managementNumber', 'name', 'katakana', 'tenantNumber', 'departmentCode', 'kubunCode', 'gatePermissions', 'actions'];
-let hiddenColumns = [];
+let columnOrder = ['select', 'sendStatus', 'registrationStatus', 'personalCode', 'issueCount', 'managementNumber', 'name', 'katakana', 'tenantCode', 'tenantName', 'departmentCode', 'departmentName', 'kubunCode', 'kubunName', 'validFrom', 'validTo', 'alternativeCode', 'bioCode', 'readProhibition', 'antipass', 'securityOperation', 'monitorCard', 'registrationDate', 'updateDate'];
+let hiddenColumns = ['issueCount', 'alternativeCode', 'bioCode', 'readProhibition', 'antipass', 'securityOperation', 'monitorCard', 'registrationDate', 'updateDate'];
 let sortState = { column: null, direction: 'asc' };
 
 // Initialize the page
@@ -50,6 +50,18 @@ document.addEventListener('DOMContentLoaded', function () {
 
         applyFiltersAndDisplay();
         console.log('🔥 Filters applied and display updated');
+        
+        // 保存された設定を復元（複数回実行で確実に）
+        loadColumnSettings();
+        setTimeout(() => {
+            loadColumnSettings();
+            console.log('🔥 Column settings restored (first pass)');
+        }, 200);
+        setTimeout(() => {
+            loadColumnWidths();
+            console.log('🔥 Column widths restored (second pass)');
+        }, 500);
+        
         console.log('🔥 PersonalList initialization complete');
 
         debugDiv.innerHTML = '✅ 個人リスト初期化完了！データ件数: ' + personalData.length;
@@ -89,21 +101,44 @@ function generateSampleData() {
 
         personalData.push({
             id: i,
-            personalSend: Math.random() > 0.3 ? '送信済' : '未送信',
-            registrationStatus: Math.random() > 0.8 ? '登録中' : '登録完了',
+            sendStatus: Math.random() > 0.3 ? '送信済' : '未送信',
+            registrationStatus: Math.random() > 0.8 ? '削除' : '登録',
             personalCode: `kojin${String(i).padStart(4, '0')}`,
+            issueCount: Math.random() > 0.5 ? '1' : '2',
             managementNumber: `no${String(i).padStart(4, '0')}`,
             name: `${lastName} ${firstName}`,
             katakana: `${katakanaName} ${firstNames[Math.floor(Math.random() * firstNames.length)].replace('郎', 'ロウ').replace('子', 'コ')}`,
-            tenantNumber: `tenant${String(i).padStart(3, '0')}`,
-            departmentCode: `shozoku${String(i).padStart(3, '0')}`,
-            kubunCode: `kubun${String(i).padStart(3, '0')}`,
-            tumonCode: `tumon${String(i).padStart(3, '0')}`,
-            gatePermissions: generateGatePermissions(),
+            tenantCode: String(i).padStart(3, '0'),
+            tenantName: `テナント${i}`,
+            departmentCode: `dept${String(i).padStart(3, '0')}`,
+            departmentName: department,
+            kubunCode: `cat${String(i).padStart(3, '0')}`,
+            kubunName: categories[Math.floor(Math.random() * categories.length)],
+            validFrom: generateDate(),
+            validTo: generateDate(true),
+            alternativeCode: `alt${String(i).padStart(4, '0')}`,
+            bioCode: Math.random() > 0.5 ? String(i).padStart(4, '0') : String(i).padStart(8, '0'),
+            readProhibition: Math.random() > 0.7 ? '有効' : '無効',
+            antipass: Math.random() > 0.8 ? '有効' : '無効',
+            securityOperation: Math.random() > 0.6 ? '有効' : '無効',
+            monitorCard: Math.random() > 0.5 ? '有効' : '無効',
+            registrationDate: generateDate(),
+            updateDate: generateDate(),
             selected: false
         });
     }
     filteredData = [...personalData];
+}
+
+// Generate date in YYYYMMDD format
+function generateDate(future = false) {
+    const date = new Date();
+    if (future) {
+        date.setDate(date.getDate() + Math.floor(Math.random() * 365));
+    } else {
+        date.setDate(date.getDate() - Math.floor(Math.random() * 365));
+    }
+    return date.toISOString().slice(0, 10).replace(/-/g, '');
 }
 
 // Generate gate permissions for gates 1-10
@@ -305,14 +340,29 @@ function initializeColumnSettings() {
     const columnList = document.getElementById('columnList');
     const columnDefinitions = {
         'select': '選択',
+        'sendStatus': '送信状態',
+        'registrationStatus': '登録状態',
         'personalCode': '個人コード',
-        'name': '名称',
-        'department': '所属名称',
-        'category': '区分',
-        'gatePermissions': 'ゲート権限',
-        'validFrom': '有効期間（開始）',
-        'validTo': '有効期間（終了）',
-        'actions': '操作'
+        'issueCount': '発行回数',
+        'managementNumber': '管理番号',
+        'name': '氏名',
+        'katakana': '氏名(ｶﾅ)',
+        'tenantCode': 'テナントコード',
+        'tenantName': 'テナント名称',
+        'departmentCode': '所属コード',
+        'departmentName': '所属名称',
+        'kubunCode': '区分コード',
+        'kubunName': '区分名称',
+        'validFrom': '利用開始日',
+        'validTo': '利用終了日',
+        'alternativeCode': '代替コード',
+        'bioCode': 'バイオコード',
+        'readProhibition': '読取禁止',
+        'antipass': 'アンチパス',
+        'securityOperation': '警備セット時操作',
+        'monitorCard': '監視カード',
+        'registrationDate': '登録日',
+        'updateDate': '更新日'
     };
 
     columnList.innerHTML = '';
@@ -500,8 +550,8 @@ function showExcelFilter(event, columnKey) {
         </div>
         
         <div class="excel-filter-list" id="excel-options-${columnKey}">
-            <div class="excel-filter-item select-all" onclick="toggleExcelSelectAll('${columnKey}')">
-                <input type="checkbox" id="select-all-${columnKey}" ${!isFiltered ? 'checked' : ''}>
+            <div class="excel-filter-item select-all" onclick="toggleExcelSelectAll('${columnKey}'); event.stopPropagation();">
+                <input type="checkbox" id="select-all-${columnKey}" ${!isFiltered ? 'checked' : ''} onclick="event.stopPropagation();">
                 <span>（すべて選択）</span>
             </div>
             ${generateExcelFilterOptions(columnKey, uniqueValues, currentFilterValues)}
@@ -520,16 +570,16 @@ function generateExcelFilterOptions(columnKey, values, currentFilter) {
     if (columnKey === 'gatePermissions') {
         // Special handling for gate permissions
         return `
-            <div class="excel-filter-item" onclick="toggleExcelOption('${columnKey}', 'hasAccess')">
-                <input type="checkbox" ${currentFilter.includes('hasAccess') ? 'checked' : ''}>
+            <div class="excel-filter-item" onclick="toggleExcelOption('${columnKey}', 'hasAccess'); event.stopPropagation();">
+                <input type="checkbox" ${currentFilter.includes('hasAccess') ? 'checked' : ''} onclick="event.stopPropagation();">
                 <span>アクセス権限あり（0-9）</span>
             </div>
-            <div class="excel-filter-item" onclick="toggleExcelOption('${columnKey}', 'noAccess')">
-                <input type="checkbox" ${currentFilter.includes('noAccess') ? 'checked' : ''}>
+            <div class="excel-filter-item" onclick="toggleExcelOption('${columnKey}', 'noAccess'); event.stopPropagation();">
+                <input type="checkbox" ${currentFilter.includes('noAccess') ? 'checked' : ''} onclick="event.stopPropagation();">
                 <span>アクセス不可（C）</span>
             </div>
-            <div class="excel-filter-item" onclick="toggleExcelOption('${columnKey}', 'restricted')">
-                <input type="checkbox" ${currentFilter.includes('restricted') ? 'checked' : ''}>
+            <div class="excel-filter-item" onclick="toggleExcelOption('${columnKey}', 'restricted'); event.stopPropagation();">
+                <input type="checkbox" ${currentFilter.includes('restricted') ? 'checked' : ''} onclick="event.stopPropagation();">
                 <span>時間制限（R）</span>
             </div>
         `;
@@ -537,8 +587,8 @@ function generateExcelFilterOptions(columnKey, values, currentFilter) {
         return values.map(value => {
             const isChecked = currentFilter.length === 0 || currentFilter.includes(value);
             return `
-                <div class="excel-filter-item" onclick="toggleExcelOption('${columnKey}', '${value}')">
-                    <input type="checkbox" ${isChecked ? 'checked' : ''}>
+                <div class="excel-filter-item" onclick="toggleExcelOption('${columnKey}', '${value}'); event.stopPropagation();">
+                    <input type="checkbox" ${isChecked ? 'checked' : ''} onclick="event.stopPropagation();">
                     <span>${value}</span>
                 </div>
             `;
@@ -547,6 +597,12 @@ function generateExcelFilterOptions(columnKey, values, currentFilter) {
 }
 
 function toggleExcelSelectAll(columnKey) {
+    // イベント伝播を停止
+    if (event) {
+        event.stopPropagation();
+        event.preventDefault();
+    }
+    
     const selectAllCheckbox = document.getElementById(`select-all-${columnKey}`);
     const allCheckboxes = document.querySelectorAll(`#excel-options-${columnKey} .excel-filter-item:not(.select-all) input[type="checkbox"]`);
 
@@ -558,6 +614,12 @@ function toggleExcelSelectAll(columnKey) {
 }
 
 function toggleExcelOption(columnKey, value) {
+    // イベント伝播を停止してモーダルが閉じないようにする
+    if (event) {
+        event.stopPropagation();
+        event.preventDefault();
+    }
+    
     const item = event.currentTarget;
     const checkbox = item.querySelector('input[type="checkbox"]');
     checkbox.checked = !checkbox.checked;
@@ -907,16 +969,6 @@ function displayCurrentPage() {
                 case 'select':
                     cellContent = `<input type="checkbox" value="${person.id}" onchange="togglePersonSelection(${person.id}, this.checked)" onclick="event.stopPropagation();">`;
                     break;
-                case 'gatePermissions':
-                    cellContent = generateGatePermissionsDisplay(person.gatePermissions, person.id);
-                    break;
-                case 'actions':
-                    cellContent = `
-                        <button class="btn btn-history" onclick="showPersonHistory(${person.id})" title="履歴表示">
-                            <i class="fas fa-history"></i> 履歴
-                        </button>
-                    `;
-                    break;
                 default:
                     cellContent = person[columnKey] || '';
                     break;
@@ -1032,7 +1084,7 @@ function showUsageHelp() {
                                 <div class="card-body text-center">
                                     <i class="fas fa-filter fa-2x text-success mb-2"></i>
                                     <h6>データフィルター</h6>
-                                    <p class="small">ヘッダーの▼をクリックしてExcel形式のフィルターを使用できます</p>
+                                    <p class="small">ヘッダーの▼をクリックしてフィルターを使用できます</p>
                                 </div>
                             </div>
                         </div>
@@ -1162,6 +1214,9 @@ function rebuildTableWithNewOrder() {
 
     // Redisplay current page data with new column order
     displayCurrentPage();
+    
+    // 設定を保存
+    saveColumnSettings();
 }
 
 function updateTableHeaders() {
@@ -1171,8 +1226,8 @@ function updateTableHeaders() {
             title: '<input type="checkbox" id="selectAll" onchange="toggleSelectAll()">',
             draggable: false
         },
-        'personalSend': {
-            title: '個人送信',
+        'sendStatus': {
+            title: '送信状態',
             draggable: true
         },
         'registrationStatus': {
@@ -1181,6 +1236,10 @@ function updateTableHeaders() {
         },
         'personalCode': {
             title: '個人コード',
+            draggable: true
+        },
+        'issueCount': {
+            title: '発行回数',
             draggable: true
         },
         'managementNumber': {
@@ -1192,32 +1251,72 @@ function updateTableHeaders() {
             draggable: true
         },
         'katakana': {
-            title: 'カタカナ',
+            title: '氏名(ｶﾅ)',
             draggable: true
         },
-        'tenantNumber': {
-            title: 'テナント番号',
+        'tenantCode': {
+            title: 'テナントコード',
+            draggable: true
+        },
+        'tenantName': {
+            title: 'テナント名称',
             draggable: true
         },
         'departmentCode': {
             title: '所属コード',
             draggable: true
         },
+        'departmentName': {
+            title: '所属名称',
+            draggable: true
+        },
         'kubunCode': {
             title: '区分コード',
             draggable: true
         },
-        'tumonCode': {
-            title: '通門コード',
+        'kubunName': {
+            title: '区分名称',
             draggable: true
         },
-        'gatePermissions': {
-            title: 'ゲート権限 (1-10)',
+        'validFrom': {
+            title: '利用開始日',
             draggable: true
         },
-        'actions': {
-            title: '操作',
-            draggable: false
+        'validTo': {
+            title: '利用終了日',
+            draggable: true
+        },
+        'alternativeCode': {
+            title: '代替コード',
+            draggable: true
+        },
+        'bioCode': {
+            title: 'バイオコード',
+            draggable: true
+        },
+        'readProhibition': {
+            title: '読取禁止',
+            draggable: true
+        },
+        'antipass': {
+            title: 'アンチパス',
+            draggable: true
+        },
+        'securityOperation': {
+            title: '警備セット時操作',
+            draggable: true
+        },
+        'monitorCard': {
+            title: '監視カード',
+            draggable: true
+        },
+        'registrationDate': {
+            title: '登録日',
+            draggable: true
+        },
+        'updateDate': {
+            title: '更新日',
+            draggable: true
         }
     };
 
@@ -1243,8 +1342,10 @@ function updateTableHeaders() {
             // ソート機能を追加
             th.classList.add('sortable');
             th.addEventListener('click', (e) => {
-                // ドラッグ操作と区別するため、特定要素以外をクリック時のみソート
-                if (!e.target.closest('.column-visibility-toggle') && !e.target.closest('.excel-filter-trigger')) {
+                // リサイザーとフィルター以外をクリック時のみソート
+                if (!e.target.closest('.column-visibility-toggle') && 
+                    !e.target.closest('.excel-filter-trigger') &&
+                    !e.target.closest('.column-resizer')) {
                     handleSort(columnKey);
                 }
             });
@@ -1256,9 +1357,10 @@ function updateTableHeaders() {
 
             th.innerHTML = `
                 <span class="column-visibility-toggle" onclick="toggleColumnVisibilityDirect('${columnKey}', event)" title="列表示切替">×</span>
-                ${def.title}
+                <span class="column-content">${def.title}</span>
                 <div class="excel-filter-trigger" onclick="showExcelFilter(event, '${columnKey}')"></div>
                 <div class="excel-filter-menu" id="excel-filter-${columnKey}"></div>
+                <div class="column-resizer" data-column="${columnKey}" title="列幅変更"></div>
             `;
         } else {
             th.innerHTML = def.title;
@@ -1266,6 +1368,9 @@ function updateTableHeaders() {
 
         thead.appendChild(th);
     });
+
+    // 列幅変更イベントリスナーのセットアップ
+    setupColumnResizers();
 }
 
 // Handle column sorting
@@ -1336,6 +1441,161 @@ function toggleColumnVisibilityDirect(columnKey, event) {
     rebuildTableWithNewOrder();
 }
 
+// 列幅変更機能のセットアップ
+function setupColumnResizers() {
+    const resizers = document.querySelectorAll('.column-resizer');
+    console.log(`🔧 列幅変更セットアップ: ${resizers.length}個のリサイザーを発見`);
+    let isResizing = false;
+    let currentResizer = null;
+    let startX = 0;
+    let startWidth = 0;
+
+    resizers.forEach((resizer, index) => {
+        console.log(`🔧 リサイザー${index + 1}セットアップ中: ${resizer.dataset.column}`);
+        
+        // マウスダウンイベント
+        resizer.addEventListener('mousedown', (e) => {
+            e.stopPropagation();
+            e.preventDefault();
+            e.stopImmediatePropagation();
+            
+            isResizing = true;
+            currentResizer = resizer;
+            const th = resizer.closest('th');
+            const columnKey = resizer.dataset.column;
+            
+            // draggableを一時的に無効化
+            th.setAttribute('draggable', 'false');
+            
+            startX = e.clientX;
+            startWidth = th.offsetWidth;
+            
+            th.classList.add('resizing');
+            resizer.classList.add('resizing');
+            
+            document.body.style.cursor = 'col-resize';
+            document.body.style.userSelect = 'none';
+            
+            console.log(`🔧 列幅変更開始: ${columnKey}, 初期幅: ${startWidth}px`);
+        });
+        
+        // リサイザーの右クリックを無効化
+        resizer.addEventListener('contextmenu', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+        });
+        
+        // リサイザーのドラッグ開始を無効化
+        resizer.addEventListener('dragstart', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+        });
+    });
+
+    document.addEventListener('mousemove', (e) => {
+        if (!isResizing || !currentResizer) return;
+        
+        e.preventDefault();
+        const diff = e.clientX - startX;
+        const newWidth = Math.max(60, startWidth + diff); // 最小幅60px
+        const th = currentResizer.closest('th');
+        const columnKey = currentResizer.dataset.column;
+        
+        th.style.width = `${newWidth}px`;
+        th.style.minWidth = `${newWidth}px`;
+        
+        // localStorageに保存
+        saveColumnWidth(columnKey, newWidth);
+    });
+
+    document.addEventListener('mouseup', () => {
+        if (!isResizing) return;
+        
+        isResizing = false;
+        if (currentResizer) {
+            const th = currentResizer.closest('th');
+            th.classList.remove('resizing');
+            currentResizer.classList.remove('resizing');
+            
+            // draggableを復活
+            if (th.hasAttribute('data-column')) {
+                th.setAttribute('draggable', 'true');
+            }
+        }
+        currentResizer = null;
+        
+        document.body.style.cursor = '';
+        document.body.style.userSelect = '';
+        
+        console.log('🔧 列幅変更完了');
+    });
+}
+
+// 統合された列設定の保存
+function saveColumnSettings() {
+    const settings = {
+        columnOrder: columnOrder,
+        hiddenColumns: hiddenColumns,
+        columnWidths: JSON.parse(localStorage.getItem('personalList_columnWidths') || '{}')
+    };
+    localStorage.setItem('personalList_settings', JSON.stringify(settings));
+    console.log('💾 列設定保存完了:', settings);
+}
+
+// 列幅をローカルストレージに保存
+function saveColumnWidth(columnKey, width) {
+    const savedWidths = JSON.parse(localStorage.getItem('personalList_columnWidths') || '{}');
+    savedWidths[columnKey] = width;
+    localStorage.setItem('personalList_columnWidths', JSON.stringify(savedWidths));
+    
+    // 統合設定も更新
+    saveColumnSettings();
+}
+
+// 統合された列設定の復元
+function loadColumnSettings() {
+    const settings = JSON.parse(localStorage.getItem('personalList_settings') || '{}');
+    console.log('💾 保存された設定データ:', settings);
+    
+    // 列順序を復元
+    if (settings.columnOrder && Array.isArray(settings.columnOrder)) {
+        columnOrder = [...settings.columnOrder];
+        console.log('💾 列順序復元:', columnOrder);
+    }
+    
+    // 非表示列を復元
+    if (settings.hiddenColumns && Array.isArray(settings.hiddenColumns)) {
+        hiddenColumns = [...settings.hiddenColumns];
+        console.log('💾 非表示列復元:', hiddenColumns);
+    }
+    
+    // テーブルを再構築
+    updateTableHeaders();
+    displayCurrentPage();
+    
+    // 列幅を復元
+    setTimeout(() => {
+        loadColumnWidths();
+    }, 50);
+}
+
+// 保存された列幅を復元
+function loadColumnWidths() {
+    const savedWidths = JSON.parse(localStorage.getItem('personalList_columnWidths') || '{}');
+    console.log('💾 保存された列幅データ:', savedWidths);
+    
+    Object.entries(savedWidths).forEach(([columnKey, width]) => {
+        const th = document.querySelector(`th[data-column="${columnKey}"]`);
+        if (th) {
+            th.style.width = `${width}px`;
+            th.style.minWidth = `${width}px`;
+            console.log(`💾 列幅復元: ${columnKey} = ${width}px`);
+        } else {
+            console.log(`❌ 列要素が見つからない: ${columnKey}`);
+        }
+    });
+}
+
 // Show column manager modal
 function showColumnManager() {
     populateColumnManager();
@@ -1351,18 +1611,29 @@ function populateColumnManager() {
 
     const columnDefinitions = {
         'select': '選択',
-        'personalSend': '個人送信',
+        'sendStatus': '送信状態',
         'registrationStatus': '登録状態',
         'personalCode': '個人コード',
+        'issueCount': '発行回数',
         'managementNumber': '管理番号',
         'name': '氏名',
-        'katakana': 'カタカナ',
-        'tenantNumber': 'テナント番号',
+        'katakana': '氏名(ｶﾅ)',
+        'tenantCode': 'テナントコード',
+        'tenantName': 'テナント名称',
         'departmentCode': '所属コード',
+        'departmentName': '所属名称',
         'kubunCode': '区分コード',
-        'tumonCode': '通門コード',
-        'gatePermissions': 'ゲート権限 (1-10)',
-        'actions': '操作'
+        'kubunName': '区分名称',
+        'validFrom': '利用開始日',
+        'validTo': '利用終了日',
+        'alternativeCode': '代替コード',
+        'bioCode': 'バイオコード',
+        'readProhibition': '読取禁止',
+        'antipass': 'アンチパス',
+        'securityOperation': '警備セット時操作',
+        'monitorCard': '監視カード',
+        'registrationDate': '登録日',
+        'updateDate': '更新日'
     };
 
     // Clear lists
@@ -1428,6 +1699,9 @@ function toggleColumnFromManager(columnKey) {
 
     // Refresh manager display
     populateColumnManager();
+    
+    // 設定を即座に保存
+    saveColumnSettings();
 }
 
 // Show all columns
@@ -1443,6 +1717,9 @@ function showAllColumns() {
 
     // Refresh manager display
     populateColumnManager();
+    
+    // 設定を即座に保存
+    saveColumnSettings();
 
     // Show feedback
     if (previousHiddenCount > 0) {
@@ -1452,8 +1729,8 @@ function showAllColumns() {
 
 // Reset to default column settings
 function resetToDefault() {
-    const defaultOrder = ['select', 'personalSend', 'registrationStatus', 'personalCode', 'managementNumber', 'name', 'katakana', 'tenantNumber', 'departmentCode', 'kubunCode', 'gatePermissions', 'actions'];
-    const defaultHidden = [];
+    const defaultOrder = ['select', 'sendStatus', 'registrationStatus', 'personalCode', 'issueCount', 'managementNumber', 'name', 'katakana', 'tenantCode', 'tenantName', 'departmentCode', 'departmentName', 'kubunCode', 'kubunName', 'validFrom', 'validTo', 'alternativeCode', 'bioCode', 'readProhibition', 'antipass', 'securityOperation', 'monitorCard', 'registrationDate', 'updateDate'];
+    const defaultHidden = ['issueCount', 'alternativeCode', 'bioCode', 'readProhibition', 'antipass', 'securityOperation', 'monitorCard', 'registrationDate', 'updateDate'];
 
     columnOrder = [...defaultOrder];
     hiddenColumns = [...defaultHidden];
@@ -1466,6 +1743,9 @@ function resetToDefault() {
 
     // Refresh manager display
     populateColumnManager();
+    
+    // 設定を即座に保存
+    saveColumnSettings();
 
     // Show feedback
     const feedback = document.createElement('div');
@@ -1515,18 +1795,29 @@ function showColumnReorderFeedback(draggedColumn, targetColumn) {
 function getColumnDisplayName(columnKey) {
     const names = {
         'select': '選択',
-        'personalSend': '個人送信',
+        'sendStatus': '送信状態',
         'registrationStatus': '登録状態',
         'personalCode': '個人コード',
+        'issueCount': '発行回数',
         'managementNumber': '管理番号',
         'name': '氏名',
-        'katakana': 'カタカナ',
-        'tenantNumber': 'テナント番号',
+        'katakana': '氏名(ｶﾅ)',
+        'tenantCode': 'テナントコード',
+        'tenantName': 'テナント名称',
         'departmentCode': '所属コード',
+        'departmentName': '所属名称',
         'kubunCode': '区分コード',
-        'tumonCode': '通門コード',
-        'gatePermissions': 'ゲート権限 (1-10)',
-        'actions': '操作'
+        'kubunName': '区分名称',
+        'validFrom': '利用開始日',
+        'validTo': '利用終了日',
+        'alternativeCode': '代替コード',
+        'bioCode': 'バイオコード',
+        'readProhibition': '読取禁止',
+        'antipass': 'アンチパス',
+        'securityOperation': '警備セット時操作',
+        'monitorCard': '監視カード',
+        'registrationDate': '登録日',
+        'updateDate': '更新日'
     };
     return names[columnKey] || columnKey;
 }
@@ -1766,7 +2057,7 @@ function sendPersonalData() {
         setTimeout(() => {
             // Mark as sent
             selectedPeople.forEach(person => {
-                person.personalSend = '送信済';
+                person.sendStatus = '送信済';
             });
             applyFiltersAndDisplay();
             showOperationStatus(`${selectedPeople.length}件のデータ送信が完了しました。`, 'success');
@@ -1774,11 +2065,39 @@ function sendPersonalData() {
     }
 }
 
-function manageTimeRestrictions() {
-    alert('入退室時間帯の管理画面に遷移します');
+function sendUnsentData() {
+    console.log('未送信データ送信実行');
+    const unsentCount = personalData.filter(person => person.sendStatus === '未送信').length;
+    if (unsentCount > 0) {
+        if (confirm(`未送信データ ${unsentCount}件 を送信しますか？`)) {
+            showOperationStatus(`未送信データ ${unsentCount}件 を送信しています...`, 'info');
+            
+            setTimeout(() => {
+                // 未送信データを送信済みに変更
+                personalData.forEach(person => {
+                    if (person.sendStatus === '未送信') {
+                        person.sendStatus = '送信済';
+                    }
+                });
+                
+                // テーブルを再描画
+                applyFiltersAndDisplay();
+                
+                showOperationStatus(`未送信データ ${unsentCount}件 の送信が完了しました。`, 'success');
+            }, 1200);
+        }
+    } else {
+        alert('未送信データはありません');
+    }
 }
 
-function bulkChangeGatePermissions() {
+// manageTimeRestrictions は HTMLで直接画面遷移するように変更
+// function manageTimeRestrictions() {
+//     window.location.href='/resources/timeRestrictionManagement.html';
+// }
+
+// bulkChangeGatePermissions は HTMLで直接画面遷移するように変更
+/* function bulkChangeGatePermissions() {
     const selectedPeople = personalData.filter(p => p.selected);
     if (selectedPeople.length === 0) {
         alert('通門権限を変更する個人を選択してください');
@@ -1893,7 +2212,7 @@ function bulkChangeGatePermissions() {
     modal.addEventListener('hidden.bs.modal', () => {
         document.body.removeChild(modal);
     });
-}
+} */
 
 function printData() {
     alert('印刷機能');
@@ -2616,60 +2935,49 @@ function showHistorySelectionModal(person) {
         <div class="modal-dialog">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title">
-                        <i class="fas fa-history text-info"></i>
-                        履歴表示設定 - ${person.name}
-                    </h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    <h5 class="modal-title">報告書作成</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body">
-                    <div class="alert alert-info">
-                        <i class="fas fa-user"></i>
-                        <strong>${person.name}</strong> (${person.personalCode}) の履歴を表示します
-                    </div>
+                    <p>ゲート: ${person.personalCode}</p>
                     
-                    <div class="row">
-                        <div class="col-md-6">
-                            <h6><i class="fas fa-calendar"></i> 期間</h6>
-                            <div class="form-check">
-                                <input class="form-check-input" type="radio" name="historyPeriod" id="periodToday" value="today" checked>
-                                <label class="form-check-label" for="periodToday">当日</label>
-                            </div>
-                            <div class="form-check">
-                                <input class="form-check-input" type="radio" name="historyPeriod" id="periodYesterday" value="yesterday">
-                                <label class="form-check-label" for="periodYesterday">前日～</label>
-                            </div>
-                            <div class="form-check">
-                                <input class="form-check-input" type="radio" name="historyPeriod" id="periodWeek" value="week">
-                                <label class="form-check-label" for="periodWeek">1週間前～</label>
-                            </div>
+                    <div style="border: 2px solid #17a2b8; padding: 15px; margin: 15px 0; border-radius: 5px;">
+                        <div style="color: #17a2b8; margin-bottom: 10px; font-weight: bold;">期間</div>
+                        <div style="margin-bottom: 8px;">
+                            <input type="radio" name="historyPeriod" id="periodToday" value="today" checked>
+                            <label for="periodToday" style="margin-left: 8px;">当日</label>
                         </div>
-                        <div class="col-md-6">
-                            <h6><i class="fas fa-filter"></i> 履歴種類</h6>
-                            <div class="form-check">
-                                <input class="form-check-input" type="checkbox" id="historyAll" value="all" checked>
-                                <label class="form-check-label" for="historyAll">全て</label>
-                            </div>
-                            <div class="form-check">
-                                <input class="form-check-input" type="checkbox" id="historyLightError" value="light-error">
-                                <label class="form-check-label" for="historyLightError">軽エラー</label>
-                            </div>
-                            <div class="form-check">
-                                <input class="form-check-input" type="checkbox" id="historyHeavyError" value="heavy-error">
-                                <label class="form-check-label" for="historyHeavyError">重エラー</label>
-                            </div>
-                            <div class="form-check">
-                                <input class="form-check-input" type="checkbox" id="historyRecovery" value="recovery">
-                                <label class="form-check-label" for="historyRecovery">重エラー復旧</label>
-                            </div>
+                        <div style="margin-bottom: 8px;">
+                            <input type="radio" name="historyPeriod" id="periodYesterday" value="yesterday">
+                            <label for="periodYesterday" style="margin-left: 8px;">前日～</label>
+                        </div>
+                        <div style="margin-bottom: 8px;">
+                            <input type="radio" name="historyPeriod" id="periodWeek" value="week">
+                            <label for="periodWeek" style="margin-left: 8px;">1週間前～</label>
+                        </div>
+                        
+                        <div style="color: #17a2b8; margin: 15px 0 10px 0; font-weight: bold;">履歴種類</div>
+                        <div style="margin-bottom: 8px;">
+                            <input type="checkbox" id="historyAll" value="all" checked>
+                            <label for="historyAll" style="margin-left: 8px;">全て</label>
+                        </div>
+                        <div style="margin-bottom: 8px;">
+                            <input type="checkbox" id="historyLightError" value="light-error">
+                            <label for="historyLightError" style="margin-left: 8px;">軽エラー</label>
+                        </div>
+                        <div style="margin-bottom: 8px;">
+                            <input type="checkbox" id="historyHeavyError" value="heavy-error">
+                            <label for="historyHeavyError" style="margin-left: 8px;">重エラー</label>
+                        </div>
+                        <div style="margin-bottom: 8px;">
+                            <input type="checkbox" id="historyRecovery" value="recovery">
+                            <label for="historyRecovery" style="margin-left: 8px;">重エラー復旧</label>
                         </div>
                     </div>
                 </div>
                 <div class="modal-footer">
+                    <button type="button" class="btn btn-info" onclick="executeHistoryView('${person.personalCode}', '${person.name}')">作成</button>
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">キャンセル</button>
-                    <button type="button" class="btn btn-primary" onclick="executeHistoryView('${person.personalCode}', '${person.name}')">
-                        <i class="fas fa-arrow-right"></i> 報告書画面へ遷移
-                    </button>
                 </div>
             </div>
         </div>
@@ -2708,3 +3016,4 @@ function executeHistoryView(personalCode, personName) {
     console.log(`報告書画面遷移: ${reportUrl}`);
     window.location.href = reportUrl;
 }
+
