@@ -39,6 +39,23 @@
         .unified-table tbody tr:nth-child(even) {
             background-color: #f8f9fa;
         }
+        
+        /* Data type row colors */
+        .unified-table tbody tr.row-normal {
+            background-color: #ffffff !important;
+        }
+        
+        .unified-table tbody tr.row-warning {
+            background-color: #fff3cd !important;
+        }
+        
+        .unified-table tbody tr.row-error {
+            background-color: #f8d7da !important;
+        }
+        
+        .unified-table tbody tr.row-recovery {
+            background-color: #d1ecf1 !important;
+        }
         .content-wrapper {
             padding-top: 70px;
         }
@@ -51,6 +68,11 @@
         .row-error {
             background-color: #f8d7da !important;
             color: #dc3545;
+        }
+        
+        .row-recovery {
+            background-color: #d1ecf1 !important;
+            color: #0c5460;
         }
         
         .filter-panel {
@@ -377,7 +399,7 @@
         }
         
         /* Improved action toolbar */
-        .action-toolbar {
+        .action-toolbar, .unified-action-toolbar {
             display: flex;
             justify-content: space-between;
             align-items: center;
@@ -387,6 +409,21 @@
             border: 1px solid #dee2e6;
             border-radius: 5px;
             box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+        
+        .action-group {
+            display: flex;
+            gap: 6px;
+            align-items: center;
+            padding-right: 15px;
+            margin-right: 15px;
+            border-right: 1px solid #dee2e6;
+        }
+        
+        .action-group:last-child {
+            border-right: none;
+            margin-right: 0;
+            padding-right: 0;
         }
         
         .primary-actions {
@@ -545,6 +582,22 @@
             <h2>履歴レポート</h2>
 
             <!-- フィルターパネル -->
+            <!-- 表示件数（ページ上部に移動） -->
+            <div class="pagination-top-controls" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; padding: 10px 15px; background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%); border: 1px solid #dee2e6; border-radius: 5px;">
+                <div class="items-per-page" style="display: flex; align-items: center; gap: 10px;">
+                    <label for="itemsPerPageTop" style="margin: 0; font-weight: 500;">表示件数:</label>
+                    <select id="itemsPerPageTop" class="form-select form-select-sm" style="width: auto;" onchange="changeItemsPerPage()">
+                        <option value="20">20件</option>
+                        <option value="30" selected>30件</option>
+                        <option value="50">50件</option>
+                        <option value="100">100件</option>
+                    </select>
+                </div>
+                <div class="current-count" id="currentCountTop" style="font-weight: bold; color: #495057;">
+                    現条件：0件
+                </div>
+            </div>
+            
             <div class="unified-filter-panel">
                 <h5 style="margin-bottom: 12px; font-size: 1.1rem;">
                     <i class="fas fa-filter me-2"></i>
@@ -554,22 +607,26 @@
             <!-- アクションツールバー -->
             <div class="unified-action-toolbar">
                 <div class="primary-actions">
-                    <button class="btn btn-primary btn-sm" onclick="applyFilters()">
-                        <i class="fas fa-filter"></i> フィルター適用
-                    </button>
-                    <button class="btn btn-outline-secondary btn-sm" onclick="resetAllFilters()">
-                        <i class="fas fa-filter-circle-xmark"></i> リセット
-                    </button>
+                    <div class="action-group">
+                        <button class="btn btn-primary btn-sm" onclick="applyFilters()">
+                            <i class="fas fa-filter"></i> フィルター適用
+                        </button>
+                        <button class="btn btn-outline-secondary btn-sm" onclick="resetAllFilters()">
+                            <i class="fas fa-filter-circle-xmark"></i> リセット
+                        </button>
+                    </div>
+                    <div class="action-group">
+                        <button class="btn btn-outline-info btn-sm" onclick="showColumnManager()">
+                            <i class="fas fa-columns"></i> 列表示管理
+                        </button>
+                        <button class="btn btn-outline-success btn-sm" onclick="printReport()">
+                            <i class="fas fa-print"></i> 印刷
+                        </button>
+                    </div>
                 </div>
                 
                 <div class="secondary-actions">
                     <span class="filter-badge">Excel形式フィルター</span>
-                    <button class="btn btn-outline-info btn-sm" onclick="showColumnManager()">
-                        <i class="fas fa-columns"></i> 列表示管理
-                    </button>
-                    <button class="btn btn-outline-success btn-sm" onclick="printReport()">
-                        <i class="fas fa-print"></i> 印刷
-                    </button>
                 </div>
             </div>
                 <div class="filter-section">
@@ -582,21 +639,23 @@
 
                     <!-- 条件保存・エクスポート -->
                     <div class="filter-group">
-                        <div class="condition-save-group">
-                            <div style="display: flex; align-items: center; gap: 10px;">
+                        <div class="condition-save-group" style="display: flex; flex-direction: column; gap: 10px;">
+                            <div class="action-group" style="display: flex; gap: 8px; border: none; margin: 0; padding: 0;">
                                 <button type="button" class="btn btn-secondary btn-sm">条件保存</button>
-                                <button type="button" class="btn btn-success btn-sm excel-export">エクスポート</button>
+                                <button type="button" class="btn btn-success btn-sm">エクスポート</button>
+                                <button type="button" class="btn btn-outline-success btn-sm excel-export">Excel形式で出力</button>
                             </div>
-                            <div class="save-options">
-                                <label><input type="checkbox"> Excel形式で出力</label>
-                                <label><input type="checkbox"> 全期間を対象</label>
+                            <div class="save-options" style="display: flex; gap: 15px;">
+                                <label style="display: flex; align-items: center; font-size: 0.9rem;">
+                                    <input type="checkbox" style="margin-right: 5px;"> 全期間を対象
+                                </label>
                             </div>
                         </div>
                     </div>
 
                     <!-- 対象期間表示のみ -->
                     <div class="filter-group">
-                        <h6 style="color: #dc3545;">対象期間 ※2025/10/10の場合</h6>
+                        <h6 style="color: #dc3545;">対象期間</h6>
                         <div class="date-range-group">
                             <div style="margin-top: 5px; font-size: 0.9em; color: #dc3545; font-weight: bold;" id="currentPeriodDisplay">
                                 <strong>現在の指定期間：</strong> 
@@ -685,30 +744,139 @@
                     <div class="filter-group">
                         <h6 style="margin-bottom: 12px;">全データ表示</h6>
                         <select id="dataDisplayFilter" class="form-select">
-                            <option value="all">全データ表示</option>
-                            <option value="entry">入室のみ</option>
-                            <option value="exit">退室のみ</option>
-                            <option value="error">エラーのみ</option>
+                            <option value="all">全データ</option>
+                            <option value="normal">正常データ</option>
+                            <option value="warning">軽エラーデータ</option>
+                            <option value="error">重エラーデータ</option>
+                            <option value="recovery">重エラー復旧データ</option>
                         </select>
+                    </div>
+
+                    <!-- 表示項目 -->
+                    <div class="filter-group">
+                        <h6 style="margin-bottom: 12px;">表示項目</h6>
+                        <div class="checkbox-group" style="display: flex; flex-direction: column; gap: 3px;">
+                            <label style="display: flex; align-items: center; font-size: 0.85rem; margin-bottom: 2px;">
+                                <input type="checkbox" class="column-filter-checkbox" value="occurredDate" checked style="margin-right: 5px;"> 発生日付
+                            </label>
+                            <label style="display: flex; align-items: center; font-size: 0.85rem; margin-bottom: 2px;">
+                                <input type="checkbox" class="column-filter-checkbox" value="personalCode" checked style="margin-right: 5px;"> 個人コード
+                            </label>
+                            <label style="display: flex; align-items: center; font-size: 0.85rem; margin-bottom: 2px;">
+                                <input type="checkbox" class="column-filter-checkbox" value="name" checked style="margin-right: 5px;"> 氏名
+                            </label>
+                            <label style="display: flex; align-items: center; font-size: 0.85rem; margin-bottom: 2px;">
+                                <input type="checkbox" class="column-filter-checkbox" value="departmentCode" checked style="margin-right: 5px;"> 所属コード
+                            </label>
+                            <label style="display: flex; align-items: center; font-size: 0.85rem; margin-bottom: 2px;">
+                                <input type="checkbox" class="column-filter-checkbox" value="departmentName" style="margin-right: 5px;"> 所属名称
+                            </label>
+                            <label style="display: flex; align-items: center; font-size: 0.85rem; margin-bottom: 2px;">
+                                <input type="checkbox" class="column-filter-checkbox" value="gateNumber" checked style="margin-right: 5px;"> ゲート番号
+                            </label>
+                            <label style="display: flex; align-items: center; font-size: 0.85rem; margin-bottom: 2px;">
+                                <input type="checkbox" class="column-filter-checkbox" value="gateName" style="margin-right: 5px;"> ゲート名称
+                            </label>
+                            <label style="display: flex; align-items: center; font-size: 0.85rem; margin-bottom: 2px;">
+                                <input type="checkbox" class="column-filter-checkbox" value="historyDetails" checked style="margin-right: 5px;"> 履歴詳細
+                            </label>
+                        </div>
                     </div>
                 </div>
             </div>
 
-            <!-- 現条件件数表示 -->
-            <div style="text-align: right; margin-bottom: 10px; font-size: 0.95rem; color: #495057;">
-                <span id="currentConditionCount" style="font-weight: bold;">現条件：0件</span>
-            </div>
 
             <!-- データテーブル（初期状態では非表示） -->
             <div class="unified-table-container" id="dataTableContainer" style="display: none;">
                 <table class="unified-table">
                     <thead>
                         <tr id="tableHeaders">
-                            <!-- Headers will be dynamically generated by JavaScript -->
+                            <th data-column="occurredDate">発生日付
+                                <div class="excel-filter-trigger" onclick="showDataFilter(event, 'occurredDate')"></div>
+                                <div class="excel-filter-menu" id="filter-occurredDate"></div>
+                            </th>
+                            <th data-column="personalCode">個人コード
+                                <div class="excel-filter-trigger" onclick="showDataFilter(event, 'personalCode')"></div>
+                                <div class="excel-filter-menu" id="filter-personalCode"></div>
+                            </th>
+                            <th data-column="name">氏名
+                                <div class="excel-filter-trigger" onclick="showDataFilter(event, 'name')"></div>
+                                <div class="excel-filter-menu" id="filter-name"></div>
+                            </th>
+                            <th data-column="departmentCode">所属コード
+                                <div class="excel-filter-trigger" onclick="showDataFilter(event, 'departmentCode')"></div>
+                                <div class="excel-filter-menu" id="filter-departmentCode"></div>
+                            </th>
+                            <th data-column="departmentName" style="display: none;">所属名称
+                                <div class="excel-filter-trigger" onclick="showDataFilter(event, 'departmentName')"></div>
+                                <div class="excel-filter-menu" id="filter-departmentName"></div>
+                            </th>
+                            <th data-column="gateNumber">ゲート番号
+                                <div class="excel-filter-trigger" onclick="showDataFilter(event, 'gateNumber')"></div>
+                                <div class="excel-filter-menu" id="filter-gateNumber"></div>
+                            </th>
+                            <th data-column="gateName" style="display: none;">ゲート名称
+                                <div class="excel-filter-trigger" onclick="showDataFilter(event, 'gateName')"></div>
+                                <div class="excel-filter-menu" id="filter-gateName"></div>
+                            </th>
+                            <th data-column="historyDetails">履歴詳細
+                                <div class="excel-filter-trigger" onclick="showDataFilter(event, 'historyDetails')"></div>
+                                <div class="excel-filter-menu" id="filter-historyDetails"></div>
+                            </th>
                         </tr>
                     </thead>
                     <tbody id="historyTableBody">
-                        <!-- データはJavaScriptで動的生成 -->
+                        <!-- サンプルデータ（実装時はJavaScriptで動的生成） -->
+                        <tr class="row-normal">
+                            <td>2025/12/11 14:15:01</td>
+                            <td>000949</td>
+                            <td>個人459</td>
+                            <td>002</td>
+                            <td style="display: none;">管理部</td>
+                            <td>0002</td>
+                            <td style="display: none;">XA0002</td>
+                            <td>退室</td>
+                        </tr>
+                        <tr class="row-normal">
+                            <td>2025/12/11 14:14:58</td>
+                            <td>000199</td>
+                            <td>個人155</td>
+                            <td>001</td>
+                            <td style="display: none;">所属002</td>
+                            <td>0001</td>
+                            <td style="display: none;">XA0001</td>
+                            <td>入室</td>
+                        </tr>
+                        <tr class="row-warning">
+                            <td>2025/12/11 14:14:55</td>
+                            <td></td>
+                            <td></td>
+                            <td>003</td>
+                            <td style="display: none;"></td>
+                            <td>0003</td>
+                            <td style="display: none;">H = 03 A = 74</td>
+                            <td>カードリーダー警告</td>
+                        </tr>
+                        <tr class="row-error">
+                            <td>2025/12/11 14:14:52</td>
+                            <td></td>
+                            <td></td>
+                            <td></td>
+                            <td style="display: none;"></td>
+                            <td>0004</td>
+                            <td style="display: none;">H = 04 A = 52</td>
+                            <td>通信異常発生</td>
+                        </tr>
+                        <tr class="row-recovery">
+                            <td>2025/12/11 14:14:49</td>
+                            <td></td>
+                            <td></td>
+                            <td></td>
+                            <td style="display: none;"></td>
+                            <td>0001</td>
+                            <td style="display: none;">H = 01 A = 15</td>
+                            <td>システム復旧</td>
+                        </tr>
                     </tbody>
                 </table>
             </div>
@@ -722,15 +890,6 @@
             
             <!-- ページネーション（初期状態では非表示） -->
             <div class="pagination-controls" id="paginationContainer" style="display: none; justify-content: space-between; align-items: center; margin-top: 15px;">
-                <div class="items-per-page">
-                    <label for="itemsPerPage">表示件数:</label>
-                    <select id="itemsPerPage" class="form-select form-select-sm" style="width: auto; margin-left: 10px;" onchange="changeItemsPerPage()">
-                        <option value="20">20件</option>
-                        <option value="30" selected>30件</option>
-                        <option value="50">50件</option>
-                        <option value="100">100件</option>
-                    </select>
-                </div>
                 
                 <div class="page-info" id="pageInfo">
                     1-30 / 1,000件中
@@ -910,6 +1069,38 @@
                     }
                 });
             });
+            
+            // 表示項目チェックボックスと列表示の連携
+            const columnCheckboxes = document.querySelectorAll('.column-filter-checkbox');
+            columnCheckboxes.forEach(checkbox => {
+                checkbox.addEventListener('change', function() {
+                    const columnName = this.value;
+                    const isChecked = this.checked;
+                    
+                    // テーブルの対応する列を表示/非表示
+                    const headers = document.querySelectorAll(`th[data-column="${columnName}"]`);
+                    const cells = document.querySelectorAll(`td[data-column="${columnName}"], th[data-column="${columnName}"]`);
+                    
+                    headers.forEach(header => {
+                        header.style.display = isChecked ? '' : 'none';
+                    });
+                    
+                    // テーブル内のすべての対応するセルを表示/非表示
+                    const table = document.getElementById('historyTableBody');
+                    if (table) {
+                        const columnIndex = Array.from(document.querySelectorAll('#tableHeaders th')).findIndex(th => th.dataset.column === columnName);
+                        if (columnIndex !== -1) {
+                            const rows = table.querySelectorAll('tr');
+                            rows.forEach(row => {
+                                const cell = row.cells[columnIndex];
+                                if (cell) {
+                                    cell.style.display = isChecked ? '' : 'none';
+                                }
+                            });
+                        }
+                    }
+                });
+            });
         });
         
         // 期間選択を適用
@@ -965,6 +1156,12 @@
             
             currentPeriodSpan.textContent = displayText;
             currentCountSpan.innerHTML = `<strong>現条件：${sampleCount.toLocaleString()}件</strong>`;
+            
+            // Update the top counter as well
+            const currentCountTop = document.getElementById('currentCountTop');
+            if (currentCountTop) {
+                currentCountTop.innerHTML = `現条件：${sampleCount.toLocaleString()}件`;
+            }
             
             // データテーブルとページネーションを表示
             document.getElementById('dataTableContainer').style.display = 'block';

@@ -554,13 +554,89 @@
             box-shadow: 0 6px 12px rgba(255, 193, 7, 0.3);
         }
         
-        .field-note {
-            font-size: 0.85rem;
-            color: #6c757d;
-            margin-top: 5px;
-            font-style: italic;
+        .form-control:read-only {
+            background-color: #f8f9fa;
+            cursor: not-allowed;
         }
         
+        /* Switch styling */
+        .form-switch .form-check-input {
+            width: 3em;
+            height: 1.5em;
+            cursor: pointer;
+        }
+
+        .display-name {
+            font-size: 0.9rem;
+            color: #6c757d;
+            margin-top: 4px;
+            min-height: 1.2em;
+        }
+
+        .input-with-button {
+            display: flex;
+            gap: 8px;
+        }
+
+        .input-with-button .form-control {
+            flex: 1;
+        }
+
+        .btn-reference {
+            background-color: #6c757d;
+            color: white;
+            border: none;
+            padding: 0 15px;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            transition: all 0.2s ease;
+        }
+
+        .btn-reference:hover {
+            background-color: #5a6268;
+        }
+
+        .datetime-display-area {
+            background: #f8f9fa;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 20px;
+            border: 1px solid #e9ecef;
+            display: flex;
+            justify-content: center;
+            gap: 40px;
+        }
+
+        .datetime-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            color: #495057;
+            font-weight: 500;
+        }
+
+        .datetime-label {
+            font-size: 0.85rem;
+            color: #6c757d;
+        }
+
+        .datetime-value {
+            font-family: monospace;
+            font-size: 1rem;
+        }
+
+        .btn-action-small {
+            padding: 10px 20px;
+            font-size: 0.95rem;
+            min-width: 100px;
+        }
+
+        .authority-columns {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+        }
+
         @media (max-width: 1200px) {
             .main-form-area {
                 grid-template-columns: 3fr 2fr;
@@ -579,13 +655,14 @@
             }
             
             .action-buttons {
-                flex-direction: column;
-                align-items: center;
+                flex-direction: row;
+                flex-wrap: wrap;
+                justify-content: center;
             }
             
             .btn-action {
-                width: 100%;
-                max-width: 300px;
+                width: auto;
+                min-width: 120px;
             }
             
             .registration-container {
@@ -686,11 +763,6 @@
             
             <!-- フォームコンテナ -->
             <div class="form-container">
-                <div class="form-header">
-                    <h3>個人情報新規登録</h3>
-                    <div class="subtitle">個人の基本情報と権限設定を行います</div>
-                </div>
-                
                 <div class="form-body">
                     <div class="main-form-area">
                         <!-- 左側フォーム -->
@@ -707,7 +779,7 @@
                                     
                                     <div class="form-group">
                                         <label class="form-label">発行回数</label>
-                                        <input type="text" class="form-control" value="0" readonly>
+                                        <input type="text" class="form-control" value="0" id="issueCount">
                                     </div>
                                     
                                     <div class="form-group">
@@ -716,7 +788,7 @@
                                     </div>
                                     
                                     <div class="form-group">
-                                        <label class="form-label">氏名<span class="required">*</span></label>
+                                        <label class="form-label">氏名</label>
                                         <input type="text" class="form-control" placeholder="氏名を入力" id="name">
                                     </div>
                                     
@@ -727,17 +799,29 @@
                                     
                                     <div class="form-group">
                                         <label class="form-label">テナント</label>
-                                        <input type="text" class="form-control" placeholder="テナントコードを入力" id="tenantCode">
+                                        <div class="input-with-button">
+                                            <input type="text" class="form-control" placeholder="テナントコード" id="tenantCode">
+                                            <button type="button" class="btn-reference" onclick="openTenantSelector()">参照</button>
+                                        </div>
+                                        <div class="display-name" id="tenantName">テナント名称表示</div>
                                     </div>
                                     
                                     <div class="form-group">
                                         <label class="form-label">所属</label>
-                                        <input type="text" class="form-control" placeholder="所属を入力" id="department">
+                                        <div class="input-with-button">
+                                            <input type="text" class="form-control" placeholder="所属コード" id="department">
+                                            <button type="button" class="btn-reference" onclick="openDepartmentSelector()">参照</button>
+                                        </div>
+                                        <div class="display-name" id="departmentName">所属名称表示</div>
                                     </div>
                                     
                                     <div class="form-group">
                                         <label class="form-label">区分</label>
-                                        <input type="text" class="form-control" value="001" id="category">
+                                        <div class="input-with-button">
+                                            <input type="text" class="form-control" value="001" id="category">
+                                            <button type="button" class="btn-reference" onclick="openCategorySelector()">参照</button>
+                                        </div>
+                                        <div class="display-name" id="categoryName">区分名称表示</div>
                                     </div>
                                     
                                     <div class="form-group">
@@ -757,72 +841,26 @@
                                         <div class="date-input-group">
                                             <input type="text" class="date-input" value="0000" maxlength="4" id="startYear" placeholder="年">
                                             <span class="date-separator">年</span>
-                                            <select class="date-select" id="startMonth">
-                                                <option value="01">01</option>
-                                                <option value="02">02</option>
-                                                <option value="03">03</option>
-                                                <option value="04">04</option>
-                                                <option value="05">05</option>
-                                                <option value="06">06</option>
-                                                <option value="07">07</option>
-                                                <option value="08">08</option>
-                                                <option value="09">09</option>
-                                                <option value="10">10</option>
-                                                <option value="11">11</option>
-                                                <option value="12">12</option>
-                                            </select>
+                                            <input type="text" class="date-input" value="00" maxlength="2" id="startMonth" placeholder="月">
                                             <span class="date-separator">月</span>
-                                            <select class="date-select" id="startDay">
-                                                <option value="01">01</option>
-                                                <option value="02">02</option>
-                                                <option value="03">03</option>
-                                                <option value="04">04</option>
-                                                <option value="05">05</option>
-                                                <option value="06">06</option>
-                                                <option value="07">07</option>
-                                                <option value="08">08</option>
-                                                <option value="09">09</option>
-                                                <option value="10">10</option>
-                                                <option value="11">11</option>
-                                                <option value="12">12</option>
-                                                <option value="13">13</option>
-                                                <option value="14">14</option>
-                                                <option value="15">15</option>
-                                                <option value="16">16</option>
-                                                <option value="17">17</option>
-                                                <option value="18">18</option>
-                                                <option value="19">19</option>
-                                                <option value="20">20</option>
-                                                <option value="21">21</option>
-                                                <option value="22">22</option>
-                                                <option value="23">23</option>
-                                                <option value="24">24</option>
-                                                <option value="25">25</option>
-                                                <option value="26">26</option>
-                                                <option value="27">27</option>
-                                                <option value="28">28</option>
-                                                <option value="29">29</option>
-                                                <option value="30">30</option>
-                                                <option value="31">31</option>
-                                            </select>
+                                            <input type="text" class="date-input" value="00" maxlength="2" id="startDay" placeholder="日">
                                             <span class="date-separator">日</span>
-                                            <button class="btn-calendar" onclick="toggleInlineDatePicker('start')">
+                                            <button type="button" class="btn-calendar" onclick="toggleInlineDatePicker('start')">
                                                 <i class="fas fa-calendar-alt"></i>
                                             </button>
                                             <div class="date-inline-picker" id="startDatePicker">
                                                 <div class="calendar-header">
-                                                    <button class="calendar-nav-btn" onclick="navigateMonth('start', -1)">‹</button>
+                                                    <button type="button" class="calendar-nav-btn" onclick="navigateMonth('start', -1)">‹</button>
                                                     <span class="calendar-month-year" id="startMonthYear"></span>
-                                                    <button class="calendar-nav-btn" onclick="navigateMonth('start', 1)">›</button>
+                                                    <button type="button" class="calendar-nav-btn" onclick="navigateMonth('start', 1)">›</button>
                                                 </div>
                                                 <div class="calendar-grid" id="startCalendarGrid"></div>
                                                 <div class="calendar-actions">
-                                                    <button class="calendar-btn today-btn" onclick="selectToday('start')">今日</button>
-                                                    <button class="calendar-btn close-btn" onclick="hideInlineDatePicker('start')">閉じる</button>
+                                                    <button type="button" class="calendar-btn today-btn" onclick="selectToday('start')">今日</button>
+                                                    <button type="button" class="calendar-btn close-btn" onclick="hideInlineDatePicker('start')">閉じる</button>
                                                 </div>
                                             </div>
                                         </div>
-                                        <div class="field-note">手入力・出来ればカレンダーも追加したい</div>
                                     </div>
                                     
                                     <div class="form-group">
@@ -830,157 +868,67 @@
                                         <div class="date-input-group">
                                             <input type="text" class="date-input" value="0000" maxlength="4" id="endYear" placeholder="年">
                                             <span class="date-separator">年</span>
-                                            <select class="date-select" id="endMonth">
-                                                <option value="01">01</option>
-                                                <option value="02">02</option>
-                                                <option value="03">03</option>
-                                                <option value="04">04</option>
-                                                <option value="05">05</option>
-                                                <option value="06">06</option>
-                                                <option value="07">07</option>
-                                                <option value="08">08</option>
-                                                <option value="09">09</option>
-                                                <option value="10">10</option>
-                                                <option value="11">11</option>
-                                                <option value="12">12</option>
-                                            </select>
+                                            <input type="text" class="date-input" value="00" maxlength="2" id="endMonth" placeholder="月">
                                             <span class="date-separator">月</span>
-                                            <select class="date-select" id="endDay">
-                                                <option value="01">01</option>
-                                                <option value="02">02</option>
-                                                <option value="03">03</option>
-                                                <option value="04">04</option>
-                                                <option value="05">05</option>
-                                                <option value="06">06</option>
-                                                <option value="07">07</option>
-                                                <option value="08">08</option>
-                                                <option value="09">09</option>
-                                                <option value="10">10</option>
-                                                <option value="11">11</option>
-                                                <option value="12">12</option>
-                                                <option value="13">13</option>
-                                                <option value="14">14</option>
-                                                <option value="15">15</option>
-                                                <option value="16">16</option>
-                                                <option value="17">17</option>
-                                                <option value="18">18</option>
-                                                <option value="19">19</option>
-                                                <option value="20">20</option>
-                                                <option value="21">21</option>
-                                                <option value="22">22</option>
-                                                <option value="23">23</option>
-                                                <option value="24">24</option>
-                                                <option value="25">25</option>
-                                                <option value="26">26</option>
-                                                <option value="27">27</option>
-                                                <option value="28">28</option>
-                                                <option value="29">29</option>
-                                                <option value="30">30</option>
-                                                <option value="31">31</option>
-                                            </select>
+                                            <input type="text" class="date-input" value="00" maxlength="2" id="endDay" placeholder="日">
                                             <span class="date-separator">日</span>
-                                            <button class="btn-calendar" onclick="toggleInlineDatePicker('end')">
+                                            <button type="button" class="btn-calendar" onclick="toggleInlineDatePicker('end')">
                                                 <i class="fas fa-calendar-alt"></i>
                                             </button>
                                             <div class="date-inline-picker" id="endDatePicker">
                                                 <div class="calendar-header">
-                                                    <button class="calendar-nav-btn" onclick="navigateMonth('end', -1)">‹</button>
+                                                    <button type="button" class="calendar-nav-btn" onclick="navigateMonth('end', -1)">‹</button>
                                                     <span class="calendar-month-year" id="endMonthYear"></span>
-                                                    <button class="calendar-nav-btn" onclick="navigateMonth('end', 1)">›</button>
+                                                    <button type="button" class="calendar-nav-btn" onclick="navigateMonth('end', 1)">›</button>
                                                 </div>
                                                 <div class="calendar-grid" id="endCalendarGrid"></div>
                                                 <div class="calendar-actions">
-                                                    <button class="calendar-btn today-btn" onclick="selectToday('end')">今日</button>
-                                                    <button class="calendar-btn close-btn" onclick="hideInlineDatePicker('end')">閉じる</button>
+                                                    <button type="button" class="calendar-btn today-btn" onclick="selectToday('end')">今日</button>
+                                                    <button type="button" class="calendar-btn close-btn" onclick="hideInlineDatePicker('end')">閉じる</button>
                                                 </div>
                                             </div>
                                         </div>
-                                        <div class="field-note">手入力・出来ればカレンダーも追加したい</div>
                                     </div>
                                 </div>
                             </div>
                             
                             <!-- 代替設定 -->
                             <div class="form-section">
-                                <h4 class="section-title">代替設定</h4>
-                                
-                                <div class="form-grid">
+                                <div class="form-check form-switch mb-3">
+                                    <input class="form-check-input" type="checkbox" id="altSettingSwitch">
+                                    <label class="form-check-label" for="altSettingSwitch">代替設定を有効にする</label>
+                                </div>
+                                <div class="form-grid" id="altSettingFields">
                                     <div class="form-group">
                                         <label class="form-label">代替コード</label>
-                                        <input type="text" class="form-control" placeholder="代替コードを入力" id="altCode">
+                                        <input type="text" class="form-control" placeholder="代替コードを入力" id="altCode" disabled>
                                     </div>
                                     
                                     <div class="form-group">
                                         <label class="form-label">代替コード利用終了日</label>
                                         <div class="date-input-group">
-                                            <input type="text" class="date-input" value="0000" maxlength="4" id="altYear" placeholder="年">
+                                            <input type="text" class="date-input" value="0000" maxlength="4" id="altYear" placeholder="年" disabled>
                                             <span class="date-separator">年</span>
-                                            <select class="date-select" id="altMonth">
-                                                <option value="01">01</option>
-                                                <option value="02">02</option>
-                                                <option value="03">03</option>
-                                                <option value="04">04</option>
-                                                <option value="05">05</option>
-                                                <option value="06">06</option>
-                                                <option value="07">07</option>
-                                                <option value="08">08</option>
-                                                <option value="09">09</option>
-                                                <option value="10">10</option>
-                                                <option value="11">11</option>
-                                                <option value="12">12</option>
-                                            </select>
+                                            <input type="text" class="date-input" value="00" maxlength="2" id="altMonth" placeholder="月" disabled>
                                             <span class="date-separator">月</span>
-                                            <select class="date-select" id="altDay">
-                                                <option value="01">01</option>
-                                                <option value="02">02</option>
-                                                <option value="03">03</option>
-                                                <option value="04">04</option>
-                                                <option value="05">05</option>
-                                                <option value="06">06</option>
-                                                <option value="07">07</option>
-                                                <option value="08">08</option>
-                                                <option value="09">09</option>
-                                                <option value="10">10</option>
-                                                <option value="11">11</option>
-                                                <option value="12">12</option>
-                                                <option value="13">13</option>
-                                                <option value="14">14</option>
-                                                <option value="15">15</option>
-                                                <option value="16">16</option>
-                                                <option value="17">17</option>
-                                                <option value="18">18</option>
-                                                <option value="19">19</option>
-                                                <option value="20">20</option>
-                                                <option value="21">21</option>
-                                                <option value="22">22</option>
-                                                <option value="23">23</option>
-                                                <option value="24">24</option>
-                                                <option value="25">25</option>
-                                                <option value="26">26</option>
-                                                <option value="27">27</option>
-                                                <option value="28">28</option>
-                                                <option value="29">29</option>
-                                                <option value="30">30</option>
-                                                <option value="31">31</option>
-                                            </select>
+                                            <input type="text" class="date-input" value="00" maxlength="2" id="altDay" placeholder="日" disabled>
                                             <span class="date-separator">日</span>
-                                            <button class="btn-calendar" onclick="toggleInlineDatePicker('alt')">
+                                            <button type="button" class="btn-calendar" id="altCalendarBtn" onclick="toggleInlineDatePicker('alt')" disabled>
                                                 <i class="fas fa-calendar-alt"></i>
                                             </button>
                                             <div class="date-inline-picker" id="altDatePicker">
                                                 <div class="calendar-header">
-                                                    <button class="calendar-nav-btn" onclick="navigateMonth('alt', -1)">‹</button>
+                                                    <button type="button" class="calendar-nav-btn" onclick="navigateMonth('alt', -1)">‹</button>
                                                     <span class="calendar-month-year" id="altMonthYear"></span>
-                                                    <button class="calendar-nav-btn" onclick="navigateMonth('alt', 1)">›</button>
+                                                    <button type="button" class="calendar-nav-btn" onclick="navigateMonth('alt', 1)">›</button>
                                                 </div>
                                                 <div class="calendar-grid" id="altCalendarGrid"></div>
                                                 <div class="calendar-actions">
-                                                    <button class="calendar-btn today-btn" onclick="selectToday('alt')">今日</button>
-                                                    <button class="calendar-btn close-btn" onclick="hideInlineDatePicker('alt')">閉じる</button>
+                                                    <button type="button" class="calendar-btn today-btn" onclick="selectToday('alt')">今日</button>
+                                                    <button type="button" class="calendar-btn close-btn" onclick="hideInlineDatePicker('alt')">閉じる</button>
                                                 </div>
                                             </div>
                                         </div>
-                                        <div class="field-note">手入力・出来ればカレンダーも追加したい</div>
                                     </div>
                                 </div>
                             </div>
@@ -1049,48 +997,58 @@
                             
                             <!-- 通行権限 -->
                             <div class="permissions-section">
-                                <div class="permissions-header">
-                                    <div class="permissions-title">◆通行権限</div>
-                                    <div class="permissions-controls">
-                                        <input type="text" class="permission-code" value="001" placeholder="001">
-                                        <button class="btn-permission">参照</button>
+                                <div class="permissions-header" style="flex-direction: column; align-items: flex-start;">
+                                    <div class="permissions-title">●通行権限</div>
+                                    <div class="permissions-controls w-100 mt-2">
+                                        <div class="input-with-button">
+                                            <input type="text" class="form-control" value="001" id="authorityCode">
+                                            <button type="button" class="btn-reference">参照</button>
+                                        </div>
                                     </div>
+                                    <div class="display-name" id="authorityName">名称：ツウコウ001</div>
                                 </div>
                                 <div class="permissions-table-container">
                                     <table class="permissions-table">
                                         <thead>
                                             <tr>
-                                                <th>ゲートNo</th>
-                                                <th>ゲート名称</th>
+                                                <th>コード</th>
+                                                <th>名称</th>
                                                 <th>TC</th>
+                                                <th>DF</th>
                                             </tr>
                                         </thead>
                                         <tbody>
-                                            <tr><td>0001</td><td>ゲート0001</td><td>C</td></tr>
-                                            <tr><td>0002</td><td>ゲート0002</td><td>C</td></tr>
-                                            <tr><td>0003</td><td>ゲート0003</td><td>C</td></tr>
-                                            <tr><td>0004</td><td>ゲート0004</td><td>C</td></tr>
-                                            <tr><td>0005</td><td>ゲート0005</td><td>C</td></tr>
-                                            <tr><td>0006</td><td>ゲート0006</td><td>C</td></tr>
-                                            <tr><td>0007</td><td>ゲート0007</td><td>C</td></tr>
-                                            <tr><td>0008</td><td>ゲート0008</td><td>C</td></tr>
-                                            <tr><td>0009</td><td>ゲート0009</td><td>C</td></tr>
-                                            <tr><td>0010</td><td>ゲート0010</td><td>C</td></tr>
-                                            <tr><td>0011</td><td>ゲート0011</td><td>C</td></tr>
-                                            <tr><td>0012</td><td>ゲート0012</td><td>C</td></tr>
-                                            <tr><td>0013</td><td>ゲート0013</td><td>C</td></tr>
-                                            <tr><td>0014</td><td>ゲート0014</td><td>C</td></tr>
-                                            <tr><td>0015</td><td>ゲート0015</td><td>C</td></tr>
-                                            <tr><td>0016</td><td>ゲート0016</td><td>C</td></tr>
-                                            <tr><td>0017</td><td>ゲート0017</td><td>C</td></tr>
-                                            <tr><td>0018</td><td>ゲート0018</td><td>C</td></tr>
-                                            <tr><td>0019</td><td>ゲート0019</td><td>C</td></tr>
-                                            <tr><td>0020</td><td>ゲート0020</td><td>C</td></tr>
-                                            <tr><td>0021</td><td>ゲート0021</td><td>C</td></tr>
-                                            <tr><td>0022</td><td>ゲート0022</td><td>C</td></tr>
-                                            <tr><td>0023</td><td>ゲート0023</td><td>C</td></tr>
-                                            <tr><td>0024</td><td>ゲート0024</td><td>C</td></tr>
-                                            <tr><td>0025</td><td>ゲート0025</td><td>C</td></tr>
+                                            <tr>
+                                                <td><div class="authority-columns"><input type="text" class="form-control form-control-sm" placeholder=""> <input type="text" class="form-control form-control-sm" value="0001" readonly></div></td>
+                                                <td>ゲート①</td>
+                                                <td></td>
+                                                <td>C</td>
+                                            </tr>
+                                            <tr>
+                                                <td><div class="authority-columns"><input type="text" class="form-control form-control-sm" placeholder=""> <input type="text" class="form-control form-control-sm" value="0002" readonly></div></td>
+                                                <td>ゲート②</td>
+                                                <td></td>
+                                                <td>C</td>
+                                            </tr>
+                                            <tr>
+                                                <td><div class="authority-columns"><input type="text" class="form-control form-control-sm" placeholder=""> <input type="text" class="form-control form-control-sm" value="0003" readonly></div></td>
+                                                <td>ゲート③</td>
+                                                <td></td>
+                                                <td>C</td>
+                                            </tr>
+                                            <tr>
+                                                <td><div class="authority-columns"><input type="text" class="form-control form-control-sm" placeholder=""> <input type="text" class="form-control form-control-sm" value="0004" readonly></div></td>
+                                                <td>ゲート④</td>
+                                                <td></td>
+                                                <td>C</td>
+                                            </tr>
+                                            <tr>
+                                                <td><div class="authority-columns"><input type="text" class="form-control form-control-sm" placeholder=""> <input type="text" class="form-control form-control-sm" value="0005" readonly></div></td>
+                                                <td>ゲート⑤</td>
+                                                <td></td>
+                                                <td>C</td>
+                                            </tr>
+                                            <!-- 以下、省略または動的生成を想定 -->
                                         </tbody>
                                     </table>
                                 </div>
@@ -1101,15 +1059,36 @@
                 
                 <!-- アクションセクション -->
                 <div class="action-section">
+                    <!-- 登録日時／更新日時 (Item 19) -->
+                    <div class="datetime-display-area">
+                        <div class="datetime-item">
+                            <span class="datetime-label">登録日時：</span>
+                            <span class="datetime-value" id="registrationDateTime">2025/12/19 10:00:00</span>
+                        </div>
+                        <div class="datetime-item">
+                            <span class="datetime-label">更新日時：</span>
+                            <span class="datetime-value" id="updateDateTime">2025/12/19 15:30:00</span>
+                        </div>
+                    </div>
+
                     <div class="action-buttons">
-                        <button class="btn-action btn-save" onclick="savePerson()">
-                            <i class="fas fa-save"></i> 登録送信
+                        <button class="btn-action btn-save btn-action-small" id="sendBtn" onclick="sendData()">
+                             送信
                         </button>
-                        <button class="btn-action btn-cancel" onclick="cancelEdit()">
-                            <i class="fas fa-times"></i> キャンセル
+                        <button class="btn-action btn-save btn-action-small" id="saveBtn" onclick="savePerson()">
+                             登録
                         </button>
-                        <button class="btn-action btn-clear" onclick="clearForm()">
-                            <i class="fas fa-eraser"></i> クリア
+                        <button class="btn-action btn-cancel btn-action-small" id="deleteBtn" onclick="deletePerson()">
+                             削除
+                        </button>
+                        <button class="btn-action btn-clear btn-action-small" id="eraseBtn" onclick="eraseData()">
+                             消去
+                        </button>
+                        <button class="btn-action btn-cancel btn-action-small" id="cancelBtn" onclick="cancelEdit()">
+                             キャンセル
+                        </button>
+                        <button class="btn-action btn-clear btn-action-small" id="clearBtn" onclick="clearForm()">
+                             クリア
                         </button>
                     </div>
                 </div>
@@ -1171,7 +1150,7 @@
                 }
                 
                 // 現在の日付を設定
-                if (year > 0 && year !== 0000 && month && day) {
+                if (year > 0 && year !== 0 && month && day) {
                     calendarData[type].currentDate = new Date(year, month - 1, day);
                     calendarData[type].selectedDate = new Date(year, month - 1, day);
                 } else {

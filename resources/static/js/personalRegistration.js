@@ -18,13 +18,16 @@ class PersonalRegistration {
     }
 
     bindEvents() {
-        // フォーム送信イベント
+        // フォーム送信イベント (Item 20)
+        $('#sendBtn').on('click', () => this.sendData());
         $('#saveBtn').on('click', () => this.savePerson());
+        $('#deleteBtn').on('click', () => this.deletePerson());
+        $('#eraseBtn').on('click', () => this.eraseData());
         $('#cancelBtn').on('click', () => this.cancelEdit());
         $('#clearBtn').on('click', () => this.clearForm());
 
         // 検索ボタンイベント
-        $('.btn-search').on('click', (e) => this.handleSearchClick(e));
+        $('.btn-reference').on('click', (e) => this.handleReferenceClick(e));
 
         // 写真関連イベント
         $('#photoUpload').on('change', (e) => this.handlePhotoUpload(e));
@@ -32,12 +35,14 @@ class PersonalRegistration {
 
         // フォーム入力イベント
         $('#personCode').on('input', () => this.validatePersonCode());
-        $('#personCode').on('blur', () => this.autoFillFromPersonCode()); // No.11
+        $('#personCode').on('blur', () => this.autoFillFromPersonCode());
         $('input[required]').on('input', () => this.validateForm());
 
-        // 日付入力の制御
-        $('.date-inputs input').on('input', (e) => this.handleDateInput(e));
-        $('.date-inputs select').on('change', (e) => this.handleDateChange(e));
+        // 日付入力の文字数制御と数字のみ許可
+        $('.date-input').on('input', (e) => this.handleDateInput(e));
+
+        // 代替設定スイッチ (Item 17)
+        $('#altSettingSwitch').on('change', (e) => this.toggleAltSettings(e.target.checked));
 
         // チェックボックス制御
         $('#bioAuth').on('change', () => this.toggleBioFields());
@@ -208,77 +213,70 @@ class PersonalRegistration {
         this.toggleBioFields();
     }
 
-    handleSearchClick(e) {
-        const target = $(e.target);
-        const parent = target.closest('.input-group');
-        const input = parent.find('input');
-        const fieldType = this.getFieldType(input);
+    handleReferenceClick(e) {
+        const target = $(e.target).closest('.input-with-button');
+        const input = target.find('input');
+        const fieldType = input.attr('id');
 
         switch (fieldType) {
+            case 'tenantCode':
+                this.openTenantSelector();
+                break;
             case 'department':
                 this.openDepartmentSelector();
                 break;
             case 'category':
                 this.openCategorySelector();
                 break;
-            case 'proxyCode':
-                this.openProxyCodeSelector();
+            case 'authorityCode':
+                this.openAuthoritySelector();
                 break;
             default:
-                console.log('検索機能:', fieldType);
+                console.log('参照機能:', fieldType);
         }
     }
 
-    getFieldType(input) {
-        const id = input.attr('id');
-        const placeholder = input.attr('placeholder');
-        
-        if (id === 'department' || placeholder && placeholder.includes('所属')) return 'department';
-        if (id === 'category') return 'category';
-        if (id === 'proxyCode') return 'proxyCode';
-        return 'unknown';
+    openTenantSelector() {
+        const tenants = [
+            { code: '001', name: 'テナント001' },
+            { code: '002', name: 'テナント002' }
+        ];
+        this.showSelectorModal('テナント選択', tenants, (selected) => {
+            $('#tenantCode').val(selected.code);
+            $('#tenantName').text('名称：' + selected.name);
+        });
     }
 
     openDepartmentSelector() {
-        // 所属選択ダイアログを開く
         const departments = [
             { code: '001', name: '総務部' },
-            { code: '002', name: '営業部' },
-            { code: '003', name: '開発部' },
-            { code: '004', name: '製造部' },
-            { code: '005', name: '品質管理部' }
+            { code: '003', name: '開発部' }
         ];
-
         this.showSelectorModal('所属選択', departments, (selected) => {
-            $('#department').val(selected.name);
+            $('#department').val(selected.code);
+            $('#departmentName').text('名称：' + selected.name);
         });
     }
 
     openCategorySelector() {
-        // 区分選択ダイアログを開く
         const categories = [
             { code: '001', name: '正社員' },
-            { code: '002', name: '契約社員' },
-            { code: '003', name: 'パート' },
-            { code: '004', name: '派遣社員' },
-            { code: '005', name: '外部委託' }
+            { code: '002', name: '契約社員' }
         ];
-
         this.showSelectorModal('区分選択', categories, (selected) => {
             $('#category').val(selected.code);
+            $('#categoryName').text('名称：' + selected.name);
         });
     }
 
-    openProxyCodeSelector() {
-        // 代理コード選択ダイアログを開く
-        const proxyCodes = [
-            { code: 'PROXY001', name: '管理者権限' },
-            { code: 'PROXY002', name: '一般権限' },
-            { code: 'PROXY003', name: '制限権限' }
+    openAuthoritySelector() {
+        const authorities = [
+            { code: '001', name: 'ツウコウ001' },
+            { code: '002', name: 'ツウコウ002' }
         ];
-
-        this.showSelectorModal('代理コード選択', proxyCodes, (selected) => {
-            $('#proxyCode').val(selected.code);
+        this.showSelectorModal('通行権限選択', authorities, (selected) => {
+            $('#authorityCode').val(selected.code);
+            $('#authorityName').text('名称：' + selected.name);
         });
     }
 
@@ -395,9 +393,43 @@ class PersonalRegistration {
         }
     }
 
+    toggleAltSettings(enabled) {
+        const fields = $('#altCode, #altYear, #altMonth, #altDay');
+        const btn = $('#altCalendarBtn');
+        fields.prop('disabled', !enabled);
+        btn.prop('disabled', !enabled);
+        if (!enabled) {
+            fields.val('');
+            $('#altYear').val('0000');
+            $('#altMonth, #altDay').val('00');
+        }
+    }
+
     toggleAntiPassback() {
         const antiPassback = $('#antiPassback').is(':checked');
         console.log('アンチパスバック設定:', antiPassback);
+    }
+
+    sendData() {
+        if (!this.validateForm()) {
+            alert('必須項目を入力してください');
+            return;
+        }
+        alert('データを送信しました');
+    }
+
+    deletePerson() {
+        if (confirm('この個人情報を削除しますか？')) {
+            alert('削除しました');
+            window.location.href = '/personalList-preview.html';
+        }
+    }
+
+    eraseData() {
+        if (confirm('入力内容を消去しますか？')) {
+            $('input[type="text"]').val('');
+            this.setDefaultValues();
+        }
     }
 
     collectFormData() {
@@ -554,85 +586,51 @@ function showCalendar(inputId) {
     setupEnterKeyHandlers() {
         const enterHandlers = {
             'personCode': (input) => {
-                // 個人コード：未入力不可
                 if (!input.value.trim()) {
                     this.showFieldError('個人コードは必須です');
                     return false;
                 }
                 return true;
             },
-            'issueCount': (input) => {
-                // 発行回数：スキップ（自動）
-                return true;
-            },
+            'issueCount': (input) => true,
             'managementNumber': (input) => {
-                // 管理番号：個人コード（桁数合わせ）を自動入力
                 if (!input.value.trim()) {
                     const personCode = $('#personCode').val().trim();
-                    if (personCode) {
-                        input.value = personCode;
-                    }
+                    if (personCode) input.value = personCode;
                 }
                 return true;
             },
             'name': (input) => {
-                // 氏名：個人コードを自動入力
                 if (!input.value.trim()) {
                     const personCode = $('#personCode').val().trim();
-                    if (personCode) {
-                        input.value = personCode;
-                    }
+                    if (personCode) input.value = personCode;
                 }
                 return true;
             },
             'nameKana': (input) => {
-                // 氏名(カナ)：個人コードを自動入力
                 if (!input.value.trim()) {
                     const personCode = $('#personCode').val().trim();
-                    if (personCode) {
-                        input.value = personCode;
-                    }
+                    if (personCode) input.value = personCode;
                 }
                 return true;
             },
             'department': (input) => {
-                // 所属：「000」（桁数合わせ）を自動入力
-                if (!input.value.trim()) {
-                    input.value = '000';
-                }
+                if (!input.value.trim()) input.value = '000';
                 return true;
             },
             'category': (input) => {
-                // 区分：「000」（桁数合わせ）を自動入力
-                if (!input.value.trim()) {
-                    input.value = '000';
-                }
+                if (!input.value.trim()) input.value = '000';
                 return true;
             },
             'tenkeyNumber': (input) => {
-                // テンキー暗証番号：「0000」を自動入力
-                if (!input.value.trim()) {
-                    input.value = '0000';
-                }
+                if (!input.value.trim()) input.value = '0000';
                 return true;
             },
-            'startDate': (input) => {
-                // 利用開始日：「9999/99/99」を自動入力
-                if (!input.value.trim()) {
-                    input.value = '9999-99-99';
-                }
-                return true;
-            },
-            'endDate': (input) => {
-                // 利用終了日：「9999/99/99」を自動入力
-                if (!input.value.trim()) {
-                    input.value = '9999-99-99';
-                }
-                return true;
-            }
+            'startYear': (input) => true,
+            'startMonth': (input) => true,
+            'startDay': (input) => true
         };
 
-        // 各入力フィールドにEnterキーハンドラーを設定
         Object.keys(enterHandlers).forEach(fieldId => {
             const element = document.getElementById(fieldId);
             if (element) {
@@ -641,10 +639,7 @@ function showCalendar(inputId) {
                         e.preventDefault();
                         const handler = enterHandlers[fieldId];
                         const shouldProceed = handler(element);
-                        
-                        if (shouldProceed) {
-                            this.moveToNextField(element);
-                        }
+                        if (shouldProceed) this.moveToNextField(element);
                     }
                 });
             }
@@ -655,16 +650,13 @@ function showCalendar(inputId) {
         const formElements = Array.from(document.querySelectorAll('input, select, textarea')).filter(el => 
             !el.disabled && !el.hidden && el.type !== 'hidden'
         );
-        
         const currentIndex = formElements.indexOf(currentElement);
         if (currentIndex >= 0 && currentIndex < formElements.length - 1) {
-            const nextElement = formElements[currentIndex + 1];
-            nextElement.focus();
+            formElements[currentIndex + 1].focus();
         }
     }
 
     showFieldError(message) {
-        // 簡単なエラー表示（実際の実装では適切なUIを使用）
         console.error(message);
         alert(message);
     }

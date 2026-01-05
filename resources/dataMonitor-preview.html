@@ -422,6 +422,70 @@
             font-size: 0.8em;
             color: #666;
         }
+
+        /* Column hide button styles */
+        .column-hide-btn {
+            position: absolute;
+            top: 2px;
+            right: 2px;
+            width: 16px;
+            height: 16px;
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            border-radius: 3px;
+            cursor: pointer;
+            font-size: 10px;
+            line-height: 12px;
+            text-align: center;
+            display: none;
+            transition: all 0.2s ease;
+        }
+
+        .data-table th:hover .column-hide-btn {
+            display: block;
+        }
+
+        .column-hide-btn:hover {
+            background: rgba(255, 255, 255, 0.4);
+            transform: scale(1.1);
+        }
+
+        .column-hidden {
+            display: none;
+        }
+
+        .filter-reset-section {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+
+        .btn-filter-reset {
+            background: #6c757d;
+            color: white;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 4px;
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .btn-filter-reset:hover {
+            background: #5a6268;
+        }
+
+        .display-count {
+            background: #e3f2fd;
+            border: 1px solid #1976d2;
+            border-radius: 4px;
+            padding: 8px 12px;
+            font-size: 0.9rem;
+            font-weight: 500;
+            color: #1976d2;
+        }
     </style>
 </head>
 
@@ -496,44 +560,15 @@
                         </select>
                     </div>
 
-                    <!-- ゲート指定フィルタ -->
-                    <div class="filter-group">
-                        <h6>ゲート指定</h6>
-                        <div class="checkbox-group">
-                            <label><input type="checkbox" class="gate-filter-checkbox" value="0001" checked> エントランス
-                                (0001)</label>
-                            <label><input type="checkbox" class="gate-filter-checkbox" value="0002" checked> サーバールーム
-                                (0002)</label>
-                            <label><input type="checkbox" class="gate-filter-checkbox" value="0003" checked> 会議室
-                                (0003)</label>
-                            <label><input type="checkbox" class="gate-filter-checkbox" value="0004" checked> 役員室
-                                (0004)</label>
-                        </div>
-                    </div>
 
-                    <!-- 表示項目フィルタ -->
-                    <div class="filter-group">
-                        <h6>表示項目</h6>
-                        <div class="checkbox-group">
-                            <label><input type="checkbox" class="column-filter-checkbox" value="occurredDate" checked>
-                                発生日付</label>
-                            <label><input type="checkbox" class="column-filter-checkbox" value="personalCode" checked>
-                                個人コード</label>
-                            <label><input type="checkbox" class="column-filter-checkbox" value="name" checked>
-                                氏名</label>
-                            <label><input type="checkbox" class="column-filter-checkbox" value="departmentCode" checked>
-                                所属コード</label>
-                            <label><input type="checkbox" class="column-filter-checkbox" value="departmentName" checked>
-                                所属名称</label>
-                            <label><input type="checkbox" class="column-filter-checkbox" value="gateNumber" checked>
-                                ゲート番号</label>
-                            <label><input type="checkbox" class="column-filter-checkbox" value="gateName" checked>
-                                ゲート名称</label>
-                            <label><input type="checkbox" class="column-filter-checkbox" value="historyDetails"
-                                    checked="checked"> 履歴詳細</label>
-                        </div>
-                    </div>
                 </div>
+            </div>
+
+            <!-- フィルター・リセット・表示件数セクション -->
+            <div class="filter-reset-section">
+                <button class="btn-filter-reset" onclick="resetAllFilters()">フィルターリセット</button>
+                <button class="btn-filter-reset" onclick="showColumnManager()">列表示管理</button>
+                <div class="display-count">表示件数: <span id="recordCount">20</span>件</div>
             </div>
 
             <!-- データテーブル -->
@@ -543,34 +578,42 @@
                         <th data-column="occurredDate">発生日付
                             <div class="excel-filter-trigger" onclick="showDataFilter(event, 'occurredDate')"></div>
                             <div class="excel-filter-menu" id="filter-occurredDate"></div>
+                            <button class="column-hide-btn" onclick="hideColumn('occurredDate')" title="列を非表示">×</button>
                         </th>
                         <th data-column="personalCode">個人コード
                             <div class="excel-filter-trigger" onclick="showDataFilter(event, 'personalCode')"></div>
                             <div class="excel-filter-menu" id="filter-personalCode"></div>
+                            <button class="column-hide-btn" onclick="hideColumn('personalCode')" title="列を非表示">×</button>
                         </th>
                         <th data-column="name">氏名
                             <div class="excel-filter-trigger" onclick="showDataFilter(event, 'name')"></div>
                             <div class="excel-filter-menu" id="filter-name"></div>
+                            <button class="column-hide-btn" onclick="hideColumn('name')" title="列を非表示">×</button>
                         </th>
                         <th data-column="departmentCode">所属コード
                             <div class="excel-filter-trigger" onclick="showDataFilter(event, 'departmentCode')"></div>
                             <div class="excel-filter-menu" id="filter-departmentCode"></div>
+                            <button class="column-hide-btn" onclick="hideColumn('departmentCode')" title="列を非表示">×</button>
                         </th>
                         <th data-column="departmentName">所属名称
                             <div class="excel-filter-trigger" onclick="showDataFilter(event, 'departmentName')"></div>
                             <div class="excel-filter-menu" id="filter-departmentName"></div>
+                            <button class="column-hide-btn" onclick="hideColumn('departmentName')" title="列を非表示">×</button>
                         </th>
                         <th data-column="gateNumber">ゲート番号
                             <div class="excel-filter-trigger" onclick="showDataFilter(event, 'gateNumber')"></div>
                             <div class="excel-filter-menu" id="filter-gateNumber"></div>
+                            <button class="column-hide-btn" onclick="hideColumn('gateNumber')" title="列を非表示">×</button>
                         </th>
                         <th data-column="gateName">ゲート名称
                             <div class="excel-filter-trigger" onclick="showDataFilter(event, 'gateName')"></div>
                             <div class="excel-filter-menu" id="filter-gateName"></div>
+                            <button class="column-hide-btn" onclick="hideColumn('gateName')" title="列を非表示">×</button>
                         </th>
                         <th data-column="historyDetails">履歴詳細
                             <div class="excel-filter-trigger" onclick="showDataFilter(event, 'historyDetails')"></div>
                             <div class="excel-filter-menu" id="filter-historyDetails"></div>
+                            <button class="column-hide-btn" onclick="hideColumn('historyDetails')" title="列を非表示">×</button>
                         </th>
                     </tr>
                 </thead>
@@ -978,6 +1021,111 @@
     <script type="text/javascript" src="/resources/static/js/jquery/3.7.1/jquery.min.js"></script>
     <script type="text/javascript" src="/resources/static/js/common.js"></script>
     <script type="text/javascript" src="/resources/static/js/dataMonitor.js"></script>
+    <script>
+        // 列の表示/非表示機能
+        function hideColumn(columnName) {
+            // ヘッダーを非表示
+            const header = document.querySelector(`th[data-column="${columnName}"]`);
+            if (header) {
+                header.classList.add('column-hidden');
+            }
+            
+            // データ行の該当列を非表示
+            const table = document.getElementById('dataTable');
+            const headerIndex = Array.from(table.querySelectorAll('thead th')).indexOf(header);
+            
+            if (headerIndex !== -1) {
+                const rows = table.querySelectorAll('tbody tr');
+                rows.forEach(row => {
+                    const cell = row.cells[headerIndex];
+                    if (cell) {
+                        cell.classList.add('column-hidden');
+                    }
+                });
+            }
+        }
+        
+        // 列表示管理ダイアログ
+        function showColumnManager() {
+            const columns = [
+                { key: 'occurredDate', name: '発生日付' },
+                { key: 'personalCode', name: '個人コード' },
+                { key: 'name', name: '氏名' },
+                { key: 'departmentCode', name: '所属コード' },
+                { key: 'departmentName', name: '所属名称' },
+                { key: 'gateNumber', name: 'ゲート番号' },
+                { key: 'gateName', name: 'ゲート名称' },
+                { key: 'historyDetails', name: '履歴詳細' }
+            ];
+            
+            let dialogHTML = '<div style="background: rgba(0,0,0,0.5); position: fixed; top: 0; left: 0; right: 0; bottom: 0; z-index: 1000;" onclick="this.remove()">';
+            dialogHTML += '<div style="background: white; padding: 20px; margin: 50px auto; max-width: 400px; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.3);" onclick="event.stopPropagation()">';
+            dialogHTML += '<h4 style="margin-bottom: 15px; color: #495057;">列表示管理</h4>';
+            
+            columns.forEach(col => {
+                const header = document.querySelector(`th[data-column="${col.key}"]`);
+                const isVisible = !header.classList.contains('column-hidden');
+                dialogHTML += `<div style="margin-bottom: 8px;"><label style="cursor: pointer;"><input type="checkbox" ${isVisible ? 'checked' : ''} onchange="toggleColumn('${col.key}', this.checked)" style="margin-right: 8px;">${col.name}</label></div>`;
+            });
+            
+            dialogHTML += '<div style="text-align: right; margin-top: 15px;"><button onclick="this.parentElement.parentElement.parentElement.remove()" style="background: #6c757d; color: white; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer;">閉じる</button></div>';
+            dialogHTML += '</div></div>';
+            
+            document.body.insertAdjacentHTML('beforeend', dialogHTML);
+        }
+        
+        function toggleColumn(columnName, show) {
+            const header = document.querySelector(`th[data-column="${columnName}"]`);
+            if (!header) return;
+            
+            const table = document.getElementById('dataTable');
+            const headerIndex = Array.from(table.querySelectorAll('thead th')).indexOf(header);
+            
+            if (show) {
+                header.classList.remove('column-hidden');
+                const rows = table.querySelectorAll('tbody tr');
+                rows.forEach(row => {
+                    const cell = row.cells[headerIndex];
+                    if (cell) {
+                        cell.classList.remove('column-hidden');
+                    }
+                });
+            } else {
+                header.classList.add('column-hidden');
+                const rows = table.querySelectorAll('tbody tr');
+                rows.forEach(row => {
+                    const cell = row.cells[headerIndex];
+                    if (cell) {
+                        cell.classList.add('column-hidden');
+                    }
+                });
+            }
+        }
+        
+        // フィルターリセット機能
+        function resetAllFilters() {
+            // すべての列を表示
+            const hiddenElements = document.querySelectorAll('.column-hidden');
+            hiddenElements.forEach(el => el.classList.remove('column-hidden'));
+            
+            // データ種別フィルターをリセット
+            document.getElementById('dataTypeFilter').value = 'all';
+            
+            // 表示件数を更新
+            updateRecordCount();
+        }
+        
+        // 表示件数を更新
+        function updateRecordCount() {
+            const visibleRows = document.querySelectorAll('#dataTableBody tr:not([style*="display: none"])');
+            document.getElementById('recordCount').textContent = visibleRows.length;
+        }
+        
+        // 初期表示件数設定
+        document.addEventListener('DOMContentLoaded', function() {
+            updateRecordCount();
+        });
+    </script>
 
 </body>
 
