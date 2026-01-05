@@ -566,6 +566,42 @@
             cursor: pointer;
         }
 
+        .alt-setting-header {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 10px;
+            width: fit-content;
+        }
+
+        .alt-setting-title {
+            font-weight: bold;
+            font-size: 1.1rem;
+            position: relative;
+            padding-bottom: 2px;
+        }
+
+        .alt-setting-title::after {
+            content: "";
+            position: absolute;
+            left: 0;
+            bottom: -2px;
+            width: 80%;
+            height: 2px;
+            background-color: #0d6efd;
+        }
+
+        .form-switch {
+            padding-left: 0;
+            display: flex;
+            align-items: center;
+        }
+
+        .form-switch .form-check-input {
+            margin-left: 0;
+            margin-top: 0;
+        }
+
         .display-name {
             font-size: 0.9rem;
             color: #6c757d;
@@ -894,9 +930,11 @@
                             
                             <!-- 代替設定 -->
                             <div class="form-section">
-                                <div class="form-check form-switch mb-3">
-                                    <input class="form-check-input" type="checkbox" id="altSettingSwitch">
-                                    <label class="form-check-label" for="altSettingSwitch">代替設定を有効にする</label>
+                                <div class="alt-setting-header">
+                                    <div class="alt-setting-title">代替設定</div>
+                                    <div class="form-check form-switch">
+                                        <input class="form-check-input" type="checkbox" id="altSettingSwitch">
+                                    </div>
                                 </div>
                                 <div class="form-grid" id="altSettingFields">
                                     <div class="form-group">
