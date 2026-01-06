@@ -493,6 +493,116 @@
             padding-left: 10px;
             padding-right: 10px;
         }
+
+        /* 列表示管理モーダル用スタイル（個人一覧と統一） */
+        .column-list {
+            border: 1px solid #dee2e6;
+            border-radius: 4px;
+            min-height: 200px;
+            max-height: 300px;
+            overflow-y: auto;
+            padding: 8px;
+            background: #f8f9fa;
+        }
+
+        .column-item-manager {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 6px 8px;
+            margin-bottom: 4px;
+            background: white;
+            border: 1px solid #dee2e6;
+            border-radius: 3px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .column-item-manager:hover {
+            background: #e9ecef;
+            border-color: #adb5bd;
+        }
+
+        .column-item-manager.hidden {
+            background: #fff3cd;
+            border-color: #ffc107;
+        }
+
+        .column-item-manager .column-name {
+            font-size: 0.9em;
+            font-weight: 500;
+        }
+
+        .column-item-manager .column-toggle-btn {
+            background: none;
+            border: none;
+            color: #6c757d;
+            cursor: pointer;
+            padding: 2px 6px;
+            border-radius: 3px;
+            transition: all 0.2s ease;
+        }
+
+        .column-item-manager .column-toggle-btn:hover {
+            background: #dee2e6;
+            color: #495057;
+        }
+
+        .column-item-manager.hidden .column-toggle-btn {
+            color: #f57c00;
+        }
+
+        .column-visibility-modal .modal-body {
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        /* データ種別セレクトボックスの色分け */
+        .data-type-select {
+            background-color: white;
+            transition: background-color 0.2s ease;
+        }
+
+        .data-type-select.normal-selected {
+            background-color: #ffffff;
+            color: #000;
+        }
+
+        .data-type-select.warning-selected {
+            background-color: #fff3cd;
+            color: #856404;
+        }
+
+        .data-type-select.error-selected {
+            background-color: #f8d7da;
+            color: #721c24;
+        }
+
+        .data-type-select.recovery-selected {
+            background-color: #d1ecf1;
+            color: #0c5460;
+        }
+
+        /* セレクトオプションの色分け（一部ブラウザで対応） */
+        .data-type-select option[value="normal"] {
+            background-color: #ffffff;
+            color: #000;
+        }
+
+        .data-type-select option[value="warning"] {
+            background-color: #fff3cd;
+            color: #856404;
+        }
+
+        .data-type-select option[value="error"] {
+            background-color: #f8d7da;
+            color: #721c24;
+        }
+
+        .data-type-select option[value="recovery"] {
+            background-color: #d1ecf1;
+            color: #0c5460;
+        }
     </style>
 </head>
 <body>
@@ -578,173 +688,50 @@
 
     <!-- メインコンテンツ -->
     <main class="content-wrapper">
-        <div class="history-report-container position-relative">
-            <h2>履歴レポート</h2>
-
-            <!-- フィルターパネル -->
-            <!-- 表示件数（ページ上部に移動） -->
-            <div class="pagination-top-controls" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; padding: 10px 15px; background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%); border: 1px solid #dee2e6; border-radius: 5px;">
-                <div class="items-per-page" style="display: flex; align-items: center; gap: 10px;">
-                    <label for="itemsPerPageTop" style="margin: 0; font-weight: 500;">表示件数:</label>
-                    <select id="itemsPerPageTop" class="form-select form-select-sm" style="width: auto;" onchange="changeItemsPerPage()">
-                        <option value="20">20件</option>
-                        <option value="30" selected>30件</option>
-                        <option value="50">50件</option>
-                        <option value="100">100件</option>
-                    </select>
-                </div>
-                <div class="current-count" id="currentCountTop" style="font-weight: bold; color: #495057;">
-                    現条件：0件
+            <div class="d-flex justify-content-between align-items-center mb-2">
+                <h2>履歴レポート</h2>
+                <div class="display-count" style="color: #dc3545; font-weight: bold; font-size: 1.1rem;">
+                    現条件: <span id="recordCountTop">0</span> 件
                 </div>
             </div>
-            
-            <div class="unified-filter-panel">
-                <h5 style="margin-bottom: 12px; font-size: 1.1rem;">
-                    <i class="fas fa-filter me-2"></i>
-                    検索条件
-                </h5>
-            
+
             <!-- アクションツールバー -->
-            <div class="unified-action-toolbar">
-                <div class="primary-actions">
-                    <div class="action-group">
-                        <button class="btn btn-primary btn-sm" onclick="applyFilters()">
-                            <i class="fas fa-filter"></i> フィルター適用
-                        </button>
-                        <button class="btn btn-outline-secondary btn-sm" onclick="resetAllFilters()">
-                            <i class="fas fa-filter-circle-xmark"></i> リセット
-                        </button>
-                    </div>
-                    <div class="action-group">
-                        <button class="btn btn-outline-info btn-sm" onclick="showColumnManager()">
-                            <i class="fas fa-columns"></i> 列表示管理
-                        </button>
-                        <button class="btn btn-outline-success btn-sm" onclick="printReport()">
-                            <i class="fas fa-print"></i> 印刷
-                        </button>
-                    </div>
+            <div class="unified-action-toolbar" style="background: #f8f9fa; border: 1px solid #dee2e6; padding: 10px; margin-bottom: 15px; display: flex; justify-content: space-between; align-items: center;">
+                <div class="primary-actions" style="display: flex; gap: 8px;">
+                    <button type="button" class="btn btn-warning" onclick="showPeriodSelection()" style="background-color: #fd7e14; border-color: #fd7e14; color: white;">
+                        ▼期間抽出
+                    </button>
+                    <button type="button" class="btn btn-secondary" style="background-color: #6c757d;">
+                        ▼条件抽出
+                    </button>
+                    <button type="button" class="btn btn-secondary" style="background-color: #6c757d;">
+                        条件保存
+                    </button>
+                    <button type="button" class="btn btn-outline-info" style="border-color: #17a2b8; color: #17a2b8; background: white;">
+                        <i class="fas fa-external-link-alt"></i> エクスポート
+                    </button>
                 </div>
-                
-                <div class="secondary-actions">
-                    <span class="filter-badge">Excel形式フィルター</span>
+                <div class="secondary-actions" style="display: flex; gap: 8px;">
+                    <button class="btn btn-outline-secondary btn-sm" onclick="resetAllFilters()">
+                        <i class="fas fa-filter-circle-xmark"></i> フィルターリセット
+                    </button>
+                    <button class="btn btn-outline-info btn-sm" onclick="showColumnManager()" id="columnManagerBtn">
+                        <i class="fas fa-columns"></i> 列表示管理
+                        <span class="badge bg-warning ms-1" id="hiddenColumnsBadge" style="display: none;">0</span>
+                    </button>
                 </div>
             </div>
-                <div class="filter-section">
-                    <!-- 抽出ボタン（1番左） -->
-                    <div class="filter-group">
-                        <button type="button" class="btn btn-warning" onclick="showPeriodSelection()" style="background-color: #fd7e14; border-color: #fd7e14; color: white; margin-bottom: 10px;">
-                            <i class="fas fa-filter"></i> 抽出
-                        </button>
-                    </div>
 
-                    <!-- 条件保存・エクスポート -->
-                    <div class="filter-group">
-                        <div class="condition-save-group" style="display: flex; flex-direction: column; gap: 10px;">
-                            <div class="action-group" style="display: flex; gap: 8px; border: none; margin: 0; padding: 0;">
-                                <button type="button" class="btn btn-secondary btn-sm">条件保存</button>
-                                <button type="button" class="btn btn-success btn-sm">エクスポート</button>
-                                <button type="button" class="btn btn-outline-success btn-sm excel-export">Excel形式で出力</button>
-                            </div>
-                            <div class="save-options" style="display: flex; gap: 15px;">
-                                <label style="display: flex; align-items: center; font-size: 0.9rem;">
-                                    <input type="checkbox" style="margin-right: 5px;"> 全期間を対象
-                                </label>
-                            </div>
-                        </div>
-                    </div>
+            <!-- 削除された古いページネーションコントロール -->
 
-                    <!-- 対象期間表示のみ -->
-                    <div class="filter-group">
-                        <h6 style="color: #dc3545;">対象期間</h6>
-                        <div class="date-range-group">
-                            <div style="margin-top: 5px; font-size: 0.9em; color: #dc3545; font-weight: bold;" id="currentPeriodDisplay">
-                                <strong>現在の指定期間：</strong> 
-                                <span id="currentPeriod">未選択</span>
-                            </div>
-                            
-                            <!-- カレンダーピッカー -->
-                            <div class="calendar-picker" id="calendarPicker">
-                                <div style="text-align: center; margin-bottom: 10px;">
-                                    <strong>期間選択</strong><br>
-                                    カレンダーで開始日/終了日を選択してください
-                                </div>
-                                <div style="display: flex; justify-content: center;">
-                                    <div>
-                                        <select class="form-select form-select-sm" style="width: 80px; display: inline-block; margin-right: 5px;">
-                                            <option>2025</option>
-                                        </select>
-                                        <select class="form-select form-select-sm" style="width: 60px; display: inline-block;">
-                                            <option>9月</option>
-                                        </select>
-                                    </div>
-                                </div>
-                                <div style="margin-top: 10px;">
-                                    <table style="width: 100%; border-collapse: collapse; font-size: 0.8rem;">
-                                        <tr style="background-color: #e9ecef;">
-                                            <th style="border: 1px solid #ccc; padding: 2px; text-align: center;">日</th>
-                                            <th style="border: 1px solid #ccc; padding: 2px; text-align: center;">月</th>
-                                            <th style="border: 1px solid #ccc; padding: 2px; text-align: center;">火</th>
-                                            <th style="border: 1px solid #ccc; padding: 2px; text-align: center;">水</th>
-                                            <th style="border: 1px solid #ccc; padding: 2px; text-align: center;">木</th>
-                                            <th style="border: 1px solid #ccc; padding: 2px; text-align: center;">金</th>
-                                            <th style="border: 1px solid #ccc; padding: 2px; text-align: center;">土</th>
-                                        </tr>
-                                        <tr>
-                                            <td style="border: 1px solid #ccc; padding: 2px; text-align: center;">1</td>
-                                            <td style="border: 1px solid #ccc; padding: 2px; text-align: center;">2</td>
-                                            <td style="border: 1px solid #ccc; padding: 2px; text-align: center;">3</td>
-                                            <td style="border: 1px solid #ccc; padding: 2px; text-align: center;">4</td>
-                                            <td style="border: 1px solid #ccc; padding: 2px; text-align: center; background-color: #28a745; color: white;">5</td>
-                                            <td style="border: 1px solid #ccc; padding: 2px; text-align: center;">6</td>
-                                            <td style="border: 1px solid #ccc; padding: 2px; text-align: center;">7</td>
-                                        </tr>
-                                        <tr>
-                                            <td style="border: 1px solid #ccc; padding: 2px; text-align: center;">8</td>
-                                            <td style="border: 1px solid #ccc; padding: 2px; text-align: center;">9</td>
-                                            <td style="border: 1px solid #ccc; padding: 2px; text-align: center;">10</td>
-                                            <td style="border: 1px solid #ccc; padding: 2px; text-align: center;">11</td>
-                                            <td style="border: 1px solid #ccc; padding: 2px; text-align: center;">12</td>
-                                            <td style="border: 1px solid #ccc; padding: 2px; text-align: center;">13</td>
-                                            <td style="border: 1px solid #ccc; padding: 2px; text-align: center;">14</td>
-                                        </tr>
-                                        <tr>
-                                            <td style="border: 1px solid #ccc; padding: 2px; text-align: center;">15</td>
-                                            <td style="border: 1px solid #ccc; padding: 2px; text-align: center;">16</td>
-                                            <td style="border: 1px solid #ccc; padding: 2px; text-align: center;">17</td>
-                                            <td style="border: 1px solid #ccc; padding: 2px; text-align: center;">18</td>
-                                            <td style="border: 1px solid #ccc; padding: 2px; text-align: center;">19</td>
-                                            <td style="border: 1px solid #ccc; padding: 2px; text-align: center;">20</td>
-                                            <td style="border: 1px solid #ccc; padding: 2px; text-align: center;">21</td>
-                                        </tr>
-                                        <tr>
-                                            <td style="border: 1px solid #ccc; padding: 2px; text-align: center;">22</td>
-                                            <td style="border: 1px solid #ccc; padding: 2px; text-align: center;">23</td>
-                                            <td style="border: 1px solid #ccc; padding: 2px; text-align: center;">24</td>
-                                            <td style="border: 1px solid #ccc; padding: 2px; text-align: center;">25</td>
-                                            <td style="border: 1px solid #ccc; padding: 2px; text-align: center;">26</td>
-                                            <td style="border: 1px solid #ccc; padding: 2px; text-align: center;">27</td>
-                                            <td style="border: 1px solid #ccc; padding: 2px; text-align: center;">28</td>
-                                        </tr>
-                                        <tr>
-                                            <td style="border: 1px solid #ccc; padding: 2px; text-align: center;">29</td>
-                                            <td style="border: 1px solid #ccc; padding: 2px; text-align: center;">30</td>
-                                            <td style="border: 1px solid #ccc; padding: 2px; text-align: center;">31</td>
-                                            <td style="border: 1px solid #ccc; padding: 2px; text-align: center;"></td>
-                                            <td style="border: 1px solid #ccc; padding: 2px; text-align: center;"></td>
-                                            <td style="border: 1px solid #ccc; padding: 2px; text-align: center;"></td>
-                                            <td style="border: 1px solid #ccc; padding: 2px; text-align: center;"></td>
-                                        </tr>
-                                    </table>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- 全データ表示 -->
-                    <div class="filter-group">
-                        <h6 style="margin-bottom: 12px;">全データ表示</h6>
-                        <select id="dataDisplayFilter" class="form-select">
-                            <option value="all">全データ</option>
+            
+            <div class="unified-filter-panel" style="background: #f8f9fa; border: 1px solid #dee2e6; border-radius: 5px; padding: 15px; margin-bottom: 20px;">
+                <div class="filter-section" style="display: flex; flex-wrap: wrap; gap: 30px; align-items: center;">
+                    <!-- データ種別 -->
+                    <div class="filter-group" style="display: flex; align-items: center; gap: 10px;">
+                        <span style="font-weight: bold; white-space: nowrap;">◆データ種別：</span>
+                        <select id="dataDisplayFilter" class="form-select data-type-select" style="width: auto; min-width: 250px;" onchange="updateTableColoring(); updateSelectColor(this);">
+                            <option value="all">全データ表示</option>
                             <option value="normal">正常データ</option>
                             <option value="warning">軽エラーデータ</option>
                             <option value="error">重エラーデータ</option>
@@ -752,34 +739,11 @@
                         </select>
                     </div>
 
-                    <!-- 表示項目 -->
-                    <div class="filter-group">
-                        <h6 style="margin-bottom: 12px;">表示項目</h6>
-                        <div class="checkbox-group" style="display: flex; flex-direction: column; gap: 3px;">
-                            <label style="display: flex; align-items: center; font-size: 0.85rem; margin-bottom: 2px;">
-                                <input type="checkbox" class="column-filter-checkbox" value="occurredDate" checked style="margin-right: 5px;"> 発生日付
-                            </label>
-                            <label style="display: flex; align-items: center; font-size: 0.85rem; margin-bottom: 2px;">
-                                <input type="checkbox" class="column-filter-checkbox" value="personalCode" checked style="margin-right: 5px;"> 個人コード
-                            </label>
-                            <label style="display: flex; align-items: center; font-size: 0.85rem; margin-bottom: 2px;">
-                                <input type="checkbox" class="column-filter-checkbox" value="name" checked style="margin-right: 5px;"> 氏名
-                            </label>
-                            <label style="display: flex; align-items: center; font-size: 0.85rem; margin-bottom: 2px;">
-                                <input type="checkbox" class="column-filter-checkbox" value="departmentCode" checked style="margin-right: 5px;"> 所属コード
-                            </label>
-                            <label style="display: flex; align-items: center; font-size: 0.85rem; margin-bottom: 2px;">
-                                <input type="checkbox" class="column-filter-checkbox" value="departmentName" style="margin-right: 5px;"> 所属名称
-                            </label>
-                            <label style="display: flex; align-items: center; font-size: 0.85rem; margin-bottom: 2px;">
-                                <input type="checkbox" class="column-filter-checkbox" value="gateNumber" checked style="margin-right: 5px;"> ゲート番号
-                            </label>
-                            <label style="display: flex; align-items: center; font-size: 0.85rem; margin-bottom: 2px;">
-                                <input type="checkbox" class="column-filter-checkbox" value="gateName" style="margin-right: 5px;"> ゲート名称
-                            </label>
-                            <label style="display: flex; align-items: center; font-size: 0.85rem; margin-bottom: 2px;">
-                                <input type="checkbox" class="column-filter-checkbox" value="historyDetails" checked style="margin-right: 5px;"> 履歴詳細
-                            </label>
+                    <!-- 抽出期間 -->
+                    <div class="filter-group" style="display: flex; align-items: center; gap: 10px;">
+                        <span style="font-weight: bold; white-space: nowrap;">◆抽出期間：</span>
+                        <div style="border: 1px solid #ced4da; padding: 6px 15px; border-radius: 4px; background: white; min-width: 350px; font-family: monospace; font-size: 0.95rem;">
+                            YYYY/MM/DD hh:mm ～ YYYY/MM/DD hh:mm
                         </div>
                     </div>
                 </div>
@@ -791,7 +755,7 @@
                 <table class="unified-table">
                     <thead>
                         <tr id="tableHeaders">
-                            <th data-column="occurredDate">発生日付
+                            <th data-column="occurredDate">発生日時
                                 <div class="excel-filter-trigger" onclick="showDataFilter(event, 'occurredDate')"></div>
                                 <div class="excel-filter-menu" id="filter-occurredDate"></div>
                             </th>
@@ -803,11 +767,11 @@
                                 <div class="excel-filter-trigger" onclick="showDataFilter(event, 'name')"></div>
                                 <div class="excel-filter-menu" id="filter-name"></div>
                             </th>
-                            <th data-column="departmentCode">所属コード
+                            <th data-column="departmentCode" style="display: none;">所属コード
                                 <div class="excel-filter-trigger" onclick="showDataFilter(event, 'departmentCode')"></div>
                                 <div class="excel-filter-menu" id="filter-departmentCode"></div>
                             </th>
-                            <th data-column="departmentName" style="display: none;">所属名称
+                            <th data-column="departmentName">所属
                                 <div class="excel-filter-trigger" onclick="showDataFilter(event, 'departmentName')"></div>
                                 <div class="excel-filter-menu" id="filter-departmentName"></div>
                             </th>
@@ -815,7 +779,7 @@
                                 <div class="excel-filter-trigger" onclick="showDataFilter(event, 'gateNumber')"></div>
                                 <div class="excel-filter-menu" id="filter-gateNumber"></div>
                             </th>
-                            <th data-column="gateName" style="display: none;">ゲート名称
+                            <th data-column="gateName">ゲート名称
                                 <div class="excel-filter-trigger" onclick="showDataFilter(event, 'gateName')"></div>
                                 <div class="excel-filter-menu" id="filter-gateName"></div>
                             </th>
@@ -827,55 +791,55 @@
                     </thead>
                     <tbody id="historyTableBody">
                         <!-- サンプルデータ（実装時はJavaScriptで動的生成） -->
-                        <tr class="row-normal">
-                            <td>2025/12/11 14:15:01</td>
-                            <td>000949</td>
-                            <td>個人459</td>
-                            <td>002</td>
-                            <td style="display: none;">管理部</td>
-                            <td>0002</td>
-                            <td style="display: none;">XA0002</td>
+                        <tr class="row-normal" style="background-color: #ffffff;">
+                            <td>2025/12/22 12:26:18</td>
+                            <td>000002</td>
+                            <td>ユーザーB</td>
+                            <td style="display: none;">002</td>
+                            <td>営業部</td>
+                            <td>0003</td>
+                            <td>XA0003</td>
                             <td>退室</td>
                         </tr>
-                        <tr class="row-normal">
-                            <td>2025/12/11 14:14:58</td>
-                            <td>000199</td>
-                            <td>個人155</td>
-                            <td>001</td>
-                            <td style="display: none;">所属002</td>
-                            <td>0001</td>
-                            <td style="display: none;">XA0001</td>
+                        <tr class="row-normal" style="background-color: #ffffff;">
+                            <td>2025/12/21 09:50:45</td>
+                            <td>000001</td>
+                            <td>ユーザーA</td>
+                            <td style="display: none;">001</td>
+                            <td>総務部</td>
+                            <td>0004</td>
+                            <td>XA0004</td>
                             <td>入室</td>
                         </tr>
-                        <tr class="row-warning">
-                            <td>2025/12/11 14:14:55</td>
-                            <td></td>
-                            <td></td>
-                            <td>003</td>
-                            <td style="display: none;"></td>
-                            <td>0003</td>
-                            <td style="display: none;">H = 03 A = 74</td>
-                            <td>カードリーダー警告</td>
-                        </tr>
-                        <tr class="row-error">
-                            <td>2025/12/11 14:14:52</td>
-                            <td></td>
-                            <td></td>
-                            <td></td>
-                            <td style="display: none;"></td>
+                        <tr class="row-warning" style="background-color: #ffff00;">
+                            <td>2025/12/20 18:01:22</td>
+                            <td>000003</td>
+                            <td>ユーザーC</td>
+                            <td style="display: none;">004</td>
+                            <td>システム部</td>
                             <td>0004</td>
-                            <td style="display: none;">H = 04 A = 52</td>
-                            <td>通信異常発生</td>
+                            <td>XA0004</td>
+                            <td>バッテリー低下</td>
                         </tr>
-                        <tr class="row-recovery">
-                            <td>2025/12/11 14:14:49</td>
-                            <td></td>
-                            <td></td>
-                            <td></td>
-                            <td style="display: none;"></td>
-                            <td>0001</td>
-                            <td style="display: none;">H = 01 A = 15</td>
-                            <td>システム復旧</td>
+                        <tr class="row-error" style="background-color: #ff0000; color: #ffffff;">
+                            <td>2025/12/19 16:55:09</td>
+                            <td>000001</td>
+                            <td>ユーザーA</td>
+                            <td style="display: none;">001</td>
+                            <td>総務部</td>
+                            <td>0003</td>
+                            <td>XA0003</td>
+                            <td>入室</td>
+                        </tr>
+                        <tr class="row-recovery" style="background-color: #0000ff; color: #ffffff;">
+                            <td>2025/12/18 18:36:52</td>
+                            <td>000002</td>
+                            <td>ユーザーB</td>
+                            <td style="display: none;">002</td>
+                            <td>営業部</td>
+                            <td>0002</td>
+                            <td>XA0002</td>
+                            <td>入室</td>
                         </tr>
                     </tbody>
                 </table>
@@ -975,7 +939,7 @@
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">キャンセル</button>
-                    <button type="button" class="btn btn-primary" onclick="applyPeriodSelection()">適用</button>
+                    <button type="button" class="btn btn-primary" onclick="historyReportInstance.applyPeriodSelection()">適用</button>
                 </div>
             </div>
         </div>
@@ -1021,10 +985,10 @@
                     <hr class="my-3">
                     
                     <div class="d-flex gap-2">
-                        <button type="button" class="btn btn-outline-success btn-sm" onclick="showAllColumns()">
+                        <button type="button" class="btn btn-outline-success btn-sm" onclick="historyReportInstance.showAllColumns()">
                             <i class="fas fa-plus"></i> すべて表示
                         </button>
-                        <button type="button" class="btn btn-outline-secondary btn-sm" onclick="resetToDefault()">
+                        <button type="button" class="btn btn-outline-secondary btn-sm" onclick="historyReportInstance.resetToDefault()">
                             <i class="fas fa-undo"></i> デフォルトに戻す
                         </button>
                     </div>
@@ -1051,145 +1015,72 @@
     <script>
         // 抽出ボタンで期間選択モーダルを表示
         function showPeriodSelection() {
-            const modal = new bootstrap.Modal(document.getElementById('periodSelectionModal'));
-            modal.show();
+            const modalElement = document.getElementById('periodSelectionModal');
+            if (modalElement) {
+                const modal = new bootstrap.Modal(modalElement);
+                modal.show();
+            }
         }
         
-        // 期間指定ラジオボタンの選択時に入力欄を表示/非表示
+        // 期間指定ラジオボタンの選択時に入力欄を表示/非表示 (モーダル内)
         document.addEventListener('DOMContentLoaded', function() {
-            const periodOptions = document.querySelectorAll('input[name="periodOption"]');
-            const customInputs = document.getElementById('customPeriodInputs');
-            
-            periodOptions.forEach(option => {
-                option.addEventListener('change', function() {
-                    if (this.value === 'custom') {
-                        customInputs.style.display = 'block';
-                    } else {
-                        customInputs.style.display = 'none';
-                    }
-                });
-            });
-            
-            // 表示項目チェックボックスと列表示の連携
-            const columnCheckboxes = document.querySelectorAll('.column-filter-checkbox');
-            columnCheckboxes.forEach(checkbox => {
-                checkbox.addEventListener('change', function() {
-                    const columnName = this.value;
-                    const isChecked = this.checked;
-                    
-                    // テーブルの対応する列を表示/非表示
-                    const headers = document.querySelectorAll(`th[data-column="${columnName}"]`);
-                    const cells = document.querySelectorAll(`td[data-column="${columnName}"], th[data-column="${columnName}"]`);
-                    
-                    headers.forEach(header => {
-                        header.style.display = isChecked ? '' : 'none';
-                    });
-                    
-                    // テーブル内のすべての対応するセルを表示/非表示
-                    const table = document.getElementById('historyTableBody');
-                    if (table) {
-                        const columnIndex = Array.from(document.querySelectorAll('#tableHeaders th')).findIndex(th => th.dataset.column === columnName);
-                        if (columnIndex !== -1) {
-                            const rows = table.querySelectorAll('tr');
-                            rows.forEach(row => {
-                                const cell = row.cells[columnIndex];
-                                if (cell) {
-                                    cell.style.display = isChecked ? '' : 'none';
-                                }
-                            });
+            const modalElement = document.getElementById('periodSelectionModal');
+            if (modalElement) {
+                const periodOptions = modalElement.querySelectorAll('input[name="periodOption"]');
+                const customInputs = document.getElementById('customPeriodInputs');
+                
+                periodOptions.forEach(option => {
+                    option.addEventListener('change', function() {
+                        if (this.value === 'custom') {
+                            customInputs.style.display = 'block';
+                        } else {
+                            customInputs.style.display = 'none';
                         }
-                    }
+                    });
                 });
-            });
+            }
         });
         
-        // 期間選択を適用
-        function applyPeriodSelection() {
-            const selectedOption = document.querySelector('input[name="periodOption"]:checked');
-            const currentPeriodSpan = document.getElementById('currentPeriod');
-            const currentCountSpan = document.getElementById('currentConditionCount');
-            let displayText = '';
-            let sampleCount = 0;
-            
-            switch(selectedOption.value) {
-                case 'all':
-                    displayText = '全期間';
-                    sampleCount = 10000;
-                    break;
-                case '1year':
-                    const oneYearAgo = new Date();
-                    oneYearAgo.setFullYear(oneYearAgo.getFullYear() - 1);
-                    const now = new Date();
-                    displayText = `${formatDate(oneYearAgo)} ～ ${formatDate(now)}`;
-                    sampleCount = 5000;
-                    break;
-                case '1month':
-                    const oneMonthAgo = new Date();
-                    oneMonthAgo.setMonth(oneMonthAgo.getMonth() - 1);
-                    displayText = `${formatDate(oneMonthAgo)} ～ ${formatDate(new Date())}`;
-                    sampleCount = 1500;
-                    break;
-                case '1week':
-                    const oneWeekAgo = new Date();
-                    oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
-                    displayText = `${formatDate(oneWeekAgo)} ～ ${formatDate(new Date())}`;
-                    sampleCount = 800;
-                    break;
-                case '1day':
-                    const oneDayAgo = new Date();
-                    oneDayAgo.setDate(oneDayAgo.getDate() - 1);
-                    displayText = `${formatDate(oneDayAgo)} ～ ${formatDate(new Date())}`;
-                    sampleCount = 120;
-                    break;
-                case 'custom':
-                    const startDate = document.getElementById('startDateModal').value;
-                    const endDate = document.getElementById('endDateModal').value;
-                    if (startDate && endDate) {
-                        displayText = `${formatDateTime(startDate)} ～ ${formatDateTime(endDate)}`;
-                        sampleCount = 2500;
-                    } else {
-                        alert('開始日時と終了日時を選択してください。');
-                        return;
-                    }
-                    break;
-            }
-            
-            currentPeriodSpan.textContent = displayText;
-            currentCountSpan.innerHTML = `<strong>現条件：${sampleCount.toLocaleString()}件</strong>`;
-            
-            // Update the top counter as well
-            const currentCountTop = document.getElementById('currentCountTop');
-            if (currentCountTop) {
-                currentCountTop.innerHTML = `現条件：${sampleCount.toLocaleString()}件`;
-            }
-            
-            // データテーブルとページネーションを表示
-            document.getElementById('dataTableContainer').style.display = 'block';
-            document.getElementById('paginationContainer').style.display = 'flex';
-            
-            // 未選択メッセージを非表示
-            document.getElementById('noDataMessage').style.display = 'none';
-            
-            // モーダルを閉じる
-            const modal = bootstrap.Modal.getInstance(document.getElementById('periodSelectionModal'));
-            modal.hide();
-            
-            // データテーブルを更新（実際のデータ取得処理を呼び出し）
-            if (typeof loadHistoryData === 'function') {
-                loadHistoryData();
+        // 既存のグローバル関数をHistoryReportインスタンスに向ける
+        function resetAllFilters() {
+            if (window.historyReportInstance) {
+                window.historyReportInstance.excelFilters = {};
+                window.historyReportInstance.currentFilters.dataDisplay = 'all';
+                const select = document.getElementById('dataDisplayFilter');
+                if (select) select.value = 'all';
+                window.historyReportInstance.applyFiltersAndDisplay();
             }
         }
         
-        // 日付フォーマット関数
-        function formatDate(date) {
-            return `${date.getFullYear()}/${date.getMonth() + 1}/${date.getDate()}`;
+        function showColumnManager() {
+            if (window.historyReportInstance) {
+                window.historyReportInstance.showColumnManager();
+            }
         }
         
-        // 日時フォーマット関数
-        function formatDateTime(dateTimeString) {
-            const date = new Date(dateTimeString);
-            return `${date.getFullYear()}/${date.getMonth() + 1}/${date.getDate()} ${date.getHours()}:${String(date.getMinutes()).padStart(2, '0')}`;
+        // セレクトボックスの色を更新
+        function updateSelectColor(selectElement) {
+            const value = selectElement.value;
+            selectElement.classList.remove('normal-selected', 'warning-selected', 'error-selected', 'recovery-selected');
+            
+            if (value === 'normal') {
+                selectElement.classList.add('normal-selected');
+            } else if (value === 'warning') {
+                selectElement.classList.add('warning-selected');
+            } else if (value === 'error') {
+                selectElement.classList.add('error-selected');
+            } else if (value === 'recovery') {
+                selectElement.classList.add('recovery-selected');
+            }
         }
+        
+        // ページ読み込み時に初期色を設定
+        document.addEventListener('DOMContentLoaded', function() {
+            const selectElement = document.getElementById('dataDisplayFilter');
+            if (selectElement) {
+                updateSelectColor(selectElement);
+            }
+        });
     </script>
 </body>
 </html>

@@ -81,20 +81,29 @@ class StatusMonitor {
     }
 
     generateIconStatuses() {
-        // 4つのアイコンの状態をランダム生成（sensorの代わりにsecurityを使用）
-        const iconTypes = ['door', 'card', 'comm', 'security'];
-        return iconTypes.map(type => {
+        // 4つのアイコンの状態を生成：開閉、施解錠、異常、警備
+        const iconTypes = ['door', 'lock', 'alarm', 'security'];
+        return iconTypes.map((type, index) => {
             const rand = Math.random();
             let status = 'normal';
             
-            if (rand < 0.05) status = 'error';
-            else if (rand < 0.15) status = 'warning';
-            else if (rand < 0.20) status = 'offline';
+            // 3番目（異常）と4番目（警備）のアイコンで状態を決定
+            if (type === 'alarm') {
+                // 異常アイコン：5%の確率で異常
+                status = rand < 0.05 ? 'error' : 'normal';
+            } else if (type === 'security') {
+                // 警備アイコン：15%の確率で警備セット状態
+                status = rand < 0.15 ? 'warning' : 'normal';
+            } else {
+                // 開扉/閉扉、解錠/施錠は50%の確率で状態変更
+                status = rand < 0.5 ? 'active' : 'normal';
+            }
             
             return {
                 type: type,
                 status: status,
-                label: this.getIconLabel(type)
+                label: this.getIconLabel(type),
+                position: index + 1
             };
         });
     }
@@ -138,17 +147,32 @@ class StatusMonitor {
     }
 
     generateGateGroups() {
-        // 100件のゲートグループを動的に生成
+        // レイアウトに応じたゲートグループを動的に生成
         this.gateGroups = [];
         
-        for (let i = 0; i < 100; i++) {
-            const startGate = i * 10 + 1;
-            const endGate = (i + 1) * 10;
-            const groupNumber = (i + 1).toString().padStart(4, '0');
+        // 表示件数に応じてグループ分けを変更
+        let itemsPerGroup;
+        let maxGroups;
+        
+        if (this.currentLayout === 16) {
+            itemsPerGroup = 16;
+            maxGroups = 3; // 1-16, 17-32, 33-48
+        } else if (this.currentLayout === 32) {
+            itemsPerGroup = 32;
+            maxGroups = 3; // 1-32, 33-64, 65-96
+        } else { // 64件
+            itemsPerGroup = 64;
+            maxGroups = 3; // 1-64, 65-128, 129-192
+        }
+        
+        for (let i = 0; i < maxGroups; i++) {
+            const startGate = i * itemsPerGroup + 1;
+            const endGate = (i + 1) * itemsPerGroup;
+            const groupNumber = (i + 1);
             
             this.gateGroups.push({
-                id: `gate-${groupNumber}`,
-                name: `ゲート-${groupNumber}～`,
+                id: `gate-group-${groupNumber}`,
+                name: `${startGate}～${endGate}件目`,
                 range: [startGate, endGate],
                 status: this.getGroupStatus([startGate, endGate])
             });
@@ -174,6 +198,10 @@ class StatusMonitor {
             btn.classList.toggle('active', parseInt(btn.dataset.layout) === layout);
         });
 
+        // レイアウト変更時にゲートグループを再生成
+        this.generateGateGroups();
+        this.renderGateButtons();
+        
         this.updateGridLayout();
         this.renderGates();
     }
@@ -375,9 +403,9 @@ class StatusMonitor {
         card.className = 'gate-card';
         card.setAttribute('data-gate-id', gate.id);
 
-        // 状態に応じたボーダーカラー
-        const statusClass = gate.online ? gate.status : 'offline';
-        card.style.borderColor = this.getStatusColor(statusClass);
+        // アイコンの③④状態に基づいてフレーム色を決定
+        const frameStatus = this.determineFrameStatus(gate);
+        card.style.borderColor = this.getStatusColor(frameStatus);
 
         // アイコングリッドを生成
         const iconGridHtml = this.createIconGrid(gate.icons);
@@ -385,7 +413,7 @@ class StatusMonitor {
         card.innerHTML = `
             <div class="gate-info">
                 <div class="gate-number">${gate.number}/${gate.name}</div>
-                <div class="gate-status-indicator status-${statusClass}"></div>
+                <div class="gate-status-indicator status-${frameStatus}"></div>
             </div>
             ${iconGridHtml}
         `;
@@ -404,6 +432,31 @@ class StatusMonitor {
         return card;
     }
 
+    determineFrameStatus(gate) {
+        // オフラインチェック
+        if (!gate.online) {
+            return 'offline';
+        }
+        
+        // アイコン③（異常）と④（警備）の状態を取得
+        const alarmIcon = gate.icons.find(icon => icon.type === 'alarm');
+        const securityIcon = gate.icons.find(icon => icon.type === 'security');
+        
+        // 異常(赤)枠：③が異常状態
+        if (alarmIcon && alarmIcon.status === 'error') {
+            return 'error';
+        }
+        
+        // 警告(黄)枠：③が通常 & ④が警備セット状態
+        if (alarmIcon && alarmIcon.status === 'normal' && 
+            securityIcon && securityIcon.status === 'warning') {
+            return 'warning';
+        }
+        
+        // 正常(緑)枠：③④が通常
+        return 'normal';
+    }
+
     createIconGrid(icons) {
         let iconHtml = '<div class="icon-grid">';
         
@@ -417,12 +470,23 @@ class StatusMonitor {
     }
 
     getIconClass(status, type) {
-        if (status === 'error') return 'icon-error';
-        if (status === 'warning') return 'icon-security';
+        if (status === 'error' && type === 'alarm') return 'icon-error';
+        if (status === 'warning' && type === 'security') return 'icon-security-active';
         if (status === 'offline') return 'icon-offline';
         
-        // 正常時は各アイコンタイプに応じた色
-        return `icon-${type}`;
+        // 各アイコンタイプに応じたクラス
+        switch (type) {
+            case 'door':
+                return status === 'active' ? 'icon-door-open' : 'icon-door-closed';
+            case 'lock':
+                return status === 'active' ? 'icon-lock-unlocked' : 'icon-lock-locked';
+            case 'alarm':
+                return 'icon-alarm-normal';
+            case 'security':
+                return 'icon-security-normal';
+            default:
+                return `icon-${type}`;
+        }
     }
 
     getStatusColor(status) {
@@ -614,101 +678,97 @@ class StatusMonitor {
     }
 
     showRemoteControlModal(gateNumber) {
-        // 既存のポップアップがあれば削除
-        const existingPopup = document.getElementById('remoteModal');
-        if (existingPopup) {
-            existingPopup.remove();
+        // 既存のモーダルがあれば削除
+        const existingModal = document.getElementById('remoteControlModal');
+        if (existingModal) {
+            existingModal.remove();
         }
 
-        // 遠隔操作ポップアップを作成
-        const popup = document.createElement('div');
-        popup.id = 'remoteModal';
-        popup.style.cssText = `
-            position: fixed;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            background: white;
-            border: 2px solid #6f42c1;
-            border-radius: 8px;
-            padding: 20px;
-            z-index: 9999;
-            box-shadow: 0 4px 16px rgba(0,0,0,0.3);
-            min-width: 300px;
+        // Bootstrapモーダルを作成
+        const modal = document.createElement('div');
+        modal.className = 'modal fade';
+        modal.id = 'remoteControlModal';
+        modal.tabIndex = -1;
+        modal.setAttribute('aria-hidden', 'true');
+
+        modal.innerHTML = `
+            <div class="modal-dialog modal-lg">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">
+                            <i class="fas fa-cogs text-primary"></i>
+                            遠隔操作
+                        </h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="text-center mb-3">
+                            <span class="badge bg-primary">ゲート: ${gateNumber}</span>
+                        </div>
+                        
+                        <div class="row justify-content-center">
+                            <div class="col-md-8">
+                                <h6 class="text-primary">
+                                    <i class="fas fa-hand-pointer"></i> 遠隔操作 
+                                    <span class="text-muted">※複数選択不可</span>
+                                </h6>
+                                <div class="remote-operation mb-3">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="radio" name="remoteOperation" value="continuous_unlock" id="continuousUnlock">
+                                        <label class="form-check-label" for="continuousUnlock">連続解錠</label>
+                                    </div>
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="radio" name="remoteOperation" value="unlock" id="unlock">
+                                        <label class="form-check-label" for="unlock">解錠</label>
+                                    </div>
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="radio" name="remoteOperation" value="lock" id="lock">
+                                        <label class="form-check-label" for="lock">施錠</label>
+                                    </div>
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="radio" name="remoteOperation" value="security_set" id="securitySet">
+                                        <label class="form-check-label" for="securitySet">警備セット</label>
+                                    </div>
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="radio" name="remoteOperation" value="security_unset" id="securityUnset">
+                                        <label class="form-check-label" for="securityUnset">警備セット解除</label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">キャンセル</button>
+                        <button type="button" class="btn btn-primary" onclick="statusMonitor.executeRemoteOperation('${gateNumber}')">
+                            <i class="fas fa-play"></i> 実行
+                        </button>
+                    </div>
+                </div>
+            </div>
         `;
 
-        popup.innerHTML = `
-            <div style="text-align: center; margin-bottom: 20px;">
-                <h5 style="margin: 0; color: #6f42c1;">遠隔操作</h5>
-                <p style="margin: 5px 0 0 0; color: #666;">ゲート: ${gateNumber}</p>
-            </div>
-            <div style="border: 2px solid #6f42c1; border-radius: 8px; padding: 15px; margin-bottom: 15px;" id="remoteControlForm">
-                <div style="margin-bottom: 12px;">
-                    <label style="display: flex; align-items: center; cursor: pointer; padding: 8px;">
-                        <input type="checkbox" name="remoteOperation" value="continuous_unlock" style="margin-right: 12px;" onchange="statusMonitor.handleRemoteCheckbox(this)"> 連続解錠
-                    </label>
-                </div>
-                <div style="margin-bottom: 12px;">
-                    <label style="display: flex; align-items: center; cursor: pointer; padding: 8px;">
-                        <input type="checkbox" name="remoteOperation" value="unlock" style="margin-right: 12px;" onchange="statusMonitor.handleRemoteCheckbox(this)"> 解錠
-                    </label>
-                </div>
-                <div style="margin-bottom: 12px;">
-                    <label style="display: flex; align-items: center; cursor: pointer; padding: 8px;">
-                        <input type="checkbox" name="remoteOperation" value="lock" style="margin-right: 12px;" onchange="statusMonitor.handleRemoteCheckbox(this)"> 施錠
-                    </label>
-                </div>
-                <div style="margin-bottom: 12px;">
-                    <label style="display: flex; align-items: center; cursor: pointer; padding: 8px;">
-                        <input type="checkbox" name="remoteOperation" value="security_set" style="margin-right: 12px;" onchange="statusMonitor.handleRemoteCheckbox(this)"> 警備セット
-                    </label>
-                </div>
-                <div style="margin-bottom: 12px;">
-                    <label style="display: flex; align-items: center; cursor: pointer; padding: 8px;">
-                        <input type="checkbox" name="remoteOperation" value="security_unset" style="margin-right: 12px;" onchange="statusMonitor.handleRemoteCheckbox(this)"> 警備セット解除
-                    </label>
-                </div>
-            </div>
-            <div style="text-align: center; display: flex; gap: 10px; justify-content: center;">
-                <button onclick="statusMonitor.executeRemoteOperation('${gateNumber}')" 
-                        style="padding: 10px 20px; border: none; border-radius: 4px; background: #6f42c1; color: white; cursor: pointer; font-size: 14px;">
-                    決定
-                </button>
-                <button onclick="statusMonitor.closeRemoteModal()" 
-                        style="padding: 10px 20px; border: 1px solid #ccc; border-radius: 4px; background: #f8f9fa; cursor: pointer; font-size: 14px;">
-                    キャンセル
-                </button>
-            </div>
-        `;
+        document.body.appendChild(modal);
 
-        // オーバーレイを作成
-        const overlay = document.createElement('div');
-        overlay.id = 'remoteOverlay';
-        overlay.style.cssText = `
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0,0,0,0.5);
-            z-index: 9998;
-        `;
-        overlay.onclick = () => this.closeRemoteModal();
+        // Bootstrapモーダルを表示
+        const bootstrapModal = new bootstrap.Modal(modal);
+        bootstrapModal.show();
 
-        document.body.appendChild(overlay);
-        document.body.appendChild(popup);
+        // モーダル非表示時に要素を削除
+        modal.addEventListener('hidden.bs.modal', function () {
+            modal.remove();
+        });
     }
 
     executeRemoteOperation(gateNumber) {
         // 選択された遠隔操作を取得
-        const selectedCheckbox = document.querySelector('input[name="remoteOperation"]:checked');
+        const selectedRadio = document.querySelector('input[name="remoteOperation"]:checked');
         
-        if (!selectedCheckbox) {
+        if (!selectedRadio) {
             alert('操作を選択してください。');
             return;
         }
         
-        const selectedOperation = selectedCheckbox.value;
+        const selectedOperation = selectedRadio.value;
         const operationNames = {
             'continuous_unlock': '連続解錠',
             'unlock': '解錠',
@@ -720,25 +780,11 @@ class StatusMonitor {
         const operationName = operationNames[selectedOperation] || selectedOperation;
         console.log(`遠隔操作実行: ${gateNumber} - ${operationName}`);
         alert(`${gateNumber}に${operationName}を実行します`);
-        this.closeRemoteModal();
-    }
-
-    closeRemoteModal() {
-        const popup = document.getElementById('remoteModal');
-        const overlay = document.getElementById('remoteOverlay');
-        if (popup) popup.remove();
-        if (overlay) overlay.remove();
-    }
-
-    handleRemoteCheckbox(checkbox) {
-        // 複数選択不可：他のチェックボックスをクリア
-        if (checkbox.checked) {
-            const otherCheckboxes = document.querySelectorAll('input[name="remoteOperation"]');
-            otherCheckboxes.forEach(cb => {
-                if (cb !== checkbox) {
-                    cb.checked = false;
-                }
-            });
+        
+        // Bootstrapモーダルを閉じる
+        const modal = bootstrap.Modal.getInstance(document.getElementById('remoteControlModal'));
+        if (modal) {
+            modal.hide();
         }
     }
 
@@ -756,102 +802,95 @@ class StatusMonitor {
     }
 
     showHistoryModal(gateNumber) {
-        // 既存のポップアップがあれば削除
-        const existingPopup = document.getElementById('historyModal');
-        if (existingPopup) {
-            existingPopup.remove();
+        // 既存のモーダルがあれば削除
+        const existingModal = document.getElementById('historyReportModal');
+        if (existingModal) {
+            existingModal.remove();
         }
 
-        // 履歴ポップアップを作成
-        const popup = document.createElement('div');
-        popup.id = 'historyModal';
-        popup.style.cssText = `
-            position: fixed;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            background: white;
-            border: 2px solid #17a2b8;
-            border-radius: 8px;
-            padding: 20px;
-            z-index: 9999;
-            box-shadow: 0 4px 16px rgba(0,0,0,0.3);
-            min-width: 350px;
+        // Bootstrapモーダルを作成
+        const modal = document.createElement('div');
+        modal.className = 'modal fade';
+        modal.id = 'historyReportModal';
+        modal.tabIndex = -1;
+        modal.setAttribute('aria-hidden', 'true');
+
+        modal.innerHTML = `
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">
+                            <i class="fas fa-chart-line text-info"></i>
+                            報告書作成
+                        </h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="text-center mb-3">
+                            <span class="badge bg-info">ゲート: ${gateNumber}</span>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6">
+                                <h6 class="text-info">
+                                    <i class="fas fa-calendar"></i> 期間
+                                </h6>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="radio" name="historyPeriod" value="today" id="today">
+                                    <label class="form-check-label" for="today">当日</label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="radio" name="historyPeriod" value="yesterday" id="yesterday">
+                                    <label class="form-check-label" for="yesterday">前日～</label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="radio" name="historyPeriod" value="week" id="week">
+                                    <label class="form-check-label" for="week">1週間前～</label>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <h6 class="text-info">
+                                    <i class="fas fa-list"></i> 履歴種類
+                                </h6>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="radio" name="historyType" value="all" id="all">
+                                    <label class="form-check-label" for="all">全て</label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="radio" name="historyType" value="minor_error" id="minorError">
+                                    <label class="form-check-label" for="minorError">軽エラー</label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="radio" name="historyType" value="major_error" id="majorError">
+                                    <label class="form-check-label" for="majorError">重エラー</label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="radio" name="historyType" value="error_recovery" id="errorRecovery">
+                                    <label class="form-check-label" for="errorRecovery">重エラー復旧</label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">キャンセル</button>
+                        <button type="button" class="btn btn-info" onclick="statusMonitor.executeReportCreation('${gateNumber}')">
+                            <i class="fas fa-file-alt"></i> 作成
+                        </button>
+                    </div>
+                </div>
+            </div>
         `;
 
-        popup.innerHTML = `
-            <div style="text-align: center; margin-bottom: 20px;">
-                <h5 style="margin: 0; color: #17a2b8;">報告書作成</h5>
-                <p style="margin: 5px 0 0 0; color: #666;">ゲート: ${gateNumber}</p>
-            </div>
-            <div style="border: 2px solid #17a2b8; border-radius: 8px; padding: 15px; margin-bottom: 15px;" id="historyForm">
-                <h6 style="margin: 0 0 10px 0; color: #17a2b8;">期間</h6>
-                <div style="margin-bottom: 8px;">
-                    <label style="display: flex; align-items: center; cursor: pointer; padding: 5px;">
-                        <input type="checkbox" name="historyPeriod" value="today" style="margin-right: 12px;" onchange="statusMonitor.handleHistoryPeriodCheckbox(this)"> 当日
-                    </label>
-                </div>
-                <div style="margin-bottom: 8px;">
-                    <label style="display: flex; align-items: center; cursor: pointer; padding: 5px;">
-                        <input type="checkbox" name="historyPeriod" value="yesterday" style="margin-right: 12px;" onchange="statusMonitor.handleHistoryPeriodCheckbox(this)"> 前日～
-                    </label>
-                </div>
-                <div style="margin-bottom: 15px;">
-                    <label style="display: flex; align-items: center; cursor: pointer; padding: 5px;">
-                        <input type="checkbox" name="historyPeriod" value="week" style="margin-right: 12px;" onchange="statusMonitor.handleHistoryPeriodCheckbox(this)"> 1週間前～
-                    </label>
-                </div>
-                
-                <h6 style="margin: 15px 0 10px 0; color: #17a2b8;">履歴種類</h6>
-                <div style="margin-bottom: 8px;">
-                    <label style="display: flex; align-items: center; cursor: pointer; padding: 5px;">
-                        <input type="checkbox" name="historyType" value="all" style="margin-right: 12px;" onchange="statusMonitor.handleHistoryTypeCheckbox(this)"> 全て
-                    </label>
-                </div>
-                <div style="margin-bottom: 8px;">
-                    <label style="display: flex; align-items: center; cursor: pointer; padding: 5px;">
-                        <input type="checkbox" name="historyType" value="minor_error" style="margin-right: 12px;" onchange="statusMonitor.handleHistoryTypeCheckbox(this)"> 軽エラー
-                    </label>
-                </div>
-                <div style="margin-bottom: 8px;">
-                    <label style="display: flex; align-items: center; cursor: pointer; padding: 5px;">
-                        <input type="checkbox" name="historyType" value="major_error" style="margin-right: 12px;" onchange="statusMonitor.handleHistoryTypeCheckbox(this)"> 重エラー
-                    </label>
-                </div>
-                <div style="margin-bottom: 8px;">
-                    <label style="display: flex; align-items: center; cursor: pointer; padding: 5px;">
-                        <input type="checkbox" name="historyType" value="error_recovery" style="margin-right: 12px;" onchange="statusMonitor.handleHistoryTypeCheckbox(this)"> 重エラー復旧
-                    </label>
-                </div>
-            </div>
-            <div style="text-align: center; display: flex; gap: 10px; justify-content: center;">
-                <button onclick="statusMonitor.executeReportCreation('${gateNumber}')" 
-                        style="padding: 10px 20px; border: none; border-radius: 4px; background: #17a2b8; color: white; cursor: pointer; font-size: 14px;">
-                    作成
-                </button>
-                <button onclick="statusMonitor.closeHistoryModal()" 
-                        style="padding: 10px 20px; border: 1px solid #ccc; border-radius: 4px; background: #f8f9fa; cursor: pointer; font-size: 14px;">
-                    キャンセル
-                </button>
-            </div>
-        `;
+        document.body.appendChild(modal);
 
-        // オーバーレイを作成
-        const overlay = document.createElement('div');
-        overlay.id = 'historyOverlay';
-        overlay.style.cssText = `
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0,0,0,0.5);
-            z-index: 9998;
-        `;
-        overlay.onclick = () => this.closeHistoryModal();
+        // Bootstrapモーダルを表示
+        const bootstrapModal = new bootstrap.Modal(modal);
+        bootstrapModal.show();
 
-        document.body.appendChild(overlay);
-        document.body.appendChild(popup);
+        // モーダル非表示時に要素を削除
+        modal.addEventListener('hidden.bs.modal', function () {
+            modal.remove();
+        });
     }
 
     executeReportCreation(gateNumber) {
@@ -887,39 +926,14 @@ class StatusMonitor {
         
         console.log(`報告書作成: ${gateNumber} - 期間: ${periodName}, 種類: ${typeName}`);
         alert(`${gateNumber}の報告書を作成します\n期間: ${periodName}\n種類: ${typeName}`);
-        this.closeHistoryModal();
-    }
-
-    closeHistoryModal() {
-        const popup = document.getElementById('historyModal');
-        const overlay = document.getElementById('historyOverlay');
-        if (popup) popup.remove();
-        if (overlay) overlay.remove();
-    }
-
-    handleHistoryPeriodCheckbox(checkbox) {
-        // 複数選択不可：他の期間チェックボックスをクリア
-        if (checkbox.checked) {
-            const otherCheckboxes = document.querySelectorAll('input[name="historyPeriod"]');
-            otherCheckboxes.forEach(cb => {
-                if (cb !== checkbox) {
-                    cb.checked = false;
-                }
-            });
+        
+        // Bootstrapモーダルを閉じる
+        const modal = bootstrap.Modal.getInstance(document.getElementById('historyReportModal'));
+        if (modal) {
+            modal.hide();
         }
     }
 
-    handleHistoryTypeCheckbox(checkbox) {
-        // 複数選択不可：他の履歴種類チェックボックスをクリア
-        if (checkbox.checked) {
-            const otherCheckboxes = document.querySelectorAll('input[name="historyType"]');
-            otherCheckboxes.forEach(cb => {
-                if (cb !== checkbox) {
-                    cb.checked = false;
-                }
-            });
-        }
-    }
 
     showGateDetails(gateNumber) {
         alert(`${gateNumber}の詳細情報を表示します`);

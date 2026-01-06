@@ -10,7 +10,7 @@ class DataMonitor {
         this.currentFilters = {
             dataType: 'all',
             selectedGates: [],
-            selectedStatuses: ['normal', 'warning', 'error', 'info'],
+            selectedStatuses: ['normal', 'warning', 'error', 'recovery'],
             visibleColumns: ['occurredDate', 'personalCode', 'name', 'departmentCode', 'departmentName', 'gateNumber', 'gateName', 'historyDetails']
         };
         this.excelFilters = {};
@@ -97,7 +97,7 @@ class DataMonitor {
             { type: 'normal', color: 'normal', remarks: ['入室', '退室'] },
             { type: 'warning', color: 'warning', remarks: ['通信異常復旧', 'カードリーダー警告', 'バッテリー低下'] },
             { type: 'error', color: 'error', remarks: ['通信異常発生', 'ドア開放異常', 'セキュリティ違反'] },
-            { type: 'info', color: 'info', remarks: ['システム開始', 'メンテナンス完了'] }
+            { type: 'recovery', color: 'info', remarks: ['システム開始', 'メンテナンス完了'] }
         ];
 
         const gates = [
@@ -324,8 +324,13 @@ class DataMonitor {
                 { key: 'historyDetails', html: historyDetailsValue }
             ];
 
-            columns.forEach(col => {
-                if (this.currentFilters.visibleColumns.includes(col.key)) {
+            columns.forEach((col, colIndex) => {
+                // Check if corresponding header is hidden by CSS class
+                const header = document.querySelector(`th[data-column="${col.key}"]`);
+                const isHiddenByClass = header && header.classList.contains('column-hidden');
+                
+                // Only show column if it's in visibleColumns AND not hidden by CSS class
+                if (this.currentFilters.visibleColumns.includes(col.key) && !isHiddenByClass) {
                     const td = document.createElement('td');
                     
                     // 履歴詳細の場合は確実にデータを表示
@@ -553,7 +558,7 @@ class DataMonitor {
                 'normal': '正常',
                 'warning': '警告', 
                 'error': '異常',
-                'info': 'オフライン'
+                'recovery': 'オフライン'
             };
             const selectedStatusNames = this.currentFilters.selectedStatuses.map(status => statusNames[status]);
             descriptions.push(`ステータス: ${selectedStatusNames.join(', ')}`);
@@ -599,12 +604,16 @@ class DataMonitor {
         headers.forEach((header, index) => {
             const columnKey = headerMapping[index];
             if (columnKey) {
-                // 履歴詳細は常に表示、他の列は通常のフィルターチェック
-                if (columnKey === 'historyDetails') {
-                    header.style.display = '';
-                } else {
-                    header.style.display = this.currentFilters.visibleColumns.includes(columnKey) ? '' : 'none';
+                // CSS class-based column hiding takes priority over filter-based visibility
+                if (!header.classList.contains('column-hidden')) {
+                    // Only apply filter-based visibility if not hidden by CSS class
+                    if (columnKey === 'historyDetails') {
+                        header.style.display = '';
+                    } else {
+                        header.style.display = this.currentFilters.visibleColumns.includes(columnKey) ? '' : 'none';
+                    }
                 }
+                // If column has 'column-hidden' class, leave it as is (CSS will handle hiding)
             }
         });
     }

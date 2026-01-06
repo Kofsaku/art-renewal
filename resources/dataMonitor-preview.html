@@ -9,6 +9,7 @@
     <link rel="stylesheet" href="/resources/static/css/common.css" />
     <link rel="stylesheet" href="/resources/static/css/modern-layout.css" />
     <link rel="stylesheet" href="/resources/static/css/unified-table.css" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" />
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;500;600;700&display=swap"
@@ -423,32 +424,32 @@
             color: #666;
         }
 
-        /* Column hide button styles */
-        .column-hide-btn {
+        /* Column hide button styles - 個人一覧と同仕様 */
+        .column-visibility-toggle {
             position: absolute;
             top: 2px;
             right: 2px;
-            width: 16px;
-            height: 16px;
-            background: rgba(255, 255, 255, 0.2);
-            color: white;
-            border: 1px solid rgba(255, 255, 255, 0.3);
-            border-radius: 3px;
+            width: 12px;
+            height: 12px;
+            background: rgba(255, 255, 255, 0.8);
+            border-radius: 2px;
             cursor: pointer;
-            font-size: 10px;
-            line-height: 12px;
-            text-align: center;
-            display: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 8px;
+            color: #495057;
             transition: all 0.2s ease;
         }
 
-        .data-table th:hover .column-hide-btn {
-            display: block;
+        .column-visibility-toggle:hover {
+            background: rgba(255, 255, 255, 1);
+            transform: scale(1.2);
         }
 
-        .column-hide-btn:hover {
-            background: rgba(255, 255, 255, 0.4);
-            transform: scale(1.1);
+        .column-visibility-toggle.hidden {
+            background: rgba(220, 53, 69, 0.8);
+            color: white;
         }
 
         .column-hidden {
@@ -477,14 +478,115 @@
             background: #5a6268;
         }
 
-        .display-count {
-            background: #e3f2fd;
-            border: 1px solid #1976d2;
+
+        /* 列表示管理モーダル用スタイル（個人一覧と統一） */
+        .column-list {
+            border: 1px solid #dee2e6;
             border-radius: 4px;
-            padding: 8px 12px;
-            font-size: 0.9rem;
+            min-height: 200px;
+            max-height: 300px;
+            overflow-y: auto;
+            padding: 8px;
+            background: #f8f9fa;
+        }
+
+        .column-item-manager {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 6px 8px;
+            margin-bottom: 4px;
+            background: white;
+            border: 1px solid #dee2e6;
+            border-radius: 3px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .column-item-manager:hover {
+            background: #e9ecef;
+            border-color: #adb5bd;
+        }
+
+        .column-item-manager.hidden {
+            background: #fff3cd;
+            border-color: #ffc107;
+        }
+
+        .column-item-manager .column-name {
+            font-size: 0.9em;
             font-weight: 500;
-            color: #1976d2;
+        }
+
+        .column-item-manager .column-toggle-btn {
+            background: none;
+            border: none;
+            color: #6c757d;
+            cursor: pointer;
+            padding: 2px 6px;
+            border-radius: 3px;
+            transition: all 0.2s ease;
+        }
+
+        .column-item-manager .column-toggle-btn:hover {
+            background: #dee2e6;
+            color: #495057;
+        }
+
+        .column-item-manager.hidden .column-toggle-btn {
+            color: #f57c00;
+        }
+
+        .column-visibility-modal .modal-body {
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        /* データ種別セレクトボックスの色分け */
+        .data-type-select {
+            background-color: white;
+            transition: background-color 0.2s ease;
+        }
+
+        .data-type-select.normal-selected {
+            background-color: #ffffff;
+            color: #000;
+        }
+
+        .data-type-select.warning-selected {
+            background-color: #fff3cd;
+            color: #856404;
+        }
+
+        .data-type-select.error-selected {
+            background-color: #f8d7da;
+            color: #721c24;
+        }
+
+        .data-type-select.recovery-selected {
+            background-color: #d1ecf1;
+            color: #0c5460;
+        }
+
+        /* セレクトオプションの色分け（一部ブラウザで対応） */
+        .data-type-select option[value="normal"] {
+            background-color: #ffffff;
+            color: #000;
+        }
+
+        .data-type-select option[value="warning"] {
+            background-color: #fff3cd;
+            color: #856404;
+        }
+
+        .data-type-select option[value="error"] {
+            background-color: #f8d7da;
+            color: #721c24;
+        }
+
+        .data-type-select option[value="recovery"] {
+            background-color: #d1ecf1;
+            color: #0c5460;
         }
     </style>
 </head>
@@ -541,34 +643,35 @@
     <!-- メインコンテンツ -->
     <div class="content-wrapper">
         <div class="data-monitor-container position-relative">
-            <h2>データモニター</h2>
-
-
-            <!-- フィルターパネル -->
-            <div class="filter-panel">
-                <h5 style="margin-bottom: 8px; font-size: 1.1rem;">◆ 履歴データ</h5>
-                <div class="filter-section">
-                    <!-- データ種別フィルタ -->
-                    <div class="filter-group">
-                        <h6>データ種別</h6>
-                        <select id="dataTypeFilter" class="form-select">
-                            <option value="all">全データ表示</option>
-                            <option value="normal">正常データ</option>
-                            <option value="warning">警告データ</option>
-                            <option value="error">エラーデータ</option>
-                            <option value="info">復旧データ</option>
-                        </select>
-                    </div>
-
-
-                </div>
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                <h2 style="margin-bottom: 0;">データモニター</h2>
+                <div class="display-count" style="color: #dc3545; font-weight: bold; font-size: 1.1rem;">現条件: <span id="recordCountTop">20</span> 件</div>
             </div>
 
-            <!-- フィルター・リセット・表示件数セクション -->
-            <div class="filter-reset-section">
-                <button class="btn-filter-reset" onclick="resetAllFilters()">フィルターリセット</button>
-                <button class="btn-filter-reset" onclick="showColumnManager()">列表示管理</button>
-                <div class="display-count">表示件数: <span id="recordCount">20</span>件</div>
+
+            <!-- フィルターパネル・アクションボタン -->
+            <div class="filter-panel d-flex justify-content-between align-items-center">
+                <div class="filter-section d-flex align-items-center gap-3">
+                    <h5 class="mb-0" style="font-size: 1.1rem; white-space: nowrap;">◆ データ種別 :</h5>
+                    <div class="filter-group mb-0">
+                        <select id="dataTypeFilter" class="form-select data-type-select" style="width: auto; min-width: 200px;" onchange="updateSelectColor(this);">
+                            <option value="all">全データ表示</option>
+                            <option value="normal">正常データ</option>
+                            <option value="warning">軽エラーデータ</option>
+                            <option value="error">重エラーデータ</option>
+                            <option value="recovery">重エラー復旧データ</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="secondary-actions d-flex align-items-center gap-2">
+                    <button class="btn btn-outline-secondary btn-sm" onclick="resetAllFilters()">
+                        <i class="fas fa-filter-circle-xmark"></i> フィルターリセット
+                    </button>
+                    <button class="btn btn-outline-info btn-sm" onclick="showColumnManager()" id="columnManagerBtn">
+                        <i class="fas fa-columns"></i> 列表示管理
+                        <span class="badge bg-warning ms-1" id="hiddenColumnsBadge" style="display: none;">0</span>
+                    </button>
+                </div>
             </div>
 
             <!-- データテーブル -->
@@ -578,42 +681,42 @@
                         <th data-column="occurredDate">発生日付
                             <div class="excel-filter-trigger" onclick="showDataFilter(event, 'occurredDate')"></div>
                             <div class="excel-filter-menu" id="filter-occurredDate"></div>
-                            <button class="column-hide-btn" onclick="hideColumn('occurredDate')" title="列を非表示">×</button>
+                            <div class="column-visibility-toggle" onclick="hideColumn('occurredDate')" title="列を非表示">×</div>
                         </th>
                         <th data-column="personalCode">個人コード
                             <div class="excel-filter-trigger" onclick="showDataFilter(event, 'personalCode')"></div>
                             <div class="excel-filter-menu" id="filter-personalCode"></div>
-                            <button class="column-hide-btn" onclick="hideColumn('personalCode')" title="列を非表示">×</button>
+                            <div class="column-visibility-toggle" onclick="hideColumn('personalCode')" title="列を非表示">×</div>
                         </th>
                         <th data-column="name">氏名
                             <div class="excel-filter-trigger" onclick="showDataFilter(event, 'name')"></div>
                             <div class="excel-filter-menu" id="filter-name"></div>
-                            <button class="column-hide-btn" onclick="hideColumn('name')" title="列を非表示">×</button>
+                            <div class="column-visibility-toggle" onclick="hideColumn('name')" title="列を非表示">×</div>
                         </th>
                         <th data-column="departmentCode">所属コード
                             <div class="excel-filter-trigger" onclick="showDataFilter(event, 'departmentCode')"></div>
                             <div class="excel-filter-menu" id="filter-departmentCode"></div>
-                            <button class="column-hide-btn" onclick="hideColumn('departmentCode')" title="列を非表示">×</button>
+                            <div class="column-visibility-toggle" onclick="hideColumn('departmentCode')" title="列を非表示">×</div>
                         </th>
                         <th data-column="departmentName">所属名称
                             <div class="excel-filter-trigger" onclick="showDataFilter(event, 'departmentName')"></div>
                             <div class="excel-filter-menu" id="filter-departmentName"></div>
-                            <button class="column-hide-btn" onclick="hideColumn('departmentName')" title="列を非表示">×</button>
+                            <div class="column-visibility-toggle" onclick="hideColumn('departmentName')" title="列を非表示">×</div>
                         </th>
                         <th data-column="gateNumber">ゲート番号
                             <div class="excel-filter-trigger" onclick="showDataFilter(event, 'gateNumber')"></div>
                             <div class="excel-filter-menu" id="filter-gateNumber"></div>
-                            <button class="column-hide-btn" onclick="hideColumn('gateNumber')" title="列を非表示">×</button>
+                            <div class="column-visibility-toggle" onclick="hideColumn('gateNumber')" title="列を非表示">×</div>
                         </th>
                         <th data-column="gateName">ゲート名称
                             <div class="excel-filter-trigger" onclick="showDataFilter(event, 'gateName')"></div>
                             <div class="excel-filter-menu" id="filter-gateName"></div>
-                            <button class="column-hide-btn" onclick="hideColumn('gateName')" title="列を非表示">×</button>
+                            <div class="column-visibility-toggle" onclick="hideColumn('gateName')" title="列を非表示">×</div>
                         </th>
                         <th data-column="historyDetails">履歴詳細
                             <div class="excel-filter-trigger" onclick="showDataFilter(event, 'historyDetails')"></div>
                             <div class="excel-filter-menu" id="filter-historyDetails"></div>
-                            <button class="column-hide-btn" onclick="hideColumn('historyDetails')" title="列を非表示">×</button>
+                            <div class="column-visibility-toggle" onclick="hideColumn('historyDetails')" title="列を非表示">×</div>
                         </th>
                     </tr>
                 </thead>
@@ -1010,6 +1113,61 @@
         <button id="toggleAutoScroll" class="btn btn-warning">停止</button>
     </div>
 
+    <!-- 列表示管理モーダル（個人一覧と統一） -->
+    <div class="modal fade" id="columnManagerModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">
+                        <i class="fas fa-columns text-primary"></i>
+                        列表示管理
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h6 class="text-success">
+                                <i class="fas fa-check"></i> 表示中の列
+                            </h6>
+                            <div class="column-list" id="visibleColumnsList">
+                                <!-- JavaScriptで動的生成 -->
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <h6 class="text-muted">
+                                <i class="fas fa-times"></i> 非表示の列
+                            </h6>
+                            <div class="column-list" id="hiddenColumnsList">
+                                <!-- JavaScriptで動的生成 -->
+                            </div>
+                            <div class="text-center mt-3" id="noHiddenColumns" style="display: none;">
+                                <span class="text-muted">
+                                    <i class="fas fa-check-circle"></i>
+                                    非表示の列はありません
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <hr class="my-3">
+
+                    <div class="d-flex gap-2">
+                        <button type="button" class="btn btn-outline-success btn-sm" onclick="showAllColumns()">
+                            <i class="fas fa-plus"></i> すべて表示
+                        </button>
+                        <button type="button" class="btn btn-outline-secondary btn-sm" onclick="resetToDefault()">
+                            <i class="fas fa-undo"></i> デフォルトに戻す
+                        </button>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">閉じる</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- フッター -->
     <div id="global-footer" class="mt-5">
         <footer>
@@ -1045,8 +1203,19 @@
             }
         }
         
-        // 列表示管理ダイアログ
+        // 列表示管理ダイアログ（個人一覧と同じモーダル形式）
         function showColumnManager() {
+            populateColumnManager();
+            const modal = new bootstrap.Modal(document.getElementById('columnManagerModal'));
+            modal.show();
+        }
+
+        // Populate column manager with current state
+        function populateColumnManager() {
+            const visibleList = document.getElementById('visibleColumnsList');
+            const hiddenList = document.getElementById('hiddenColumnsList');
+            const noHiddenMsg = document.getElementById('noHiddenColumns');
+            
             const columns = [
                 { key: 'occurredDate', name: '発生日付' },
                 { key: 'personalCode', name: '個人コード' },
@@ -1057,21 +1226,67 @@
                 { key: 'gateName', name: 'ゲート名称' },
                 { key: 'historyDetails', name: '履歴詳細' }
             ];
-            
-            let dialogHTML = '<div style="background: rgba(0,0,0,0.5); position: fixed; top: 0; left: 0; right: 0; bottom: 0; z-index: 1000;" onclick="this.remove()">';
-            dialogHTML += '<div style="background: white; padding: 20px; margin: 50px auto; max-width: 400px; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.3);" onclick="event.stopPropagation()">';
-            dialogHTML += '<h4 style="margin-bottom: 15px; color: #495057;">列表示管理</h4>';
+
+            visibleList.innerHTML = '';
+            hiddenList.innerHTML = '';
+
+            let hiddenCount = 0;
             
             columns.forEach(col => {
                 const header = document.querySelector(`th[data-column="${col.key}"]`);
                 const isVisible = !header.classList.contains('column-hidden');
-                dialogHTML += `<div style="margin-bottom: 8px;"><label style="cursor: pointer;"><input type="checkbox" ${isVisible ? 'checked' : ''} onchange="toggleColumn('${col.key}', this.checked)" style="margin-right: 8px;">${col.name}</label></div>`;
+                
+                const itemHTML = `
+                    <div class="column-item-manager ${!isVisible ? 'hidden' : ''}" data-column="${col.key}">
+                        <span class="column-name">${col.name}</span>
+                        <button class="column-toggle-btn" onclick="toggleColumnVisibility('${col.key}')" title="${isVisible ? '非表示にする' : '表示する'}">
+                            <i class="fas fa-${isVisible ? 'eye-slash' : 'eye'}"></i>
+                        </button>
+                    </div>
+                `;
+                
+                if (isVisible) {
+                    visibleList.insertAdjacentHTML('beforeend', itemHTML);
+                } else {
+                    hiddenList.insertAdjacentHTML('beforeend', itemHTML);
+                    hiddenCount++;
+                }
             });
+
+            noHiddenMsg.style.display = hiddenCount === 0 ? 'block' : 'none';
             
-            dialogHTML += '<div style="text-align: right; margin-top: 15px;"><button onclick="this.parentElement.parentElement.parentElement.remove()" style="background: #6c757d; color: white; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer;">閉じる</button></div>';
-            dialogHTML += '</div></div>';
+            // Update hidden columns badge
+            const badge = document.getElementById('hiddenColumnsBadge');
+            if (hiddenCount > 0) {
+                badge.textContent = hiddenCount;
+                badge.style.display = 'inline';
+            } else {
+                badge.style.display = 'none';
+            }
+        }
+
+        function toggleColumnVisibility(columnKey) {
+            const header = document.querySelector(`th[data-column="${columnKey}"]`);
+            if (!header) return;
+
+            const isCurrentlyVisible = !header.classList.contains('column-hidden');
+            toggleColumn(columnKey, !isCurrentlyVisible);
             
-            document.body.insertAdjacentHTML('beforeend', dialogHTML);
+            // Re-populate the manager to reflect changes
+            populateColumnManager();
+        }
+
+        function showAllColumns() {
+            const columns = ['occurredDate', 'personalCode', 'name', 'departmentCode', 'departmentName', 'gateNumber', 'gateName', 'historyDetails'];
+            columns.forEach(col => {
+                toggleColumn(col, true);
+            });
+            populateColumnManager();
+        }
+
+        function resetToDefault() {
+            // Show all columns by default for data monitor
+            showAllColumns();
         }
         
         function toggleColumn(columnName, show) {
@@ -1118,12 +1333,40 @@
         // 表示件数を更新
         function updateRecordCount() {
             const visibleRows = document.querySelectorAll('#dataTableBody tr:not([style*="display: none"])');
-            document.getElementById('recordCount').textContent = visibleRows.length;
+            const count = visibleRows.length;
+            document.getElementById('recordCount').textContent = count;
+            document.getElementById('recordCountTop').textContent = count;
         }
         
+        // セレクトボックスの色を更新
+        function updateSelectColor(selectElement) {
+            const value = selectElement.value;
+            selectElement.classList.remove('normal-selected', 'warning-selected', 'error-selected', 'recovery-selected');
+            
+            if (value === 'normal') {
+                selectElement.classList.add('normal-selected');
+            } else if (value === 'warning') {
+                selectElement.classList.add('warning-selected');
+            } else if (value === 'error') {
+                selectElement.classList.add('error-selected');
+            } else if (value === 'recovery') {
+                selectElement.classList.add('recovery-selected');
+            }
+        }
+
         // 初期表示件数設定
         document.addEventListener('DOMContentLoaded', function() {
             updateRecordCount();
+            // 列表示管理の初期化
+            setTimeout(() => {
+                populateColumnManager();
+            }, 100);
+            
+            // セレクトボックスの初期色設定
+            const selectElement = document.getElementById('dataTypeFilter');
+            if (selectElement) {
+                updateSelectColor(selectElement);
+            }
         });
     </script>
 

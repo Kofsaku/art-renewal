@@ -159,13 +159,14 @@
         }
         
         .gate-grid.layout-64 .icon-grid {
-            width: 70px;
-            height: 40px;
-            gap: 2px;
+            width: 80px;
+            height: 20px;
+            gap: 1px;
         }
         
         .gate-grid.layout-64 .status-icon {
-            font-size: 9px;
+            font-size: 8px;
+            min-height: 18px;
         }
         
         
@@ -215,11 +216,11 @@
         
         .icon-grid {
             display: grid;
-            grid-template-columns: 1fr 1fr;
-            grid-template-rows: 1fr 1fr;
+            grid-template-columns: 1fr 1fr 1fr 1fr;
+            grid-template-rows: 1fr;
             gap: 4px;
-            width: 100px;
-            height: 60px;
+            width: 120px;
+            height: 30px;
             margin-right: auto;
         }
         
@@ -237,30 +238,38 @@
             overflow: hidden;
         }
         
-        /* No.21: 改善されたアイコン表示 */
-        .icon-door { 
+        /* 4項目横並びアイコン表示 */
+        /* ①開扉/閉扉 */
+        .icon-door-closed { 
             background-image: url('/resources/static/images/ゲート/①開閉状態/door_closed.png');
             background-size: contain;
             background-repeat: no-repeat;
             background-position: center;
         }
-        .icon-card { 
+        .icon-door-open { 
+            background-image: url('/resources/static/images/ゲート/①開閉状態/door_opening.png');
+            background-size: contain;
+            background-repeat: no-repeat;
+            background-position: center;
+        }
+        
+        /* ②解錠/施錠 */
+        .icon-lock-locked { 
             background-image: url('/resources/static/images/ゲート/②施解錠状態/door_locking.png');
             background-size: contain;
             background-repeat: no-repeat;
             background-position: center;
         }
-        .icon-sensor { 
-            background-image: url('/resources/static/images/ゲート/④警備状態/gate_sec_set.png');
+        .icon-lock-unlocked { 
+            background-image: url('/resources/static/images/ゲート/②施解錠状態/door_unlocking.png');
             background-size: contain;
             background-repeat: no-repeat;
             background-position: center;
         }
-        .icon-comm { 
-            background-image: url('/resources/static/images/ゲート/①開閉状態/door_opening.png');
-            background-size: contain;
-            background-repeat: no-repeat;
-            background-position: center;
+        
+        /* ③通常/異常 */
+        .icon-alarm-normal { 
+            background: transparent;
         }
         .icon-error { 
             background-image: url('/resources/static/images/ゲート/③警報状態/alarm_abnormal.png');
@@ -269,18 +278,22 @@
             background-position: center;
             animation: pulse-error 2s infinite;
         }
-        .icon-offline { 
-            background-image: url('/resources/static/images/ゲート/②施解錠状態/door_unlocking.png');
-            background-size: contain;
-            background-repeat: no-repeat;
-            background-position: center;
-            opacity: 0.7;
+        
+        /* ④通常/警備セット */
+        .icon-security-normal { 
+            background: transparent;
         }
-        .icon-security { 
+        .icon-security-active { 
             background-image: url('/resources/static/images/ゲート/④警備状態/gate_sec_set.png');
             background-size: contain;
             background-repeat: no-repeat;
             background-position: center;
+        }
+        
+        /* オフライン状態 */
+        .icon-offline { 
+            background: rgba(108, 117, 125, 0.7);
+            opacity: 0.7;
         }
         
         /* アニメーション効果 */
@@ -595,7 +608,7 @@
                         <!-- 凡例パネル -->
                         <div class="legend-panel" id="legendPanel">
                             <h6 style="margin: 0 0 10px 0; font-size: 0.9em;">状態凡例</h6>
-                            <div style="display: flex; gap: 15px; flex-wrap: wrap;">
+                            <div style="display: flex; gap: 15px; flex-wrap: wrap; margin-bottom: 15px;">
                                 <div class="legend-item">
                                     <input type="checkbox" class="status-filter-checkbox" value="normal" checked style="margin-right: 5px;">
                                     <div class="legend-indicator status-normal"></div>
@@ -615,6 +628,25 @@
                                     <input type="checkbox" class="status-filter-checkbox" value="offline" checked style="margin-right: 5px;">
                                     <div class="legend-indicator status-offline"></div>
                                     <span style="font-size: 0.8em;">オフライン</span>
+                                </div>
+                            </div>
+                            <h6 style="margin: 0 0 10px 0; font-size: 0.9em; border-top: 1px solid #ddd; padding-top: 10px;">アイコン凡例</h6>
+                            <div style="display: flex; gap: 15px; flex-wrap: wrap;">
+                                <div class="legend-item">
+                                    <div class="icon-door-closed" style="width: 16px; height: 16px; margin-right: 8px;"></div>
+                                    <span style="font-size: 0.8em;">開扉/閉扉</span>
+                                </div>
+                                <div class="legend-item">
+                                    <div class="icon-lock-locked" style="width: 16px; height: 16px; margin-right: 8px;"></div>
+                                    <span style="font-size: 0.8em;">解錠/施錠</span>
+                                </div>
+                                <div class="legend-item">
+                                    <div class="icon-error" style="width: 16px; height: 16px; margin-right: 8px;"></div>
+                                    <span style="font-size: 0.8em;">異常</span>
+                                </div>
+                                <div class="legend-item">
+                                    <div class="icon-security-active" style="width: 16px; height: 16px; margin-right: 8px;"></div>
+                                    <span style="font-size: 0.8em;">警備セット</span>
                                 </div>
                             </div>
                         </div>
@@ -667,17 +699,8 @@
                         };
                     });
                     
-                    // 100件のゲートグループを強制生成
-                    statusMonitor.gateGroups = [];
-                    for (let i = 0; i < 100; i++) {
-                        const groupNumber = (i + 1).toString().padStart(4, '0');
-                        statusMonitor.gateGroups.push({
-                            id: `gate-${groupNumber}`,
-                            name: `ゲート-${groupNumber}～`,
-                            range: [i * 10 + 1, (i + 1) * 10],
-                            status: 'normal'
-                        });
-                    }
+                    // レイアウトに応じたゲートグループを再生成
+                    statusMonitor.generateGateGroups();
                     statusMonitor.renderGateButtons();
                     console.log('Filter initialization complete');
                 }

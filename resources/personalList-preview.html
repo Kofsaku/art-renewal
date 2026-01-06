@@ -851,14 +851,14 @@
         }
 
         .count-label {
-            color: #dc3545;
-            font-weight: 600;
+            color: #1976d2;
+            font-weight: 500;
         }
 
         .count-value {
-            font-weight: bold;
-            color: #dc3545;
-            font-size: 1.2em;
+            font-weight: 500;
+            color: #1976d2;
+            font-size: 1.0em;
         }
 
         /* フィルター黒三角の視覚化 */
@@ -1130,13 +1130,14 @@
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
                 <h2>個人情報一覧</h2>
                 <!-- 右端の現条件人数表示と送信ボタン -->
-                <div class="header-right-controls" id="currentCountDisplay">
-                    <span class="count-label">現条件：</span>
-                    <span class="count-value" id="currentCountValue">0</span>人
-                    <button class="btn btn-primary btn-sm ms-2" onclick="sendPersonalData()">
+                <div style="display: flex; align-items: center; gap: 10px;">
+                    <div class="display-count" style="color: #dc3545; font-weight: bold; font-size: 1.1rem;">
+                        現条件: <span id="currentCountValue">0</span> 件
+                    </div>
+                    <button class="btn btn-primary btn-sm" onclick="sendPersonalData()">
                         <i class="fas fa-paper-plane"></i> 送信
                     </button>
-                    <button class="btn btn-secondary btn-sm ms-2" onclick="sendUnsentData()">
+                    <button class="btn btn-secondary btn-sm" onclick="sendUnsentData()">
                         <i class="fas fa-paper-plane"></i> 未送信データの送信
                     </button>
                 </div>
