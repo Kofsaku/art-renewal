@@ -138,6 +138,7 @@
         .gate-grid.layout-64 {
             grid-auto-rows: 60px;
             gap: 4px;
+            max-height: none; /* 高さを制限しない */
         }
         
         .gate-grid.layout-64 .gate-card {
@@ -159,9 +160,9 @@
         }
         
         .gate-grid.layout-64 .icon-grid {
-            width: 80px;
-            height: 20px;
-            gap: 1px;
+            width: 70px;
+            height: 18px;
+            gap: 2px;
         }
         
         .gate-grid.layout-64 .status-icon {
@@ -216,101 +217,90 @@
         
         .icon-grid {
             display: grid;
-            grid-template-columns: 1fr 1fr 1fr 1fr;
-            grid-template-rows: 1fr;
-            gap: 4px;
-            width: 120px;
-            height: 30px;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 6px;
+            width: 140px;
+            height: 32px;
             margin-right: auto;
+            border: 1px solid #dee2e6; /* 外枠を追加して区切りを見やすく */
+            background-color: white;
         }
         
         .status-icon {
             width: 100%;
             height: 100%;
-            border-radius: 4px;
-            border: 1px solid #dee2e6;
             display: block;
-            min-height: 25px;
-            background: transparent;
-            color: transparent;
-            font-size: 0;
-            text-indent: -9999px;
-            overflow: hidden;
-        }
-        
-        /* 4項目横並びアイコン表示 */
-        /* ①開扉/閉扉 */
-        .icon-door-closed { 
-            background-image: url('/resources/static/images/ゲート/①開閉状態/door_closed.png');
+            background-color: transparent;
             background-size: contain;
             background-repeat: no-repeat;
             background-position: center;
+            border-right: 1px solid #eee; /* アイコン間の区切り */
+            transition: all 0.2s ease;
+        }
+        
+        .status-icon:last-child {
+            border-right: none;
+        }
+        
+        .status-icon:hover {
+            background-color: #f8f9fa;
+        }
+
+        /* ①開閉状態、②施解錠状態、③警報状態、④警備状態の共通スタイル（凡例・グリッド共通） */
+        .icon-door-closed, .icon-door-open, 
+        .icon-lock-locked, .icon-lock-unlocked,
+        .icon-error, .icon-security-active {
+            background-size: contain;
+            background-repeat: no-repeat;
+            background-position: center;
+            display: inline-block; /* 凡例での表示用 */
+            vertical-align: middle;
+        }
+
+        /* ①開閉状態 */
+        .icon-door-closed { 
+            background-image: url('/resources/static/images/gate/1_door_state/door_closed.png');
         }
         .icon-door-open { 
-            background-image: url('/resources/static/images/ゲート/①開閉状態/door_opening.png');
-            background-size: contain;
-            background-repeat: no-repeat;
-            background-position: center;
+            background-image: url('/resources/static/images/gate/1_door_state/door_opening.png');
         }
         
-        /* ②解錠/施錠 */
+        /* ②施解錠状態 */
         .icon-lock-locked { 
-            background-image: url('/resources/static/images/ゲート/②施解錠状態/door_locking.png');
-            background-size: contain;
-            background-repeat: no-repeat;
-            background-position: center;
+            background-image: url('/resources/static/images/gate/2_lock_state/door_locking.png');
         }
         .icon-lock-unlocked { 
-            background-image: url('/resources/static/images/ゲート/②施解錠状態/door_unlocking.png');
-            background-size: contain;
-            background-repeat: no-repeat;
-            background-position: center;
+            background-image: url('/resources/static/images/gate/2_lock_state/door_unlocking.png');
         }
         
-        /* ③通常/異常 */
+        /* ③警報状態 */
         .icon-alarm-normal { 
-            background: transparent;
+            background-image: none;
         }
         .icon-error { 
-            background-image: url('/resources/static/images/ゲート/③警報状態/alarm_abnormal.png');
-            background-size: contain;
-            background-repeat: no-repeat;
-            background-position: center;
+            background-image: url('/resources/static/images/gate/3_alarm_state/alarm_abnormal.png');
             animation: pulse-error 2s infinite;
         }
         
-        /* ④通常/警備セット */
+        /* ④警備状態 */
         .icon-security-normal { 
-            background: transparent;
+            background-image: none;
         }
         .icon-security-active { 
-            background-image: url('/resources/static/images/ゲート/④警備状態/gate_sec_set.png');
-            background-size: contain;
-            background-repeat: no-repeat;
-            background-position: center;
+            background-image: url('/resources/static/images/gate/4_security_state/gate_sec_set.png');
         }
         
-        /* オフライン状態 */
+        /* オフライン状態用の追加スタイル（もし必要なら） */
         .icon-offline { 
-            background: rgba(108, 117, 125, 0.7);
-            opacity: 0.7;
+            background-color: #e9ecef;
+            opacity: 0.5;
         }
         
         /* アニメーション効果 */
         @keyframes pulse-error {
-            0% { transform: scale(1); }
-            50% { transform: scale(1.1); }
-            100% { transform: scale(1); }
-        }
-        
-        .status-icon {
-            transition: all 0.3s ease;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-        }
-        
-        .status-icon:hover {
-            transform: scale(1.1);
-            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+            0% { transform: scale(0.9); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(0.9); }
         }
         
         .status-normal {

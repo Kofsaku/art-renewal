@@ -17,14 +17,16 @@ let mapMonitor = {
         { id: 8, name: 'ゲート⑧', status: 'warning', position: { x: 110, y: 240 }, lastUpdate: new Date() }
     ],
     
-    // UI状態
-    sidebarCollapsed: false,
+    // ズーム設定
     zoomLevel: 1,
-    maxZoom: 2,
+    maxZoom: 3,
     minZoom: 0.5,
     
     // 更新間隔（ミリ秒）
-    updateInterval: 5000
+    updateInterval: 5000,
+
+    // 現在のフロア
+    currentFloor: 1
 };
 
 /**
@@ -54,6 +56,14 @@ function setupEventListeners() {
     if (sidebarToggle) {
         sidebarToggle.addEventListener('click', toggleSidebar);
     }
+
+    // フロア切り替え
+    document.querySelectorAll('.floor-button').forEach(button => {
+        button.addEventListener('click', function() {
+            const floor = parseInt(this.dataset.floor);
+            switchFloor(floor);
+        });
+    });
     
     // ゲートクリックイベント
     document.querySelectorAll('.gate-indicator').forEach(indicator => {
@@ -139,19 +149,59 @@ function renderGateIndicators() {
     const floorPlan = document.getElementById('floorPlan');
     if (!floorPlan) return;
     
-    // 既存のインジケーターを更新
+    // 既存のインジケーターをクリアして再描画
+    const existingIndicators = floorPlan.querySelectorAll('.gate-indicator, .gate-pointer');
+    existingIndicators.forEach(el => el.remove());
+    
     mapMonitor.gateData.forEach(gate => {
-        const indicator = document.querySelector(`.gate-indicator[data-gate="${gate.id}"]`);
-        if (indicator) {
-            // 状態に応じてクラスを更新
-            indicator.className = `gate-indicator status-${gate.status}`;
-            indicator.dataset.gate = gate.id;
-            
-            // ポジション更新
-            indicator.style.left = gate.position.x + 'px';
-            indicator.style.top = gate.position.y + 'px';
-        }
+        const pointer = document.createElement('div');
+        pointer.className = `gate-pointer`;
+        pointer.style.left = `${gate.position.x}px`;
+        pointer.style.top = `${gate.position.y}px`;
+        pointer.dataset.gate = gate.id;
+        
+        const circle = document.createElement('div');
+        circle.className = `pointer-circle status-${gate.status}`;
+        
+        const tooltip = document.createElement('div');
+        tooltip.className = `gate-tooltip status-${gate.status}`;
+        
+        // ツールチップの内容
+        tooltip.innerHTML = `
+            <div class="tooltip-header">
+                <div class="status-dot status-${gate.status}" style="background: ${getStatusColorHex(gate.status)}"></div>
+                <span>${gate.id.toString().padStart(4, '0')}<br>${gate.name}</span>
+            </div>
+            <div class="tooltip-icons-grid">
+                <div class="tooltip-icon-item tooltip-icon-door"></div>
+                <div class="tooltip-icon-item tooltip-icon-lock"></div>
+                <div class="tooltip-icon-item tooltip-icon-security"></div>
+                <div class="tooltip-icon-item tooltip-icon-comm"></div>
+            </div>
+        `;
+        
+        pointer.appendChild(circle);
+        pointer.appendChild(tooltip);
+        
+        pointer.addEventListener('click', function() {
+            showGateControlModal(this);
+        });
+        
+        floorPlan.appendChild(pointer);
     });
+}
+
+/**
+ * 状態に対応するカラーコードを取得
+ */
+function getStatusColorHex(status) {
+    const colorMap = {
+        normal: '#28a745',
+        warning: '#ffc107',
+        error: '#dc3545',
+        offline: '#6c757d'
+    };
+    return colorMap[status] || '#6c757d';
 }
 
 /**
@@ -254,9 +304,70 @@ function resetZoom() {
  */
 function applyZoom() {
     const floorPlan = document.getElementById('floorPlan');
-    if (floorPlan) {
-        floorPlan.style.transform = `scale(${mapMonitor.zoomLevel})`;
-        floorPlan.style.transformOrigin = 'center center';
+    const viewport = document.getElementById('mapViewport');
+    if (!floorPlan || !viewport) return;
+
+    floorPlan.style.transform = `scale(${mapMonitor.zoomLevel})`;
+    floorPlan.style.transformOrigin = '50% 50%';
+
+    const baseWidth = 800;
+    const baseHeight = 500;
+    const scaledWidth = baseWidth * mapMonitor.zoomLevel;
+    const scaledHeight = baseHeight * mapMonitor.zoomLevel;
+    
+    const marginX = Math.max(50, (viewport.clientWidth - scaledWidth) / 2);
+    const marginY = Math.max(50, (viewport.clientHeight - scaledHeight) / 2);
+
+    floorPlan.style.marginTop = `${marginY}px`;
+    floorPlan.style.marginBottom = `${marginY}px`;
+    viewport.style.textAlign = 'center';
+}
+
+/**
+ * フロア切り替え
+ */
+function switchFloor(floor) {
+    mapMonitor.currentFloor = floor;
+    
+    // ボタンの表示更新
+    document.querySelectorAll('.floor-button').forEach(btn => {
+        btn.classList.toggle('active', parseInt(btn.dataset.floor) === floor);
+    });
+
+    // ゲートの再配置（フロア2/3はランダム）
+    if (floor === 1) {
+        // 固定配置（初期値）
+        mapMonitor.gateData = [
+            { id: 1, name: 'ゲート①', status: 'normal', position: { x: 110, y: 60 } },
+            { id: 2, name: 'ゲート②', status: 'normal', position: { x: 210, y: 60 } },
+            { id: 3, name: 'ゲート③', status: 'warning', position: { x: 310, y: 60 } },
+            { id: 4, name: 'ゲート④', status: 'error', position: { x: 210, y: 110 } },
+            { id: 5, name: 'ゲート⑤', status: 'error', position: { x: 330, y: 110 } },
+            { id: 6, name: 'ゲート⑥', status: 'normal', position: { x: 110, y: 170 } },
+            { id: 7, name: 'ゲート⑦', status: 'normal', position: { x: 110, y: 270 } },
+            { id: 8, name: 'ゲート⑧', status: 'offline', position: { x: 110, y: 240 } }
+        ];
+    } else {
+        // ランダム配置（ダミー）
+        mapMonitor.gateData.forEach(gate => {
+            gate.position = {
+                x: Math.floor(Math.random() * 600) + 100,
+                y: Math.floor(Math.random() * 300) + 100
+            };
+        });
+    }
+
+    renderGateIndicators();
+    updateFloorTitle();
+}
+
+/**
+ * フロアタイトルの更新
+ */
+function updateFloorTitle() {
+    const title = document.querySelector('.monitor-header h2');
+    if (title) {
+        title.textContent = `マップモニター - フロア${mapMonitor.currentFloor}`;
     }
 }
 
